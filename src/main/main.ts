@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification } from 'electron';
 import path from 'path';
 import { setupTray } from './tray';
-import { setupHotkeys } from './hotkeys';
+import { setupHotkeys, reloadHotkeys } from './hotkeys';
 import { setupIpcHandlers } from './ipc-handlers';
+import * as queries from './db/queries';
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
@@ -53,11 +54,40 @@ function createWindow() {
   });
 }
 
+function startReminderPoller() {
+  setInterval(() => {
+    try {
+      const due = queries.getDueReminders();
+      for (const task of due) {
+        queries.clearReminder(task.id);
+        const notif = new Notification({
+          title: 'Task Grabber — Напоминание',
+          body: task.title,
+          silent: false,
+        });
+        notif.on('click', () => {
+          mainWindow?.show();
+          mainWindow?.webContents.send('reminder:show', task.id);
+        });
+        notif.show();
+      }
+    } catch {
+      // DB might not be ready yet — silently skip
+    }
+  }, 30_000); // check every 30 seconds
+}
+
 app.whenReady().then(() => {
   createWindow();
   setupTray(mainWindow!);
   setupHotkeys(mainWindow!);
   setupIpcHandlers();
+  startReminderPoller();
+
+  // Reload hotkeys when settings change
+  ipcMain.on('hotkeys:reload', () => {
+    if (mainWindow) reloadHotkeys(mainWindow);
+  });
 });
 
 app.on('before-quit', () => {

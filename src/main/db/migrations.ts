@@ -58,12 +58,41 @@ export function runMigrations(db: Database.Database) {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS task_templates (
+      id          TEXT PRIMARY KEY,
+      title       TEXT NOT NULL,
+      description TEXT,
+      priority    INTEGER DEFAULT 0,
+      tags        TEXT DEFAULT '[]',
+      created_at  TEXT DEFAULT (datetime('now'))
+    );
   `);
 
-  // Migrate: add due_date column if missing (for existing DBs)
+  // Migrate: add related_tasks table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS related_tasks (
+      task_id         TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+      related_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+      PRIMARY KEY (task_id, related_task_id)
+    );
+  `);
+
+  // Migrate: add missing columns (for existing DBs)
   const taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as { name: string }[];
   if (!taskColumns.find((c) => c.name === 'due_date')) {
     db.exec("ALTER TABLE tasks ADD COLUMN due_date TEXT");
+  }
+  if (!taskColumns.find((c) => c.name === 'archived_at')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN archived_at TEXT");
+  }
+  if (!taskColumns.find((c) => c.name === 'reminder_at')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN reminder_at TEXT");
   }
 
   // Seed default columns if empty
@@ -78,5 +107,21 @@ export function runMigrations(db: Database.Database) {
       }
     });
     insertMany();
+  }
+
+  // Seed default settings if empty
+  const settingsCount = db.prepare('SELECT COUNT(*) as cnt FROM settings').get() as { cnt: number };
+  if (settingsCount.cnt === 0) {
+    const insertSetting = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
+    const defaultHotkeys = JSON.stringify({
+      GRAB_TEXT: 'CommandOrControl+Shift+T',
+      GRAB_FILES: 'CommandOrControl+Shift+F',
+      QUICK_NOTE: 'CommandOrControl+Shift+N',
+    });
+    db.transaction(() => {
+      insertSetting.run('autoLaunch', 'false');
+      insertSetting.run('theme', 'dark');
+      insertSetting.run('hotkeys', defaultHotkeys);
+    })();
   }
 }

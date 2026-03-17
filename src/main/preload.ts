@@ -47,6 +47,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addTagToTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:add', taskId, tagId),
   removeTagFromTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:remove', taskId, tagId),
 
+  // Templates
+  getTemplates: () => ipcRenderer.invoke('templates:getAll'),
+  createTemplate: (data: unknown) => ipcRenderer.invoke('templates:create', data),
+  deleteTemplate: (id: string) => ipcRenderer.invoke('templates:delete', id),
+
+  // Settings
+  getAllSettings: () => ipcRenderer.invoke('settings:getAll'),
+  getSetting: (key: string) => ipcRenderer.invoke('settings:get', key),
+  setSetting: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value),
+  getAutoLaunch: () => ipcRenderer.invoke('settings:getAutoLaunch'),
+  setAutoLaunch: (enable: boolean) => ipcRenderer.invoke('settings:setAutoLaunch', enable),
+  reloadHotkeys: () => ipcRenderer.send('hotkeys:reload'),
+
   // Events from main to renderer
   onGrabText: (callback: (text: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text);
@@ -67,5 +80,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = () => callback();
     ipcRenderer.on('dialog:showQuickNote', handler);
     return () => { ipcRenderer.removeListener('dialog:showQuickNote', handler); };
+  },
+
+  // Archive
+  archiveTask: (id: string) => ipcRenderer.invoke('tasks:archive', id),
+  unarchiveTask: (id: string) => ipcRenderer.invoke('tasks:unarchive', id),
+  getArchivedTasks: () => ipcRenderer.invoke('tasks:getArchived'),
+  getTaskStats: () => ipcRenderer.invoke('tasks:getStats'),
+
+  // Related tasks
+  getRelatedTasks: (taskId: string) => ipcRenderer.invoke('related:get', taskId),
+  addRelatedTask: (taskId: string, relatedId: string) => ipcRenderer.invoke('related:add', taskId, relatedId),
+  removeRelatedTask: (taskId: string, relatedId: string) => ipcRenderer.invoke('related:remove', taskId, relatedId),
+
+  // Reminders
+  onReminderShow: (callback: (taskId: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, taskId: string) => callback(taskId);
+    ipcRenderer.on('reminder:show', handler);
+    return () => { ipcRenderer.removeListener('reminder:show', handler); };
   },
 });

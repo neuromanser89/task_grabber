@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments } from '../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats } from '../shared/types';
 
 interface ElectronAPI {
   getFilePath: (file: File) => string;
@@ -39,10 +39,37 @@ interface ElectronAPI {
   addTagToTask: (taskId: string, tagId: string) => Promise<boolean>;
   removeTagFromTask: (taskId: string, tagId: string) => Promise<boolean>;
 
+  // Templates
+  getTemplates: () => Promise<TaskTemplate[]>;
+  createTemplate: (data: unknown) => Promise<TaskTemplate>;
+  deleteTemplate: (id: string) => Promise<boolean>;
+
+  // Settings
+  getAllSettings: () => Promise<Record<string, string>>;
+  getSetting: (key: string) => Promise<string | null>;
+  setSetting: (key: string, value: string) => Promise<boolean>;
+  getAutoLaunch: () => Promise<boolean>;
+  setAutoLaunch: (enable: boolean) => Promise<boolean>;
+  reloadHotkeys: () => void;
+
   onGrabText: (cb: (text: string) => void) => () => void;
   onGrabFiles: (cb: (files: string[]) => void) => () => void;
   onShowCreateDialog: (cb: () => void) => () => void;
   onShowQuickNote: (cb: () => void) => () => void;
+
+  // Archive
+  archiveTask: (id: string) => Promise<boolean>;
+  unarchiveTask: (id: string) => Promise<boolean>;
+  getArchivedTasks: () => Promise<TaskWithAttachments[]>;
+  getTaskStats: () => Promise<TaskStats>;
+
+  // Related tasks
+  getRelatedTasks: (taskId: string) => Promise<Task[]>;
+  addRelatedTask: (taskId: string, relatedId: string) => Promise<boolean>;
+  removeRelatedTask: (taskId: string, relatedId: string) => Promise<boolean>;
+
+  // Reminders
+  onReminderShow: (cb: (taskId: string) => void) => () => void;
 }
 
 declare global {
