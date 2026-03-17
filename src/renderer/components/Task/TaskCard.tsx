@@ -18,6 +18,12 @@ const SOURCE_EMOJI: Record<string, string> = {
   email: '✉️',
 };
 
+function countChecklist(text: string): [number, number] {
+  const matches = text.match(/^[-*]\s+\[([ xX])\]/gm) ?? [];
+  const done = matches.filter((m) => /\[([xX])\]/.test(m)).length;
+  return [done, matches.length];
+}
+
 function formatDueDate(dateStr: string): { label: string; isOverdue: boolean; isToday: boolean } {
   const due = new Date(dateStr);
   const today = new Date();
@@ -99,11 +105,32 @@ export default function TaskCard({ task, isDragOverlay = false, onClick }: Props
         </span>
       </div>
 
-      {task.description && (
-        <p className="text-[11px] text-white/30 mt-1.5 line-clamp-2 leading-relaxed">
-          {task.description}
-        </p>
-      )}
+      {task.description && (() => {
+        const [done, total] = countChecklist(task.description);
+        if (total > 0) {
+          // Show checklist progress bar instead of raw text
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          return (
+            <div className="mt-1.5">
+              <div className="flex items-center justify-between text-[10px] text-white/25 mb-1">
+                <span>{done}/{total}</span>
+                <span>{pct}%</span>
+              </div>
+              <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${pct}%`, backgroundColor: pct === 100 ? '#10B981' : '#3B82F6' }}
+                />
+              </div>
+            </div>
+          );
+        }
+        return (
+          <p className="text-[11px] text-white/30 mt-1.5 line-clamp-2 leading-relaxed">
+            {task.description}
+          </p>
+        );
+      })()}
 
       {/* Tags */}
       {task.tags && task.tags.length > 0 && (

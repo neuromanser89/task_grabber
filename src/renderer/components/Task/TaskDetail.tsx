@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Tag, TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@shared/constants';
 import { useTaskStore } from '../../stores/taskStore';
@@ -6,8 +8,7 @@ import { useColumnStore } from '../../stores/columnStore';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import TagInput from '../common/TagInput';
-import MarkdownEditor from '../common/MarkdownEditor';
-import { Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays } from 'lucide-react';
+import { Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, Eye, Edit3 } from 'lucide-react';
 
 interface Props {
   task: TaskWithAttachments | null;
@@ -39,6 +40,24 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function toggleChecklistItem(text: string, index: number): string {
+  let count = 0;
+  return text.replace(/^(\s*[-*]\s+)\[([ xX])\]/gm, (_match, prefix, state) => {
+    if (count === index) {
+      count++;
+      return `${prefix}[${state.trim() === '' ? 'x' : ' '}]`;
+    }
+    count++;
+    return _match;
+  });
+}
+
+function countChecklist(text: string): [number, number] {
+  const matches = text.match(/^[-*]\s+\[([ xX])\]/gm) ?? [];
+  const done = matches.filter((m) => /\[([xX])\]/.test(m)).length;
+  return [done, matches.length];
+}
+
 export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const { updateTask, deleteTask, updateTaskTags } = useTaskStore();
   const { columns } = useColumnStore();
@@ -50,8 +69,10 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [dueDate, setDueDate] = useState<string>('');
   const [taskTags, setTaskTags] = useState<Tag[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [descPreview, setDescPreview] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
+  const checkboxIndexRef = useRef(0);
 
   useEffect(() => {
     if (task) {
@@ -62,6 +83,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setDueDate(task.due_date ? task.due_date.slice(0, 10) : '');
       setTaskTags(task.tags ?? []);
       setConfirmDelete(false);
+      setDescPreview(!!(task.description));
     }
   }, [task]);
 
@@ -76,10 +98,10 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     }
   };
 
-  const saveDescription = () => {
-    const val = description.trim();
-    if (val !== (task.description ?? '')) {
-      updateTask(task.id, { description: val || null });
+  const saveDescription = (val?: string) => {
+    const text = (val ?? description).trim();
+    if (text !== (task.description ?? '')) {
+      updateTask(task.id, { description: text || null });
     }
   };
 
@@ -98,6 +120,12 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     updateTask(task.id, { due_date: val || null });
   };
 
+  const handleCheckboxToggle = (index: number) => {
+    const newText = toggleChecklistItem(description, index);
+    setDescription(newText);
+    saveDescription(newText);
+  };
+
   const handleDelete = () => {
     if (!confirmDelete) {
       setConfirmDelete(true);
@@ -106,6 +134,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     deleteTask(task.id);
     onClose();
   };
+
+  const [doneCount, totalCount] = countChecklist(description);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
@@ -121,19 +151,105 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           placeholder="Заголовок задачи"
         />
 
-        {/* Description */}
+        {/* Description with Markdown + Checklist */}
         <div>
-          <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
-            Описание
-          </label>
-          <MarkdownEditor
-            value={description}
-            onChange={setDescription}
-            onBlur={saveDescription}
-            placeholder="Нет описания"
-            rows={5}
-            defaultMode={description ? 'preview' : 'edit'}
-          />
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider">
+              Описание
+              {totalCount > 0 && (
+                <span className="ml-2 normal-case font-normal text-white/25">
+                  {doneCount}/{totalCount}
+                </span>
+              )}
+            </label>
+            <button
+              onClick={() => {
+                if (descPreview) {
+                  setDescPreview(false);
+                } else {
+                  saveDescription();
+                  setDescPreview(true);
+                }
+              }}
+              className="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 transition-colors"
+            >
+              {descPreview ? <Edit3 size={11} /> : <Eye size={11} />}
+              {descPreview ? 'Редактировать' : 'Предпросмотр'}
+            </button>
+          </div>
+
+          {descPreview ? (
+            <div
+              className="min-h-[96px] w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 text-[13px] text-white/75 leading-relaxed cursor-text"
+              onClick={() => setDescPreview(false)}
+            >
+              {description ? (
+                (() => {
+                  checkboxIndexRef.current = 0;
+                  return (
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        li: ({ children, ...props }) => {
+                          const childArr = React.Children.toArray(children);
+                          const first = childArr[0] as React.ReactElement | undefined;
+                          if (first && typeof first === 'object' && (first as React.ReactElement).type === 'input') {
+                            return <li className="flex items-start gap-2 list-none -ml-4" {...props}>{children}</li>;
+                          }
+                          return <li className="ml-1" {...props}>{children}</li>;
+                        },
+                        input: ({ checked }) => {
+                          const idx = checkboxIndexRef.current++;
+                          return (
+                            <input
+                              type="checkbox"
+                              checked={checked ?? false}
+                              onChange={(e) => { e.stopPropagation(); handleCheckboxToggle(idx); }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-0.5 accent-blue-500 cursor-pointer flex-shrink-0"
+                            />
+                          );
+                        },
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        h1: ({ children }) => <h1 className="text-[15px] font-bold text-white/85 mb-2">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-[13px] font-bold text-white/80 mb-1.5">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-[12px] font-semibold text-white/75 mb-1">{children}</h3>,
+                        ul: ({ children }) => <ul className="mb-2 space-y-1 pl-4">{children}</ul>,
+                        ol: ({ children }) => <ol className="mb-2 space-y-1 list-decimal pl-4">{children}</ol>,
+                        code: ({ children, className }) => {
+                          const isBlock = className?.includes('language-');
+                          return isBlock
+                            ? <code className="block bg-white/[0.05] rounded px-2 py-1.5 text-[11px] font-mono text-white/60 mb-2 overflow-x-auto">{children}</code>
+                            : <code className="bg-white/[0.07] rounded px-1 py-0.5 text-[11px] font-mono text-white/65">{children}</code>;
+                        },
+                        blockquote: ({ children }) => (
+                          <blockquote className="border-l-2 border-white/20 pl-3 text-white/45 italic mb-2">{children}</blockquote>
+                        ),
+                        a: ({ children, href }) => (
+                          <a href={href} className="text-blue-400/80 underline hover:text-blue-400" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>{children}</a>
+                        ),
+                        strong: ({ children }) => <strong className="font-semibold text-white/85">{children}</strong>,
+                        em: ({ children }) => <em className="text-white/60 italic">{children}</em>,
+                      }}
+                    >
+                      {description}
+                    </ReactMarkdown>
+                  );
+                })()
+              ) : (
+                <span className="text-white/15">Нет описания. Нажмите чтобы добавить...</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => { saveDescription(); if (description.trim()) setDescPreview(true); }}
+              rows={6}
+              placeholder={"Описание... (Markdown)\n\n- [ ] подзадача 1\n- [x] выполнено\n\n**жирный**, *курсив*, # заголовок"}
+              className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.08] focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-white/75 placeholder-white/15 outline-none resize-none transition-all duration-200 font-mono"
+            />
+          )}
         </div>
 
         {/* Column + Priority row */}
