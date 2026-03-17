@@ -77,6 +77,10 @@ interface ElectronAPI {
 
   // Reminders
   onReminderShow: (cb: (taskId: string) => void) => () => void;
+
+  // Widget
+  ipcSend: (channel: string, ...args: unknown[]) => void;
+  onWidgetOpenTask?: (cb: (taskId: string) => void) => () => void;
 }
 
 declare global {

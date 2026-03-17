@@ -15,10 +15,14 @@ export default function DropZone({ onTaskCreated }: Props) {
 
   // Listen for drag events on the entire window
   useEffect(() => {
+    function hasDraggableContent(e: DragEvent): boolean {
+      const types = e.dataTransfer?.types ?? [];
+      return types.includes('Files') || types.includes('text/plain') || types.includes('text/uri-list');
+    }
+
     function handleWindowDragEnter(e: DragEvent) {
       e.preventDefault();
-      // Only respond to file drags
-      if (e.dataTransfer?.types.includes('Files')) {
+      if (hasDraggableContent(e)) {
         dragCounter.current++;
         setIsDragOver(true);
       }
@@ -45,7 +49,42 @@ export default function DropZone({ onTaskCreated }: Props) {
       dragCounter.current = 0;
       setIsDragOver(false);
 
+      // Handle browser text/URL drags
+      const textData = e.dataTransfer?.getData('text/uri-list') || e.dataTransfer?.getData('text/plain');
       const files = Array.from(e.dataTransfer?.files ?? []);
+
+      if (files.length === 0 && textData) {
+        // Text or URL drag from browser
+        const columns = await window.electronAPI?.getColumns() ?? [];
+        const defaultCol = (columns as { id: string; is_default: number }[]).find((c) => c.is_default === 1) ?? columns[0];
+        if (!defaultCol) return;
+
+        const allTasks = await window.electronAPI?.getTasks() ?? [];
+        const colTasks = (allTasks as { column_id: string; sort_order: number }[]).filter((t) => t.column_id === (defaultCol as { id: string }).id);
+        const maxOrder = colTasks.length > 0
+          ? Math.max(...colTasks.map((t) => t.sort_order)) + 1
+          : 0;
+
+        const firstLine = textData.split('\n')[0].trim().slice(0, 120);
+        const task = await window.electronAPI?.createTask({
+          title: firstLine || 'Новая задача',
+          description: textData,
+          column_id: (defaultCol as { id: string }).id,
+          sort_order: maxOrder,
+          priority: 0,
+          color: null,
+          source_type: 'text',
+          source_info: null,
+          due_date: null,
+        });
+        if (task) {
+          const fullTask: TaskWithAttachments = { ...task, attachments: [], tags: [] };
+          addTaskToStore(fullTask);
+          onTaskCreated?.(fullTask);
+        }
+        return;
+      }
+
       if (files.length === 0) return;
 
       setIsProcessing(true);
@@ -131,7 +170,7 @@ export default function DropZone({ onTaskCreated }: Props) {
           }
         </p>
         <p className="text-sm text-white/40">
-          .msg письма • документы • любые файлы
+          .msg письма • документы • файлы • текст • URL
         </p>
       </div>
     </div>
