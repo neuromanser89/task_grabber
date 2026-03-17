@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, Hand, FileText, Folder, Mail, StickyNote } from 'lucide-react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, Hand, FileText, Folder, Mail, StickyNote, BarChart2 } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useNoteStore } from '../../stores/noteStore';
 import type { Tag as TagType } from '@shared/types';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
 import type { Priority, SourceType } from '@shared/types';
 import NotesPanel from '../Notes/NotesPanel';
+import StatsPanel from '../Stats/StatsPanel';
 
 const SOURCES: { value: SourceType; label: string; icon: React.ReactNode }[] = [
   { value: 'manual', label: 'Вручную', icon: <Hand size={11} /> },
@@ -14,12 +15,16 @@ const SOURCES: { value: SourceType; label: string; icon: React.ReactNode }[] = [
   { value: 'email', label: 'Письмо', icon: <Mail size={11} /> },
 ];
 
+export interface SidebarHandle {
+  focusSearch: () => void;
+}
+
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-export default function Sidebar({ collapsed, onToggle }: Props) {
+const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, onToggle }, ref) {
   const {
     searchQuery, filterTags, filterPriority, filterSource,
     setSearch, toggleTagFilter, togglePriorityFilter, toggleSourceFilter, resetFilters,
@@ -27,8 +32,15 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
   } = useTaskStore();
 
   const { notes } = useNoteStore();
-  const [activeTab, setActiveTab] = useState<'filters' | 'notes'>('filters');
+  const [activeTab, setActiveTab] = useState<'filters' | 'notes' | 'stats'>('filters');
   const [allTags, setAllTags] = useState<TagType[]>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusSearch: () => {
+      searchInputRef.current?.focus();
+    },
+  }));
 
   useEffect(() => {
     window.electronAPI?.getTags().then(setAllTags);
@@ -76,6 +88,17 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
               <StickyNote size={10} />
               {notes.length > 0 && <span className="text-white/25">{notes.length}</span>}
             </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
+                activeTab === 'stats'
+                  ? 'bg-white/[0.07] text-white/70'
+                  : 'text-white/30 hover:text-white/55'
+              }`}
+              title="Статистика"
+            >
+              <BarChart2 size={10} />
+            </button>
           </div>
         )}
         <button
@@ -96,6 +119,7 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                 <div className="relative">
                   <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
                   <input
+                    ref={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Поиск..."
@@ -203,13 +227,19 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
                 </button>
               )}
             </div>
-          ) : (
+          ) : activeTab === 'notes' ? (
             <div className="flex-1 overflow-y-auto px-3 py-3">
               <NotesPanel />
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-3 py-3">
+              <StatsPanel />
             </div>
           )}
         </>
       )}
     </aside>
   );
-}
+});
+
+export default Sidebar;

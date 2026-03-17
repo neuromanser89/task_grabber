@@ -10,8 +10,9 @@ import Button from '../common/Button';
 import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
-  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image,
+  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff,
 } from 'lucide-react';
+import RelatedTasks from './RelatedTasks';
 
 interface Props {
   task: TaskWithAttachments | null;
@@ -93,7 +94,7 @@ function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: str
       {/* Image preview tooltip */}
       {showPreview && img && (
         <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-none">
-          <div className="bg-[#1A1A2E] border border-white/[0.12] rounded-lg p-1.5 shadow-2xl">
+          <div className="glass-heavy border border-white/[0.12] rounded-lg p-1.5 shadow-2xl">
             <img
               src={`file://${att.filepath.replace(/\\/g, '/')}`}
               alt={att.filename}
@@ -146,6 +147,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [descPreview, setDescPreview] = useState(false);
   const [savedTemplate, setSavedTemplate] = useState(false);
+  const [reminderAt, setReminderAt] = useState<string>('');
+  const [confirmArchive, setConfirmArchive] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -161,6 +164,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setConfirmDelete(false);
       setDescPreview(!!(task.description));
       setSavedTemplate(false);
+      setReminderAt(task.reminder_at ? task.reminder_at.slice(0, 16) : '');
+      setConfirmArchive(false);
     }
   }, [task]);
 
@@ -226,6 +231,22 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     });
     setSavedTemplate(true);
     setTimeout(() => setSavedTemplate(false), 2000);
+  };
+
+  const handleReminderChange = (val: string) => {
+    setReminderAt(val);
+    updateTask(task.id, { reminder_at: val ? new Date(val).toISOString() : null });
+  };
+
+  const handleArchive = async () => {
+    if (!confirmArchive) {
+      setConfirmArchive(true);
+      return;
+    }
+    await window.electronAPI?.archiveTask(task.id);
+    // Remove from store (without calling DB delete)
+    useTaskStore.setState((s) => ({ tasks: s.tasks.filter((t) => t.id !== task.id) }));
+    onClose();
   };
 
   const [doneCount, totalCount] = countChecklist(description);
@@ -431,6 +452,34 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           />
         </div>
 
+        {/* Reminder */}
+        <div>
+          <div className="text-[11px] font-medium text-white/35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+            <Bell size={10} />
+            Напоминание
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="datetime-local"
+              value={reminderAt}
+              onChange={(e) => handleReminderChange(e.target.value)}
+              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+            />
+            {reminderAt && (
+              <button
+                onClick={() => handleReminderChange('')}
+                className="text-white/25 hover:text-white/50 transition-colors"
+                title="Убрать напоминание"
+              >
+                <BellOff size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Related tasks */}
+        <RelatedTasks taskId={task.id} />
+
         {/* Attachments */}
         {task.attachments && task.attachments.length > 0 && (
           <div>
@@ -487,6 +536,16 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               title="Сохранить как шаблон"
             >
               {savedTemplate ? 'Сохранено!' : 'Шаблон'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Archive size={12} />}
+              onClick={handleArchive}
+              onBlur={() => setConfirmArchive(false)}
+              title="Архивировать задачу"
+            >
+              {confirmArchive ? 'Архивировать?' : 'Архив'}
             </Button>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
