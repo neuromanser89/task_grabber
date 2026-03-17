@@ -16,20 +16,22 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export default function Badge({ text, color = '#3B82F6', removable = false, onRemove }: BadgeProps) {
-  const bgColor = hexToRgba(color, 0.15);
-
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
-      style={{ backgroundColor: bgColor, color }}
+      className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full text-[10px] font-semibold tracking-wide border"
+      style={{
+        backgroundColor: hexToRgba(color, 0.1),
+        color: color,
+        borderColor: hexToRgba(color, 0.15),
+      }}
     >
       {text}
       {removable && (
         <button
           onClick={e => { e.stopPropagation(); onRemove?.(); }}
-          className="hover:opacity-70 transition-opacity flex-shrink-0"
+          className="hover:opacity-60 transition-opacity duration-150 flex-shrink-0 ml-0.5"
         >
-          <X size={10} />
+          <X size={9} />
         </button>
       )}
     </span>

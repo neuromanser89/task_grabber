@@ -43,7 +43,7 @@ export default function TaskCard({ task, isDragOverlay = false, onClick }: Props
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging && !isDragOverlay ? 0.3 : 1,
+    opacity: isDragging && !isDragOverlay ? 0.25 : 1,
   };
 
   return (
@@ -53,36 +53,44 @@ export default function TaskCard({ task, isDragOverlay = false, onClick }: Props
       {...attributes}
       {...listeners}
       onClick={(e) => { if (onClick && !isDragging) { e.stopPropagation(); onClick(task); } }}
-      className={`group relative bg-[#0F0F1A] border border-white/5 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all ${
+      className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
-          ? 'shadow-2xl border-white/20 rotate-1 scale-105'
-          : 'hover:bg-[#16162A] hover:border-white/10 hover:shadow-lg hover:-translate-y-0.5'
+          ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-white/15'
+          : 'glass-card hover:bg-[#16162A]/80 hover:border-white/[0.08] hover:shadow-card-hover hover:-translate-y-[2px]'
       }`}
     >
-      {/* Priority stripe */}
+      {/* Priority stripe with glow */}
       {task.priority > 0 && (
-        <div
-          className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r"
-          style={{ backgroundColor: priorityColor }}
-        />
+        <>
+          <div
+            className="absolute left-0 top-2.5 bottom-2.5 w-[2px] rounded-r-full"
+            style={{ backgroundColor: priorityColor }}
+          />
+          <div
+            className="absolute left-0 top-2.5 bottom-2.5 w-[2px] rounded-r-full blur-sm opacity-50"
+            style={{ backgroundColor: priorityColor }}
+          />
+        </>
       )}
 
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-white/90 leading-snug line-clamp-2 flex-1">
+        <p className="text-[13px] font-medium text-white/85 leading-snug line-clamp-2 flex-1">
           {task.title}
         </p>
-        <span className="text-xs opacity-50 flex-shrink-0">
+        <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity duration-200 flex-shrink-0 mt-0.5">
           {SOURCE_EMOJI[task.source_type ?? 'manual']}
         </span>
       </div>
 
       {task.description && (
-        <p className="text-xs text-white/40 mt-1.5 line-clamp-2">{task.description}</p>
+        <p className="text-[11px] text-white/30 mt-1.5 line-clamp-2 leading-relaxed">
+          {task.description}
+        </p>
       )}
 
-      <div className="flex items-center justify-between mt-2 text-xs text-white/30">
-        <span>{relativeTime(task.created_at)}</span>
-        {hasAttachments && <span>📎</span>}
+      <div className="flex items-center justify-between mt-2.5 text-[10px] text-white/20">
+        <span className="transition-colors group-hover:text-white/30">{relativeTime(task.created_at)}</span>
+        {hasAttachments && <span className="text-white/25">📎</span>}
       </div>
     </div>
   );

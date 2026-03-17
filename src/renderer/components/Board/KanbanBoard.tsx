@@ -106,7 +106,11 @@ export default function KanbanBoard() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden">
+        <div className="relative flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden">
+          {/* Subtle ambient glow in the background */}
+          <div className="pointer-events-none absolute top-0 left-1/4 w-[500px] h-[300px] bg-accent-blue/[0.02] rounded-full blur-[120px]" />
+          <div className="pointer-events-none absolute bottom-0 right-1/4 w-[400px] h-[200px] bg-accent-purple/[0.02] rounded-full blur-[100px]" />
+
           {columns.map((col) => (
             <Column
               key={col.id}

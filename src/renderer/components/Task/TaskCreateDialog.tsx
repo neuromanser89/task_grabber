@@ -82,7 +82,7 @@ export default function TaskCreateDialog({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="✨ Новая задача" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Новая задача" size="md">
       <div className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
         <Input
           label="Заголовок"
@@ -103,14 +103,14 @@ export default function TaskCreateDialog({
         />
 
         {/* Column selector */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-white/50 uppercase tracking-wide">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
             Колонка
           </label>
           <select
             value={columnId}
             onChange={e => setColumnId(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-colors"
+            className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-3 py-2 text-[13px] text-white/85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
           >
             {columns.map(col => (
               <option key={col.id} value={col.id} className="bg-[#1A1A2E]">
@@ -122,25 +122,26 @@ export default function TaskCreateDialog({
 
         {/* Priority selector */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-white/50 uppercase tracking-wide">
+          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
             Приоритет
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {([0, 1, 2, 3] as Priority[]).map(p => (
               <button
                 key={p}
                 onClick={() => setPriority(p)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-all duration-200 ${
                   priority === p
-                    ? 'border-transparent'
-                    : 'border-white/10 text-white/40 hover:text-white/60 hover:border-white/20'
+                    ? 'border-transparent scale-[1.02]'
+                    : 'border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.1] hover:bg-white/[0.02]'
                 }`}
                 style={
                   priority === p
                     ? {
-                        backgroundColor: p === 0 ? 'rgba(255,255,255,0.1)' : `${PRIORITY_COLORS[p]}25`,
-                        color: p === 0 ? 'rgba(255,255,255,0.7)' : PRIORITY_COLORS[p],
-                        borderColor: p === 0 ? 'rgba(255,255,255,0.15)' : `${PRIORITY_COLORS[p]}50`,
+                        backgroundColor: p === 0 ? 'rgba(255,255,255,0.08)' : `${PRIORITY_COLORS[p]}18`,
+                        color: p === 0 ? 'rgba(255,255,255,0.6)' : PRIORITY_COLORS[p],
+                        borderColor: p === 0 ? 'rgba(255,255,255,0.1)' : `${PRIORITY_COLORS[p]}35`,
+                        boxShadow: p === 0 ? 'none' : `0 0 12px ${PRIORITY_COLORS[p]}10`,
                       }
                     : {}
                 }
@@ -153,31 +154,36 @@ export default function TaskCreateDialog({
 
         {/* Files hint */}
         {initialFiles.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-lg">
-            <Upload size={14} className="text-white/40 flex-shrink-0" />
-            <span className="text-xs text-white/50">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-lg">
+            <Upload size={13} className="text-white/30 flex-shrink-0" />
+            <span className="text-[11px] text-white/40">
               {initialFiles.length} файл{initialFiles.length > 1 ? 'а' : ''} будет прикреплено
             </span>
           </div>
         )}
 
         {error && title.trim() && (
-          <p className="text-xs text-red-400">{error}</p>
+          <p className="text-[11px] text-red-400/80">{error}</p>
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-1">
-          <Button variant="ghost" onClick={onClose} disabled={loading}>
-            Отмена
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleCreate}
-            loading={loading}
-            icon={<Plus size={14} />}
-          >
-            Создать
-          </Button>
+        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+          <span className="text-[10px] text-white/15">
+            <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[9px] font-mono">Ctrl+Enter</kbd> создать
+          </span>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onClose} disabled={loading}>
+              Отмена
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreate}
+              loading={loading}
+              icon={<Plus size={13} />}
+            >
+              Создать
+            </Button>
+          </div>
         </div>
       </div>
     </Modal>
