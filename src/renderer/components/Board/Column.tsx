@@ -49,7 +49,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay }: Pr
       <div
         ref={setSortRef}
         style={isDragOverlay ? {} : style}
-        className="flex flex-col w-[272px] flex-shrink-0 rounded-xl overflow-hidden glass transition-all duration-300"
+        className="flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300"
       >
         {/* Header with colored top accent */}
         <div className="relative" ref={headerRef}>
@@ -70,8 +70,8 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay }: Pr
               style={{
                 backgroundColor: column.color,
                 boxShadow: `0 0 8px ${column.color}40`,
-                ringColor: `${column.color}30`,
-              }}
+                '--tw-ring-color': `${column.color}30`,
+              } as React.CSSProperties}
             />
             <span className="font-medium text-[13px] text-white/75 flex-1 tracking-tight truncate">
               {column.name}

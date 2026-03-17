@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { DEFAULT_COLUMNS } from '../../shared/constants';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'crypto';
 
 export function runMigrations(db: Database.Database) {
   db.exec(`

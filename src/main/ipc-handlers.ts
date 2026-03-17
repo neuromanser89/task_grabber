@@ -121,6 +121,7 @@ export function setupIpcHandlers() {
         date: parsed.date,
         subject: parsed.subject,
       }),
+      due_date: null,
     });
 
     // Save msg attachments to storage

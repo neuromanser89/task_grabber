@@ -1,5 +1,5 @@
 import { getDb } from './database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID as uuidv4 } from 'crypto';
 import type { Task, Column, Attachment, Note, Tag } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
