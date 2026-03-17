@@ -1,14 +1,14 @@
 import React from 'react';
-import type { Task } from '@shared/types';
+import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CalendarDays } from 'lucide-react';
 
 interface Props {
-  task: Task;
+  task: TaskWithAttachments;
   isDragOverlay?: boolean;
-  onClick?: (task: Task) => void;
+  onClick?: (task: TaskWithAttachments) => void;
 }
 
 const SOURCE_EMOJI: Record<string, string> = {
@@ -103,6 +103,24 @@ export default function TaskCard({ task, isDragOverlay = false, onClick }: Props
         <p className="text-[11px] text-white/30 mt-1.5 line-clamp-2 leading-relaxed">
           {task.description}
         </p>
+      )}
+
+      {/* Tags */}
+      {task.tags && task.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {task.tags.map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium"
+              style={{
+                backgroundColor: `${tag.color}20`,
+                color: tag.color,
+              }}
+            >
+              {tag.name}
+            </span>
+          ))}
+        </div>
       )}
 
       <div className="flex items-center justify-between mt-2.5 text-[10px] text-white/20">

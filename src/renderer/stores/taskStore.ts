@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import type { Task } from '@shared/types';
+import type { Task, Tag, TaskWithAttachments } from '@shared/types';
 
 interface TaskState {
-  tasks: Task[];
+  tasks: TaskWithAttachments[];
   loading: boolean;
 
   fetchAll: () => Promise<void>;
@@ -10,16 +10,18 @@ interface TaskState {
   updateTask: (id: string, data: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, columnId: string, sortOrder: number) => Promise<void>;
+  addTaskToStore: (task: TaskWithAttachments) => void;
+  updateTaskTags: (taskId: string, tags: Tag[]) => void;
 }
 
-export const useTaskStore = create<TaskState>((set, get) => ({
+export const useTaskStore = create<TaskState>((set) => ({
   tasks: [],
   loading: false,
 
   fetchAll: async () => {
     set({ loading: true });
     try {
-      const tasks = await window.electronAPI?.getTasks() ?? [];
+      const tasks = (await window.electronAPI?.getTasks() ?? []) as TaskWithAttachments[];
       set({ tasks });
     } finally {
       set({ loading: false });
@@ -28,7 +30,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   createTask: async (data) => {
     const task = await window.electronAPI!.createTask(data);
-    set((s) => ({ tasks: [...s.tasks, task] }));
+    set((s) => ({ tasks: [...s.tasks, { ...task, attachments: [], tags: [] }] }));
     return task;
   },
 
@@ -48,6 +50,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     await window.electronAPI!.moveTask(id, columnId, sortOrder);
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === id ? { ...t, column_id: columnId, sort_order: sortOrder } : t)),
+    }));
+  },
+
+  addTaskToStore: (task) => {
+    set((s) => ({ tasks: [...s.tasks, task] }));
+  },
+
+  updateTaskTags: (taskId, tags) => {
+    set((s) => ({
+      tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, tags } : t)),
     }));
   },
 }));

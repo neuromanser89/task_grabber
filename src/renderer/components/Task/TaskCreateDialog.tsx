@@ -69,6 +69,7 @@ export default function TaskCreateDialog({
         color: null,
         source_type: initialText ? 'text' : 'manual',
         source_info: null,
+        due_date: null,
       });
       onClose();
     } catch {

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import type { Column as ColumnType, Task } from '@shared/types';
+import type { Column as ColumnType, TaskWithAttachments } from '@shared/types';
 import TaskCard from '../Task/TaskCard';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -8,8 +8,8 @@ import ColumnEditor from './ColumnEditor';
 
 interface Props {
   column: ColumnType;
-  tasks: Task[];
-  onTaskClick?: (task: Task) => void;
+  tasks: TaskWithAttachments[];
+  onTaskClick?: (task: TaskWithAttachments) => void;
   isDragOverlay?: boolean;
 }
 

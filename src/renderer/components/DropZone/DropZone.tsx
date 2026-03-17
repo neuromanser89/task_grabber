@@ -3,6 +3,7 @@ import { Mail, Paperclip } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import type { TaskWithAttachments } from '@shared/types';
 
+
 interface Props {
   onTaskCreated?: (task: TaskWithAttachments) => void;
 }
@@ -11,7 +12,7 @@ export default function DropZone({ onTaskCreated }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const dragCounter = useRef(0);
-  const { fetchAll } = useTaskStore();
+  const { addTaskToStore } = useTaskStore();
 
   function handleDragEnter(e: React.DragEvent) {
     e.preventDefault();
@@ -50,6 +51,7 @@ export default function DropZone({ onTaskCreated }: Props) {
           // Parse .msg — creates task automatically
           const task = await window.electronAPI?.parseMsg(filePath);
           if (task) {
+            addTaskToStore(task);
             onTaskCreated?.(task);
           }
         } else {
@@ -77,12 +79,16 @@ export default function DropZone({ onTaskCreated }: Props) {
           });
 
           if (task) {
-            await window.electronAPI?.addAttachment(task.id, filePath);
-            onTaskCreated?.({ ...task, attachments: [], tags: [] });
+            const attachment = await window.electronAPI?.addAttachment(task.id, filePath);
+            const fullTask: TaskWithAttachments = {
+              ...task,
+              attachments: attachment ? [attachment] : [],
+              tags: [],
+            };
+            addTaskToStore(fullTask);
+            onTaskCreated?.(fullTask);
           }
         }
-      }
-      await fetchAll();
     } finally {
       setIsProcessing(false);
     }

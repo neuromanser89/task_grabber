@@ -22,7 +22,7 @@ import {
   horizontalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable';
-import type { Column as ColumnType, Task } from '@shared/types';
+import type { Column as ColumnType, TaskWithAttachments } from '@shared/types';
 
 const RANDOM_COLORS = [
   '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981',
@@ -33,9 +33,9 @@ export default function KanbanBoard() {
   const { tasks, fetchAll, moveTask } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
 
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskWithAttachments | null>(null);
 
   // Inline new column state
   const [addingColumn, setAddingColumn] = useState(false);
