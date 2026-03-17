@@ -3,6 +3,8 @@ import path from 'path';
 import { setupTray } from './tray';
 import { setupHotkeys, reloadHotkeys } from './hotkeys';
 import { setupIpcHandlers } from './ipc-handlers';
+import { setupWidgetHotkey, setupWidgetIpc } from './widget';
+import { createBackup } from './backup';
 import * as queries from './db/queries';
 
 let mainWindow: BrowserWindow | null = null;
@@ -82,7 +84,14 @@ app.whenReady().then(() => {
   setupTray(mainWindow!);
   setupHotkeys(mainWindow!);
   setupIpcHandlers();
+  setupWidgetHotkey();
+  setupWidgetIpc(getMainWindow);
   startReminderPoller();
+
+  // Auto-backup on startup (after DB is initialized)
+  setTimeout(() => {
+    try { createBackup(); } catch { /* ignore if DB not ready */ }
+  }, 2000);
 
   // Reload hotkeys when settings change
   ipcMain.on('hotkeys:reload', () => {

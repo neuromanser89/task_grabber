@@ -47,6 +47,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addTagToTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:add', taskId, tagId),
   removeTagFromTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:remove', taskId, tagId),
 
+  // Export / Import / Backup
+  exportData: () => ipcRenderer.invoke('data:export'),
+  importData: () => ipcRenderer.invoke('data:import'),
+  listBackups: () => ipcRenderer.invoke('backup:list'),
+  createBackup: () => ipcRenderer.invoke('backup:create'),
+  restoreBackup: (backupPath: string) => ipcRenderer.invoke('backup:restore', backupPath),
+
   // Templates
   getTemplates: () => ipcRenderer.invoke('templates:getAll'),
   createTemplate: (data: unknown) => ipcRenderer.invoke('templates:create', data),

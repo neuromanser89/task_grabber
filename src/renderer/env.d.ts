@@ -39,6 +39,13 @@ interface ElectronAPI {
   addTagToTask: (taskId: string, tagId: string) => Promise<boolean>;
   removeTagFromTask: (taskId: string, tagId: string) => Promise<boolean>;
 
+  // Export / Import / Backup
+  exportData: () => Promise<{ success: boolean; filePath?: string }>;
+  importData: () => Promise<{ success: boolean; error?: string }>;
+  listBackups: () => Promise<{ name: string; path: string; date: string; size: number }[]>;
+  createBackup: () => Promise<{ success: boolean; backupPath?: string }>;
+  restoreBackup: (backupPath: string) => Promise<{ success: boolean }>;
+
   // Templates
   getTemplates: () => Promise<TaskTemplate[]>;
   createTemplate: (data: unknown) => Promise<TaskTemplate>;

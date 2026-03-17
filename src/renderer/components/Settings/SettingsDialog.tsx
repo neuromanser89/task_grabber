@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, Monitor, Sun, Moon, Keyboard, Power, X, Check, RotateCcw } from 'lucide-react';
+import { Settings, Monitor, Sun, Moon, Keyboard, Power, Check, RotateCcw, Download, Upload, Database, Clock, AlertTriangle } from 'lucide-react';
 import Modal from '../common/Modal';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -60,11 +60,14 @@ export default function SettingsDialog({
   onThemeChange,
   currentTheme,
 }: SettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance' | 'data'>('general');
   const [autoLaunch, setAutoLaunch] = useState(false);
   const [hotkeys, setHotkeys] = useState<HotkeyConfig>(DEFAULT_HOTKEYS);
   const [recordingKey, setRecordingKey] = useState<keyof HotkeyConfig | null>(null);
   const [saving, setSaving] = useState(false);
+  const [backups, setBackups] = useState<{ name: string; path: string; date: string; size: number }[]>([]);
+  const [dataStatus, setDataStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -78,7 +81,74 @@ export default function SettingsDialog({
         } catch { /* ignore */ }
       }
     });
+    // Load backups
+    window.electronAPI?.listBackups().then((list) => setBackups(list ?? []));
   }, [isOpen]);
+
+  const handleExport = async () => {
+    setDataLoading(true);
+    setDataStatus(null);
+    const result = await window.electronAPI?.exportData();
+    setDataLoading(false);
+    if (result?.success) {
+      setDataStatus({ type: 'success', msg: 'Экспорт выполнен' });
+    } else {
+      setDataStatus({ type: 'error', msg: 'Отменено' });
+    }
+  };
+
+  const handleImport = async () => {
+    setDataLoading(true);
+    setDataStatus(null);
+    const result = await window.electronAPI?.importData();
+    setDataLoading(false);
+    if (result?.success) {
+      setDataStatus({ type: 'success', msg: 'Импорт выполнен. Перезапустите приложение.' });
+    } else if (result?.error) {
+      setDataStatus({ type: 'error', msg: result.error });
+    } else {
+      setDataStatus({ type: 'error', msg: 'Отменено' });
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    setDataLoading(true);
+    setDataStatus(null);
+    const result = await window.electronAPI?.createBackup();
+    if (result?.success) {
+      const list = await window.electronAPI?.listBackups();
+      setBackups(list ?? []);
+      setDataStatus({ type: 'success', msg: 'Бэкап создан' });
+    }
+    setDataLoading(false);
+  };
+
+  const handleRestoreBackup = async (backupPath: string) => {
+    if (!window.confirm('Текущие данные будут заменены. Продолжить?')) return;
+    setDataLoading(true);
+    setDataStatus(null);
+    const result = await window.electronAPI?.restoreBackup(backupPath);
+    setDataLoading(false);
+    if (result?.success) {
+      setDataStatus({ type: 'success', msg: 'Восстановлено. Перезапустите приложение.' });
+    } else {
+      setDataStatus({ type: 'error', msg: 'Ошибка восстановления' });
+    }
+  };
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function formatDate(isoDate: string): string {
+    try {
+      return new Date(isoDate).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+      return isoDate;
+    }
+  }
 
   const handleAutoLaunchToggle = async () => {
     const next = !autoLaunch;
@@ -139,7 +209,8 @@ export default function SettingsDialog({
         {([
           { id: 'general', label: 'Общие', icon: <Settings size={13} /> },
           { id: 'hotkeys', label: 'Хоткеи', icon: <Keyboard size={13} /> },
-          { id: 'appearance', label: 'Оформление', icon: <Sun size={13} /> },
+          { id: 'appearance', label: 'Вид', icon: <Sun size={13} /> },
+          { id: 'data', label: 'Данные', icon: <Database size={13} /> },
         ] as const).map((tab) => (
           <button
             key={tab.id}
@@ -261,6 +332,87 @@ export default function SettingsDialog({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Data tab */}
+      {activeTab === 'data' && (
+        <div className="space-y-4">
+          {/* Status message */}
+          {dataStatus && (
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+              dataStatus.type === 'success'
+                ? 'bg-accent-green/10 border border-accent-green/20 text-accent-green'
+                : 'bg-accent-red/10 border border-accent-red/20 text-accent-red'
+            }`}>
+              {dataStatus.type === 'success' ? <Check size={12} /> : <AlertTriangle size={12} />}
+              {dataStatus.msg}
+            </div>
+          )}
+
+          {/* Export / Import */}
+          <div>
+            <div className="text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Экспорт / Импорт</div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExport}
+                disabled={dataLoading}
+                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-white/70 hover:text-white/90 rounded-lg transition-all duration-150 disabled:opacity-50"
+              >
+                <Download size={12} />
+                Экспорт JSON
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={dataLoading}
+                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-white/70 hover:text-white/90 rounded-lg transition-all duration-150 disabled:opacity-50"
+              >
+                <Upload size={12} />
+                Импорт JSON
+              </button>
+            </div>
+          </div>
+
+          {/* Backups */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs font-medium text-white/40 uppercase tracking-wider">Бэкапы (последние 5)</div>
+              <button
+                onClick={handleCreateBackup}
+                disabled={dataLoading}
+                className="flex items-center gap-1 text-xs text-accent-blue hover:text-accent-blue/80 transition-colors disabled:opacity-50"
+              >
+                <Database size={11} />
+                Создать
+              </button>
+            </div>
+            {backups.length === 0 ? (
+              <div className="text-xs text-white/30 py-2 text-center">Бэкапов нет</div>
+            ) : (
+              <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin">
+                {backups.map((b) => (
+                  <div
+                    key={b.name}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock size={11} className="text-white/30 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-xs text-white/70 truncate">{formatDate(b.date)}</div>
+                        <div className="text-[10px] text-white/30">{formatSize(b.size)}</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreBackup(b.path)}
+                      disabled={dataLoading}
+                      className="flex-shrink-0 px-2 py-1 text-[10px] text-white/50 hover:text-white/80 bg-white/[0.05] hover:bg-white/[0.09] rounded-md transition-all duration-150 disabled:opacity-50"
+                    >
+                      Восстановить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
