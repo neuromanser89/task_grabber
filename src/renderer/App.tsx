@@ -3,13 +3,19 @@ import TitleBar from './components/Layout/TitleBar';
 import KanbanBoard from './components/Board/KanbanBoard';
 import StatusBar from './components/Layout/StatusBar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
+import QuickNoteDialog from './components/Notes/QuickNoteDialog';
+import { useNoteStore } from './stores/noteStore';
 
 export default function App() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showQuickNote, setShowQuickNote] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
+  const { fetchNotes } = useNoteStore();
 
   useEffect(() => {
+    fetchNotes();
+
     const unsubText = window.electronAPI?.onGrabText((text) => {
       setInitialText(text);
       setInitialFiles([]);
@@ -25,10 +31,14 @@ export default function App() {
       setInitialFiles([]);
       setShowCreateDialog(true);
     });
+    const unsubQuickNote = window.electronAPI?.onShowQuickNote(() => {
+      setShowQuickNote(true);
+    });
     return () => {
       unsubText?.();
       unsubFiles?.();
       unsubDialog?.();
+      unsubQuickNote?.();
     };
   }, []);
 
@@ -50,6 +60,10 @@ export default function App() {
         onClose={() => setShowCreateDialog(false)}
         initialText={initialText}
         initialFiles={initialFiles}
+      />
+      <QuickNoteDialog
+        isOpen={showQuickNote}
+        onClose={() => setShowQuickNote(false)}
       />
     </div>
   );

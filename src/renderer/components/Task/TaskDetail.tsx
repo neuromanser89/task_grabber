@@ -45,6 +45,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [description, setDescription] = useState('');
   const [columnId, setColumnId] = useState('');
   const [priority, setPriority] = useState<0 | 1 | 2 | 3>(0);
+  const [dueDate, setDueDate] = useState<string>('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
@@ -55,6 +56,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setDescription(task.description ?? '');
       setColumnId(task.column_id);
       setPriority(task.priority ?? 0);
+      // due_date stored as ISO date string "YYYY-MM-DD" or null
+      setDueDate(task.due_date ? task.due_date.slice(0, 10) : '');
       setConfirmDelete(false);
     }
   }, [task]);
@@ -85,6 +88,11 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const handlePriorityChange = (p: 0 | 1 | 2 | 3) => {
     setPriority(p);
     updateTask(task.id, { priority: p });
+  };
+
+  const handleDueDateChange = (val: string) => {
+    setDueDate(val);
+    updateTask(task.id, { due_date: val || null });
   };
 
   const handleDelete = () => {
@@ -170,6 +178,29 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Due date */}
+        <div>
+          <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+            Дедлайн
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => handleDueDateChange(e.target.value)}
+              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+            />
+            {dueDate && (
+              <button
+                onClick={() => handleDueDateChange('')}
+                className="text-white/25 hover:text-white/50 transition-colors text-[11px]"
+              >
+                Очистить
+              </button>
+            )}
           </div>
         </div>
 
