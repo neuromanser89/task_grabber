@@ -3,6 +3,7 @@
 import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments } from '../shared/types';
 
 interface ElectronAPI {
+  getFilePath: (file: File) => string;
   minimizeWindow: () => void;
   maximizeWindow: () => void;
   closeWindow: () => void;

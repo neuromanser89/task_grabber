@@ -1,0 +1,26 @@
+appId: com.taskgrabber.app
+productName: Task Grabber
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - assets/**/*
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icons/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+extraResources:
+  - from: assets/
+    to: assets/
+    filter:
+      - "**/*"

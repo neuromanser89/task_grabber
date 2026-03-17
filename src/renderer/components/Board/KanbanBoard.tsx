@@ -248,7 +248,7 @@ export default function KanbanBoard() {
         </DragOverlay>
       </DndContext>
 
-      <DropZone onTaskCreated={(task) => setSelectedTask(task)} />
+      <DropZone />
 
       <TaskDetail
         task={selectedTask}
