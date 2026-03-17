@@ -1,4 +1,4 @@
-import { app, ipcMain, shell } from 'electron';
+import { app, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { initDatabase } from './db/database';
@@ -168,6 +168,27 @@ export function setupIpcHandlers() {
     return true;
   });
 
+  // ─── Settings ─────────────────────────────────────────────────────────────
+  ipcMain.handle('settings:getAll', () => queries.getAllSettings());
+
+  ipcMain.handle('settings:get', (_e, key: string) => queries.getSetting(key));
+
+  ipcMain.handle('settings:set', (_e, key: string, value: string) => {
+    queries.setSetting(key, value);
+    return true;
+  });
+
+  ipcMain.handle('settings:getAutoLaunch', () => {
+    const loginSettings = app.getLoginItemSettings();
+    return loginSettings.openAtLogin;
+  });
+
+  ipcMain.handle('settings:setAutoLaunch', (_e, enable: boolean) => {
+    app.setLoginItemSettings({ openAtLogin: enable });
+    queries.setSetting('autoLaunch', enable ? 'true' : 'false');
+    return true;
+  });
+
   // ─── Notes ────────────────────────────────────────────────────────────────
   ipcMain.handle('notes:getAll', () => queries.getAllNotes());
 
@@ -179,6 +200,53 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('notes:delete', (_e, id: string) => {
     queries.deleteNote(id);
+    return true;
+  });
+
+  // ─── Templates ────────────────────────────────────────────────────────────
+  ipcMain.handle('templates:getAll', () => queries.getAllTemplates());
+
+  ipcMain.handle('templates:create', (_e, data: { title: string; description: string | null; priority: number; tags: string }) =>
+    queries.createTemplate(data)
+  );
+
+  ipcMain.handle('templates:delete', (_e, id: string) => {
+    queries.deleteTemplate(id);
+    return true;
+  });
+
+  // ─── Archive ──────────────────────────────────────────────────────────────
+  ipcMain.handle('tasks:archive', (_e, id: string) => {
+    queries.archiveTask(id);
+    return true;
+  });
+
+  ipcMain.handle('tasks:unarchive', (_e, id: string) => {
+    queries.unarchiveTask(id);
+    return true;
+  });
+
+  ipcMain.handle('tasks:getArchived', () => {
+    const tasks = queries.getArchivedTasks();
+    return tasks.map((task) => ({
+      ...task,
+      attachments: queries.getAttachmentsByTaskId(task.id),
+      tags: queries.getTagsByTaskId(task.id),
+    }));
+  });
+
+  ipcMain.handle('tasks:getStats', () => queries.getTaskStats());
+
+  // ─── Related Tasks ─────────────────────────────────────────────────────────
+  ipcMain.handle('related:get', (_e, taskId: string) => queries.getRelatedTasks(taskId));
+
+  ipcMain.handle('related:add', (_e, taskId: string, relatedTaskId: string) => {
+    queries.addRelatedTask(taskId, relatedTaskId);
+    return true;
+  });
+
+  ipcMain.handle('related:remove', (_e, taskId: string, relatedTaskId: string) => {
+    queries.removeRelatedTask(taskId, relatedTaskId);
     return true;
   });
 }

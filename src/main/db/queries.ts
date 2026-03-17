@@ -1,6 +1,6 @@
 import { getDb } from './database';
 import { randomUUID as uuidv4 } from 'crypto';
-import type { Task, Column, Attachment, Note, Tag } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
 
@@ -47,7 +47,107 @@ export function deleteColumn(id: string): void {
 // ─── Tasks ───────────────────────────────────────────────────────────────────
 
 export function getAllTasks(): Task[] {
-  return getDb().prepare('SELECT * FROM tasks ORDER BY column_id, sort_order').all() as Task[];
+  return getDb().prepare('SELECT * FROM tasks WHERE archived_at IS NULL ORDER BY column_id, sort_order').all() as Task[];
+}
+
+export function getArchivedTasks(): Task[] {
+  return getDb().prepare('SELECT * FROM tasks WHERE archived_at IS NOT NULL ORDER BY archived_at DESC').all() as Task[];
+}
+
+export function archiveTask(id: string): void {
+  getDb()
+    .prepare("UPDATE tasks SET archived_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+    .run(id);
+}
+
+export function unarchiveTask(id: string): void {
+  getDb()
+    .prepare("UPDATE tasks SET archived_at = NULL, updated_at = datetime('now') WHERE id = ?")
+    .run(id);
+}
+
+export function getTaskStats(): TaskStats {
+  const db = getDb();
+  const total = (db.prepare('SELECT COUNT(*) as n FROM tasks WHERE archived_at IS NULL').get() as { n: number }).n;
+  const archivedTotal = (db.prepare('SELECT COUNT(*) as n FROM tasks WHERE archived_at IS NOT NULL').get() as { n: number }).n;
+
+  const byColumn = db.prepare(`
+    SELECT t.column_id, c.name as column_name, COUNT(*) as count
+    FROM tasks t
+    JOIN columns c ON c.id = t.column_id
+    WHERE t.archived_at IS NULL
+    GROUP BY t.column_id
+    ORDER BY c.sort_order
+  `).all() as { column_id: string; column_name: string; count: number }[];
+
+  // Find "done" column — last column or one with is_default=0 and highest sort_order with name matching Готово
+  const columns = getAllColumns();
+  const doneCol = columns.find((c) => /готово|done|complete/i.test(c.name));
+  const doneColAlt = columns.find((c) => /забито|cancel|discard/i.test(c.name));
+  const doneIds = [doneCol?.id, doneColAlt?.id].filter(Boolean) as string[];
+  const completedTotal = doneIds.length > 0
+    ? (db.prepare(`SELECT COUNT(*) as n FROM tasks WHERE column_id IN (${doneIds.map(() => '?').join(',')}) AND archived_at IS NULL`).get(...doneIds) as { n: number }).n
+    : 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().slice(0, 10);
+  const weekStart = new Date(today);
+  weekStart.setDate(weekStart.getDate() - 6);
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+  const createdToday = (db.prepare(`SELECT COUNT(*) as n FROM tasks WHERE date(created_at) = ?`).get(todayStr) as { n: number }).n;
+  const createdThisWeek = (db.prepare(`SELECT COUNT(*) as n FROM tasks WHERE date(created_at) >= ?`).get(weekStartStr) as { n: number }).n;
+
+  const byPriority = db.prepare(`
+    SELECT priority, COUNT(*) as count
+    FROM tasks
+    WHERE archived_at IS NULL
+    GROUP BY priority
+    ORDER BY priority
+  `).all() as { priority: number; count: number }[];
+
+  return { total, byColumn, createdToday, createdThisWeek, completedTotal, archivedTotal, byPriority };
+}
+
+// ─── Related Tasks ───────────────────────────────────────────────────────────
+
+export function getRelatedTasks(taskId: string): Task[] {
+  return getDb().prepare(`
+    SELECT t.* FROM tasks t
+    INNER JOIN related_tasks rt ON (rt.related_task_id = t.id AND rt.task_id = ?)
+       OR (rt.task_id = t.id AND rt.related_task_id = ?)
+    WHERE t.id != ?
+    ORDER BY t.created_at DESC
+  `).all(taskId, taskId, taskId) as Task[];
+}
+
+export function addRelatedTask(taskId: string, relatedTaskId: string): void {
+  // Store in both directions via single canonical row (smaller id first)
+  const [a, b] = [taskId, relatedTaskId].sort();
+  getDb()
+    .prepare('INSERT OR IGNORE INTO related_tasks (task_id, related_task_id) VALUES (?, ?)')
+    .run(a, b);
+}
+
+export function removeRelatedTask(taskId: string, relatedTaskId: string): void {
+  const [a, b] = [taskId, relatedTaskId].sort();
+  getDb()
+    .prepare('DELETE FROM related_tasks WHERE task_id = ? AND related_task_id = ?')
+    .run(a, b);
+}
+
+export function getDueReminders(): Task[] {
+  const now = new Date().toISOString();
+  return getDb()
+    .prepare(`SELECT * FROM tasks WHERE reminder_at IS NOT NULL AND reminder_at <= ? AND archived_at IS NULL`)
+    .all(now) as Task[];
+}
+
+export function clearReminder(taskId: string): void {
+  getDb()
+    .prepare("UPDATE tasks SET reminder_at = NULL, updated_at = datetime('now') WHERE id = ?")
+    .run(taskId);
 }
 
 export function getTaskById(id: string): Task | null {
@@ -79,7 +179,7 @@ export function createTask(
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date'];
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -196,4 +296,49 @@ export function getTasksByColumnId(columnId: string): Task[] {
   return getDb()
     .prepare('SELECT * FROM tasks WHERE column_id = ? ORDER BY sort_order')
     .all(columnId) as Task[];
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+export function getSetting(key: string): string | null {
+  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+  return row ? row.value : null;
+}
+
+export function setSetting(key: string, value: string): void {
+  getDb()
+    .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
+    .run(key, value);
+}
+
+export function getAllSettings(): Record<string, string> {
+  const rows = getDb().prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
+  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+}
+
+// ─── Task Templates ────────────────────────────────────────────────────────────
+
+export function getAllTemplates(): TaskTemplate[] {
+  return getDb()
+    .prepare('SELECT * FROM task_templates ORDER BY created_at DESC')
+    .all() as TaskTemplate[];
+}
+
+export function createTemplate(data: {
+  title: string;
+  description: string | null;
+  priority: number;
+  tags: string;
+}): TaskTemplate {
+  const id = uuidv4();
+  getDb()
+    .prepare(
+      'INSERT INTO task_templates (id, title, description, priority, tags) VALUES (?, ?, ?, ?, ?)'
+    )
+    .run(id, data.title, data.description, data.priority, data.tags);
+  return getDb().prepare('SELECT * FROM task_templates WHERE id = ?').get(id) as TaskTemplate;
+}
+
+export function deleteTemplate(id: string): void {
+  getDb().prepare('DELETE FROM task_templates WHERE id = ?').run(id);
 }

@@ -1,18 +1,54 @@
 import { globalShortcut, BrowserWindow, clipboard } from 'electron';
 import { HOTKEYS } from '../shared/constants';
+import * as queries from './db/queries';
+
+export interface HotkeyConfig {
+  GRAB_TEXT: string;
+  GRAB_FILES: string;
+  QUICK_NOTE: string;
+}
+
+function loadHotkeyConfig(): HotkeyConfig {
+  try {
+    const raw = queries.getSetting('hotkeys');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        GRAB_TEXT: parsed.GRAB_TEXT || HOTKEYS.GRAB_TEXT,
+        GRAB_FILES: parsed.GRAB_FILES || HOTKEYS.GRAB_FILES,
+        QUICK_NOTE: parsed.QUICK_NOTE || HOTKEYS.QUICK_NOTE,
+      };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {
+    GRAB_TEXT: HOTKEYS.GRAB_TEXT,
+    GRAB_FILES: HOTKEYS.GRAB_FILES,
+    QUICK_NOTE: HOTKEYS.QUICK_NOTE,
+  };
+}
 
 export function setupHotkeys(mainWindow: BrowserWindow) {
-  // Ctrl+Shift+T — grab selected text
-  globalShortcut.register(HOTKEYS.GRAB_TEXT, async () => {
+  const config = loadHotkeyConfig();
+  registerHotkeys(mainWindow, config);
+}
+
+export function reloadHotkeys(mainWindow: BrowserWindow) {
+  globalShortcut.unregisterAll();
+  const config = loadHotkeyConfig();
+  registerHotkeys(mainWindow, config);
+}
+
+function registerHotkeys(mainWindow: BrowserWindow, config: HotkeyConfig) {
+  // Grab text
+  globalShortcut.register(config.GRAB_TEXT, async () => {
     const originalClipboard = clipboard.readText();
 
-    // Simulate Ctrl+C to copy selected text
-    // Small delay for clipboard to update
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const capturedText = clipboard.readText();
 
-    // Restore original clipboard
     if (originalClipboard !== capturedText) {
       clipboard.writeText(originalClipboard);
     }
@@ -26,14 +62,14 @@ export function setupHotkeys(mainWindow: BrowserWindow) {
     }
   });
 
-  // Ctrl+Shift+F — grab files
-  globalShortcut.register(HOTKEYS.GRAB_FILES, () => {
+  // Grab files
+  globalShortcut.register(config.GRAB_FILES, () => {
     showWindow(mainWindow);
     mainWindow.webContents.send('dialog:showCreate');
   });
 
-  // Ctrl+Shift+N — quick note
-  globalShortcut.register(HOTKEYS.QUICK_NOTE, () => {
+  // Quick note
+  globalShortcut.register(config.QUICK_NOTE, () => {
     showWindow(mainWindow);
     mainWindow.webContents.send('dialog:showQuickNote');
   });

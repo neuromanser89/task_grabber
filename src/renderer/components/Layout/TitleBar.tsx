@@ -1,11 +1,12 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Sparkles } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings } from 'lucide-react';
 
 interface TitleBarProps {
   onNewTask?: () => void;
+  onSettings?: () => void;
 }
 
-export default function TitleBar({ onNewTask }: TitleBarProps) {
+export default function TitleBar({ onNewTask, onSettings }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -33,6 +34,15 @@ export default function TitleBar({ onNewTask }: TitleBarProps) {
           >
             <Plus size={12} strokeWidth={2.5} />
             Задача
+          </button>
+        )}
+        {onSettings && (
+          <button
+            onClick={onSettings}
+            className="w-7 h-7 flex items-center justify-center hover:bg-white/8 rounded-md transition-all duration-150 text-white/40 hover:text-white/70"
+            title="Настройки"
+          >
+            <Settings size={14} />
           </button>
         )}
 
