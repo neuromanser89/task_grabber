@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import Column from './Column';
@@ -23,19 +23,30 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import type { Column as ColumnType, TaskWithAttachments } from '@shared/types';
+import { useKeyboardNav } from '../../hooks/useKeyboardNav';
 
 const RANDOM_COLORS = [
   '#3B82F6', '#F59E0B', '#8B5CF6', '#10B981',
   '#EF4444', '#EC4899', '#14B8A6', '#F97316',
 ];
 
-export default function KanbanBoard() {
-  const { tasks, fetchAll, moveTask, filteredTasks } = useTaskStore();
+interface Props {
+  onCreateTask?: () => void;
+  onFocusSearch?: () => void;
+}
+
+export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
+  const { tasks, fetchAll, moveTask, filteredTasks, deleteTask } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
 
   const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskWithAttachments | null>(null);
+
+  // Keyboard nav state
+  const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
+  const [deleteConfirm, setDeleteConfirm] = useState<TaskWithAttachments | null>(null);
 
   // Inline new column state
   const [addingColumn, setAddingColumn] = useState(false);
@@ -46,6 +57,15 @@ export default function KanbanBoard() {
     fetchAll();
     fetchColumns();
   }, [fetchAll, fetchColumns]);
+
+  // Open task from reminder notification
+  useEffect(() => {
+    const unsub = window.electronAPI?.onReminderShow((taskId) => {
+      const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+      if (task) setSelectedTask(task);
+    });
+    return () => unsub?.();
+  }, []);
 
   useEffect(() => {
     if (addingColumn && newColInputRef.current) {
@@ -59,6 +79,61 @@ export default function KanbanBoard() {
 
   const sortedColumns = [...columns].sort((a, b) => a.sort_order - b.sort_order);
   const columnDndIds = sortedColumns.map((c) => `col::${c.id}`);
+
+  // Get currently selected task ID for highlighting
+  const selectedTaskId = (() => {
+    if (selectedColumnIndex < 0 || selectedColumnIndex >= sortedColumns.length) return null;
+    const col = sortedColumns[selectedColumnIndex];
+    const colTasks = tasks
+      .filter((t) => t.column_id === col.id)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    return colTasks[selectedTaskIndex]?.id ?? null;
+  })();
+
+  // Keyboard nav handlers
+  const handleMoveTaskToColumn = useCallback(
+    async (task: TaskWithAttachments, colIdx: number) => {
+      if (colIdx < 0 || colIdx >= sortedColumns.length) return;
+      const targetCol = sortedColumns[colIdx];
+      if (task.column_id === targetCol.id) return;
+      const targetTasks = tasks
+        .filter((t) => t.column_id === targetCol.id)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      const newOrder = targetTasks.length > 0
+        ? targetTasks[targetTasks.length - 1].sort_order + 1
+        : 0;
+      await moveTask(task.id, targetCol.id, newOrder);
+      setSelectedColumnIndex(colIdx);
+      setSelectedTaskIndex(0);
+    },
+    [sortedColumns, tasks, moveTask]
+  );
+
+  const handleDeleteTask = useCallback((task: TaskWithAttachments) => {
+    setDeleteConfirm(task);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteConfirm) return;
+    await deleteTask(deleteConfirm.id);
+    setDeleteConfirm(null);
+    setSelectedTaskIndex(0);
+  }, [deleteConfirm, deleteTask]);
+
+  useKeyboardNav({
+    columns: sortedColumns,
+    tasks,
+    selectedColumnIndex,
+    selectedTaskIndex,
+    onSelectColumn: setSelectedColumnIndex,
+    onSelectTask: setSelectedTaskIndex,
+    onOpenTask: setSelectedTask,
+    onCreateTask: onCreateTask ?? (() => {}),
+    onDeleteTask: handleDeleteTask,
+    onMoveTaskToColumn: handleMoveTaskToColumn,
+    onFocusSearch: onFocusSearch ?? (() => {}),
+    enabled: selectedTask === null && deleteConfirm === null && !addingColumn,
+  });
 
   function isDndColumnId(id: string) {
     return id.startsWith('col::');
@@ -82,13 +157,11 @@ export default function KanbanBoard() {
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Ignore column drags here
     if (isDndColumnId(activeId)) return;
 
     const draggedTask = tasks.find((t) => t.id === activeId);
     if (!draggedTask) return;
 
-    // Dragging over a column
     const overColumn = columns.find((c) => c.id === overId);
     if (overColumn && draggedTask.column_id !== overColumn.id) {
       const tasksInTarget = tasks
@@ -102,7 +175,6 @@ export default function KanbanBoard() {
       return;
     }
 
-    // Dragging over another task
     const overTask = tasks.find((t) => t.id === overId);
     if (overTask && draggedTask.column_id !== overTask.column_id) {
       moveTask(activeId, overTask.column_id, overTask.sort_order);
@@ -119,7 +191,6 @@ export default function KanbanBoard() {
     const overId = over.id as string;
     if (activeId === overId) return;
 
-    // Column reorder
     if (isDndColumnId(activeId) && isDndColumnId(overId)) {
       const oldIndex = sortedColumns.findIndex((c) => `col::${c.id}` === activeId);
       const newIndex = sortedColumns.findIndex((c) => `col::${c.id}` === overId);
@@ -131,7 +202,6 @@ export default function KanbanBoard() {
       return;
     }
 
-    // Task reorder within same column
     const draggedTask = tasks.find((t) => t.id === activeId);
     const overTask = tasks.find((t) => t.id === overId);
 
@@ -188,12 +258,13 @@ export default function KanbanBoard() {
             <div className="pointer-events-none absolute top-0 left-1/4 w-[500px] h-[300px] bg-accent-blue/[0.02] rounded-full blur-[120px]" />
             <div className="pointer-events-none absolute bottom-0 right-1/4 w-[400px] h-[200px] bg-accent-purple/[0.02] rounded-full blur-[100px]" />
 
-            {sortedColumns.map((col) => (
+            {sortedColumns.map((col, colIdx) => (
               <Column
                 key={col.id}
                 column={col}
                 tasks={filteredTasks().filter((t) => t.column_id === col.id)}
                 onTaskClick={setSelectedTask}
+                selectedTaskId={selectedColumnIndex === colIdx ? selectedTaskId : null}
               />
             ))}
 
@@ -255,6 +326,30 @@ export default function KanbanBoard() {
         isOpen={selectedTask !== null}
         onClose={() => setSelectedTask(null)}
       />
+
+      {/* Delete confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-heavy rounded-xl p-6 max-w-sm w-full mx-4 border border-white/[0.08] shadow-2xl">
+            <p className="text-white/80 text-sm mb-1">Удалить задачу?</p>
+            <p className="text-white/40 text-xs mb-4 line-clamp-2">{deleteConfirm.title}</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-1.5 rounded-lg text-xs text-white bg-red-500/80 hover:bg-red-500 transition-colors"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
