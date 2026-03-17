@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { Tag, TaskWithAttachments } from '@shared/types';
+import type { Tag, TaskWithAttachments, Attachment } from '@shared/types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@shared/constants';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import TagInput from '../common/TagInput';
-import { Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, Eye, Edit3 } from 'lucide-react';
+import {
+  Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
+  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image,
+} from 'lucide-react';
 
 interface Props {
   task: TaskWithAttachments | null;
@@ -29,6 +32,20 @@ const SOURCE_LABEL: Record<string, string> = {
   file: 'Файл',
   email: 'Письмо',
 };
+
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg']);
+
+function isImage(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  return IMAGE_EXTS.has(ext);
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('ru-RU', {
@@ -58,8 +75,66 @@ function countChecklist(text: string): [number, number] {
   return [done, matches.length];
 }
 
+// Attachment item with hover preview for images
+function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: string) => void }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const img = isImage(att.filename);
+
+  const handleOpen = () => {
+    window.electronAPI?.openFile(att.filepath);
+  };
+
+  return (
+    <div
+      className="relative flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg group hover:border-white/[0.12] transition-all duration-150"
+      onMouseEnter={() => img && setShowPreview(true)}
+      onMouseLeave={() => setShowPreview(false)}
+    >
+      {/* Image preview tooltip */}
+      {showPreview && img && (
+        <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-none">
+          <div className="bg-[#1A1A2E] border border-white/[0.12] rounded-lg p-1.5 shadow-2xl">
+            <img
+              src={`file://${att.filepath.replace(/\\/g, '/')}`}
+              alt={att.filename}
+              className="max-w-[240px] max-h-[180px] object-contain rounded"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </div>
+        </div>
+      )}
+
+      <span className="text-white/30 flex-shrink-0">
+        {img ? <Image size={12} /> : <Paperclip size={12} />}
+      </span>
+
+      <button
+        onClick={handleOpen}
+        className="flex-1 text-left text-[11px] text-white/60 hover:text-white/85 transition-colors truncate max-w-[200px]"
+        title={att.filename}
+      >
+        {att.filename}
+      </button>
+
+      {att.filesize && (
+        <span className="text-[10px] text-white/20 flex-shrink-0">
+          {formatFileSize(att.filesize)}
+        </span>
+      )}
+
+      <button
+        onClick={() => onDelete(att.id)}
+        className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-red-400/70 transition-all ml-1 flex-shrink-0"
+        title="Удалить вложение"
+      >
+        <X size={11} />
+      </button>
+    </div>
+  );
+}
+
 export default function TaskDetail({ task, isOpen, onClose }: Props) {
-  const { updateTask, deleteTask, updateTaskTags } = useTaskStore();
+  const { updateTask, deleteTask, updateTaskTags, deleteAttachment } = useTaskStore();
   const { columns } = useColumnStore();
 
   const [title, setTitle] = useState('');
@@ -70,6 +145,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [taskTags, setTaskTags] = useState<Tag[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [descPreview, setDescPreview] = useState(false);
+  const [savedTemplate, setSavedTemplate] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -84,6 +160,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setTaskTags(task.tags ?? []);
       setConfirmDelete(false);
       setDescPreview(!!(task.description));
+      setSavedTemplate(false);
     }
   }, [task]);
 
@@ -133,6 +210,22 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     }
     deleteTask(task.id);
     onClose();
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    await deleteAttachment(task.id, attachmentId);
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!window.electronAPI) return;
+    await window.electronAPI.createTemplate({
+      title: title.trim(),
+      description: description.trim() || null,
+      priority,
+      tags: JSON.stringify(taskTags.map((t) => t.name)),
+    });
+    setSavedTemplate(true);
+    setTimeout(() => setSavedTemplate(false), 2000);
   };
 
   const [doneCount, totalCount] = countChecklist(description);
@@ -338,6 +431,24 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           />
         </div>
 
+        {/* Attachments */}
+        {task.attachments && task.attachments.length > 0 && (
+          <div>
+            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+              Вложения ({task.attachments.length})
+            </label>
+            <div className="flex flex-col gap-1.5">
+              {task.attachments.map((att) => (
+                <AttachmentItem
+                  key={att.id}
+                  att={att}
+                  onDelete={handleDeleteAttachment}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Meta info */}
         <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/25 pt-2 border-t border-white/[0.04]">
           <span className="flex items-center gap-1.5 bg-white/[0.03] px-2 py-1 rounded-md">
@@ -358,15 +469,26 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex justify-between items-center pt-1">
-          <Button
-            variant="danger"
-            size="sm"
-            icon={<Trash2 size={12} />}
-            onClick={handleDelete}
-            onBlur={() => setConfirmDelete(false)}
-          >
-            {confirmDelete ? 'Точно удалить?' : 'Удалить'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="danger"
+              size="sm"
+              icon={<Trash2 size={12} />}
+              onClick={handleDelete}
+              onBlur={() => setConfirmDelete(false)}
+            >
+              {confirmDelete ? 'Точно удалить?' : 'Удалить'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={savedTemplate ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+              onClick={handleSaveAsTemplate}
+              title="Сохранить как шаблон"
+            >
+              {savedTemplate ? 'Сохранено!' : 'Шаблон'}
+            </Button>
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             Закрыть
           </Button>

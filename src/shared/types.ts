@@ -23,6 +23,8 @@ export interface Task {
   source_type: SourceType;
   source_info: string | null;
   due_date: string | null;
+  archived_at: string | null;
+  reminder_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +62,15 @@ export interface TaskWithAttachments extends Task {
   tags: Tag[];
 }
 
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: Priority;
+  tags: string; // JSON array of tag names
+  created_at: string;
+}
+
 // IPC channel names
 export const IPC = {
   TASKS_GET_ALL: 'tasks:getAll',
@@ -83,4 +94,24 @@ export const IPC = {
   NOTES_CREATE: 'notes:create',
   NOTES_UPDATE: 'notes:update',
   NOTES_DELETE: 'notes:delete',
+  TEMPLATES_GET_ALL: 'templates:getAll',
+  TEMPLATES_CREATE: 'templates:create',
+  TEMPLATES_DELETE: 'templates:delete',
+  TASKS_ARCHIVE: 'tasks:archive',
+  TASKS_UNARCHIVE: 'tasks:unarchive',
+  TASKS_GET_ARCHIVED: 'tasks:getArchived',
+  TASKS_GET_STATS: 'tasks:getStats',
+  RELATED_ADD: 'related:add',
+  RELATED_REMOVE: 'related:remove',
+  RELATED_GET: 'related:get',
 } as const;
+
+export interface TaskStats {
+  total: number;
+  byColumn: { column_id: string; column_name: string; count: number }[];
+  createdToday: number;
+  createdThisWeek: number;
+  completedTotal: number;
+  archivedTotal: number;
+  byPriority: { priority: number; count: number }[];
+}

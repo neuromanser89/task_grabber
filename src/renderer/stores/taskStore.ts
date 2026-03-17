@@ -19,6 +19,7 @@ interface TaskState {
   moveTask: (id: string, columnId: string, sortOrder: number) => Promise<void>;
   addTaskToStore: (task: TaskWithAttachments) => void;
   updateTaskTags: (taskId: string, tags: Tag[]) => void;
+  deleteAttachment: (taskId: string, attachmentId: string) => Promise<void>;
 
   // Filter actions
   setSearch: (q: string) => void;
@@ -116,6 +117,17 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   updateTaskTags: (taskId, tags) => {
     set((s) => ({
       tasks: s.tasks.map((t) => (t.id === taskId ? { ...t, tags } : t)),
+    }));
+  },
+
+  deleteAttachment: async (taskId, attachmentId) => {
+    await window.electronAPI!.deleteAttachment(attachmentId);
+    set((s) => ({
+      tasks: s.tasks.map((t) =>
+        t.id === taskId
+          ? { ...t, attachments: t.attachments.filter((a) => a.id !== attachmentId) }
+          : t
+      ),
     }));
   },
 
