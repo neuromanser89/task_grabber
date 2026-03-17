@@ -28,6 +28,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Files
   openFile: (filePath: string) => ipcRenderer.invoke('file:open', filePath),
 
+  // Notes
+  getNotes: () => ipcRenderer.invoke('notes:getAll'),
+  createNote: (content: string) => ipcRenderer.invoke('notes:create', content),
+  updateNote: (id: string, content: string) => ipcRenderer.invoke('notes:update', id, content),
+  deleteNote: (id: string) => ipcRenderer.invoke('notes:delete', id),
+
+  // MSG parsing — creates task automatically from .msg file
+  parseMsg: (filePath: string) => ipcRenderer.invoke('msg:parse', filePath),
+
+  // Tags
+  getTags: () => ipcRenderer.invoke('tags:getAll'),
+  createTag: (name: string, color: string) => ipcRenderer.invoke('tags:create', name, color),
+  deleteTag: (id: string) => ipcRenderer.invoke('tags:delete', id),
+  addTagToTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:add', taskId, tagId),
+  removeTagFromTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:remove', taskId, tagId),
+
   // Events from main to renderer
   onGrabText: (callback: (text: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, text: string) => callback(text);
@@ -43,5 +59,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = () => callback();
     ipcRenderer.on('dialog:showCreate', handler);
     return () => { ipcRenderer.removeListener('dialog:showCreate', handler); };
+  },
+  onShowQuickNote: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('dialog:showQuickNote', handler);
+    return () => { ipcRenderer.removeListener('dialog:showQuickNote', handler); };
   },
 });

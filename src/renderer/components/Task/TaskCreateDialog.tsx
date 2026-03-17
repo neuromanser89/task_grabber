@@ -4,6 +4,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import { useTaskStore } from '../../stores/taskStore';
+import { useColumnStore } from '../../stores/columnStore';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
 import type { Priority } from '@shared/types';
 
@@ -20,7 +21,8 @@ export default function TaskCreateDialog({
   initialText = '',
   initialFiles = [],
 }: TaskCreateDialogProps) {
-  const { tasks, columns, createTask } = useTaskStore();
+  const { tasks, createTask } = useTaskStore();
+  const { columns } = useColumnStore();
 
   const defaultColumn = columns.find(c => c.is_default === 1) ?? columns[0];
 

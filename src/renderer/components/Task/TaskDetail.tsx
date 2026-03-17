@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Task } from '@shared/types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@shared/constants';
 import { useTaskStore } from '../../stores/taskStore';
+import { useColumnStore } from '../../stores/columnStore';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays } from 'lucide-react';
@@ -37,7 +38,8 @@ function formatDate(dateStr: string): string {
 }
 
 export default function TaskDetail({ task, isOpen, onClose }: Props) {
-  const { columns, updateTask, deleteTask } = useTaskStore();
+  const { updateTask, deleteTask } = useTaskStore();
+  const { columns } = useColumnStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

@@ -1,6 +1,14 @@
 import { getDb } from './database';
 import { v4 as uuidv4 } from 'uuid';
-import type { Task, Column, Attachment } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag } from '../../shared/types';
+
+const SAFE_FIELD_RE = /^[a-z_]+$/;
+
+function safeFilterFields(data: Record<string, unknown>, allowed: string[]): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(data).filter(([k]) => allowed.includes(k) && SAFE_FIELD_RE.test(k))
+  );
+}
 
 // ─── Columns ────────────────────────────────────────────────────────────────
 
@@ -20,7 +28,7 @@ export function createColumn(data: Omit<Column, 'id' | 'created_at' | 'updated_a
 
 export function updateColumn(id: string, data: Partial<Column>): Column {
   const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default'];
-  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+  const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
     .join(', ');
@@ -52,8 +60,8 @@ export function createTask(
   const id = uuidv4();
   getDb()
     .prepare(
-      `INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       id,
@@ -64,14 +72,15 @@ export function createTask(
       data.priority ?? 0,
       data.color,
       data.source_type ?? 'manual',
-      data.source_info
+      data.source_info,
+      data.due_date ?? null
     );
   return getDb().prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Task;
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info'];
-  const filtered = Object.fromEntries(Object.entries(data).filter(([k]) => allowed.includes(k)));
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date'];
+  const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
     .join(', ');
@@ -115,4 +124,76 @@ export function createAttachment(
 
 export function deleteAttachment(id: string): void {
   getDb().prepare('DELETE FROM attachments WHERE id = ?').run(id);
+}
+
+// ─── Notes ───────────────────────────────────────────────────────────────────
+
+export function getAllNotes(): Note[] {
+  return getDb().prepare('SELECT * FROM notes ORDER BY created_at DESC').all() as Note[];
+}
+
+export function createNote(content: string): Note {
+  const id = uuidv4();
+  getDb()
+    .prepare('INSERT INTO notes (id, content) VALUES (?, ?)')
+    .run(id, content);
+  return getDb().prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
+}
+
+export function updateNote(id: string, content: string): Note {
+  getDb()
+    .prepare("UPDATE notes SET content = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(content, id);
+  return getDb().prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
+}
+
+export function deleteNote(id: string): void {
+  getDb().prepare('DELETE FROM notes WHERE id = ?').run(id);
+}
+
+// ─── Tags ─────────────────────────────────────────────────────────────────────
+
+export function getAllTags(): Tag[] {
+  return getDb().prepare('SELECT * FROM tags ORDER BY name').all() as Tag[];
+}
+
+export function createTag(name: string, color: string): Tag {
+  const id = uuidv4();
+  getDb()
+    .prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)')
+    .run(id, name, color);
+  return getDb().prepare('SELECT * FROM tags WHERE id = ?').get(id) as Tag;
+}
+
+export function deleteTag(id: string): void {
+  getDb().prepare('DELETE FROM tags WHERE id = ?').run(id);
+}
+
+export function getTagsByTaskId(taskId: string): Tag[] {
+  return getDb()
+    .prepare(
+      `SELECT t.* FROM tags t
+       INNER JOIN task_tags tt ON tt.tag_id = t.id
+       WHERE tt.task_id = ?
+       ORDER BY t.name`
+    )
+    .all(taskId) as Tag[];
+}
+
+export function addTagToTask(taskId: string, tagId: string): void {
+  getDb()
+    .prepare('INSERT OR IGNORE INTO task_tags (task_id, tag_id) VALUES (?, ?)')
+    .run(taskId, tagId);
+}
+
+export function removeTagFromTask(taskId: string, tagId: string): void {
+  getDb()
+    .prepare('DELETE FROM task_tags WHERE task_id = ? AND tag_id = ?')
+    .run(taskId, tagId);
+}
+
+export function getTasksByColumnId(columnId: string): Task[] {
+  return getDb()
+    .prepare('SELECT * FROM tasks WHERE column_id = ? ORDER BY sort_order')
+    .all(columnId) as Task[];
 }
