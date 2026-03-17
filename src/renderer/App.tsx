@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TitleBar from './components/Layout/TitleBar';
 import KanbanBoard from './components/Board/KanbanBoard';
 import StatusBar from './components/Layout/StatusBar';
+import Sidebar from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
 import QuickNoteDialog from './components/Notes/QuickNoteDialog';
 import { useNoteStore } from './stores/noteStore';
@@ -11,6 +12,7 @@ export default function App() {
   const [showQuickNote, setShowQuickNote] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { fetchNotes } = useNoteStore();
 
   useEffect(() => {
@@ -52,6 +54,7 @@ export default function App() {
     <div className="app-root flex flex-col h-screen bg-[#0F0F0F] text-white select-none">
       <TitleBar onNewTask={openCreateDialog} />
       <main className="flex flex-1 overflow-hidden">
+        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
         <KanbanBoard />
       </main>
       <StatusBar />

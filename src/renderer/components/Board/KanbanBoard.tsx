@@ -30,7 +30,7 @@ const RANDOM_COLORS = [
 ];
 
 export default function KanbanBoard() {
-  const { tasks, fetchAll, moveTask } = useTaskStore();
+  const { tasks, fetchAll, moveTask, filteredTasks } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
 
   const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
@@ -192,7 +192,7 @@ export default function KanbanBoard() {
               <Column
                 key={col.id}
                 column={col}
-                tasks={tasks.filter((t) => t.column_id === col.id)}
+                tasks={filteredTasks().filter((t) => t.column_id === col.id)}
                 onTaskClick={setSelectedTask}
               />
             ))}

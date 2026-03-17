@@ -4,6 +4,16 @@ import { Keyboard, LayoutGrid } from 'lucide-react';
 
 export default function StatusBar() {
   const tasks = useTaskStore((s) => s.tasks);
+  const filteredTasks = useTaskStore((s) => s.filteredTasks);
+  const hasFilters = useTaskStore(
+    (s) =>
+      s.searchQuery.length > 0 ||
+      s.filterTags.length > 0 ||
+      s.filterPriority.length > 0 ||
+      s.filterSource.length > 0
+  );
+
+  const visible = filteredTasks();
   const today = new Date().toDateString();
   const todayCount = tasks.filter(
     (t) => new Date(t.created_at).toDateString() === today
@@ -16,7 +26,15 @@ export default function StatusBar() {
 
       <span className="flex items-center gap-1.5">
         <LayoutGrid size={10} className="opacity-50" />
-        {tasks.length} задач
+        {hasFilters ? (
+          <span>
+            <span className="text-accent-blue/70">{visible.length}</span>
+            <span className="text-white/15"> / </span>
+            {tasks.length} задач
+          </span>
+        ) : (
+          `${tasks.length} задач`
+        )}
       </span>
       <span className="text-white/15">|</span>
       <span>+{todayCount} сегодня</span>
