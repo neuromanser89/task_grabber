@@ -58,7 +58,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
 
   return (
     <aside
-      className={`flex flex-col flex-shrink-0 h-full border-r border-white/[0.05] transition-all duration-200 overflow-hidden bg-[#0F0F14]/70 backdrop-blur-md ${
+      className={`flex flex-col flex-shrink-0 h-full border-r transition-all duration-200 overflow-hidden glass ${
         collapsed ? 'w-10' : 'w-[200px]'
       }`}
     >
