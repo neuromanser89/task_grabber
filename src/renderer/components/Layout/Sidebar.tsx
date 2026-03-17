@@ -46,10 +46,9 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
 
   return (
     <aside
-      className={`flex flex-col flex-shrink-0 h-full border-r border-white/[0.05] transition-all duration-200 overflow-hidden ${
+      className={`flex flex-col flex-shrink-0 h-full border-r border-white/[0.05] transition-all duration-200 overflow-hidden bg-[#0F0F14]/70 backdrop-blur-md ${
         collapsed ? 'w-10' : 'w-[200px]'
       }`}
-      style={{ background: 'rgba(15,15,20,0.7)' }}
     >
       {/* Header row */}
       <div className="flex items-center justify-between px-2 py-2.5 border-b border-white/[0.04]">

@@ -209,7 +209,7 @@ export default function KanbanBoard() {
                     if (e.key === 'Escape') { setAddingColumn(false); setNewColName(''); }
                   }}
                   onBlur={handleAddColumn}
-                  className="bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-white/25"
+                  className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
                   placeholder="Название колонки"
                 />
                 <div className="flex gap-1.5">

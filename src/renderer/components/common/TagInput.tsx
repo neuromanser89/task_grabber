@@ -173,8 +173,7 @@ export default function TagInput({ taskId, initialTags, onChange }: Props) {
         {showDropdown && dropdownItems.length > 0 && (
           <div
             ref={dropdownRef}
-            className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg overflow-hidden border border-white/[0.08] shadow-xl"
-            style={{ background: '#1A1A2E' }}
+            className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg overflow-hidden border border-white/[0.08] shadow-xl glass-heavy"
           >
             {dropdownItems.map((item, idx) =>
               item === null ? (

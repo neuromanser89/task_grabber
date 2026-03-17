@@ -43,11 +43,14 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 animate-fade-in"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] bg-accent-blue/5 rounded-full blur-[80px] pointer-events-none" />
 
       {/* Dialog */}
       <div className="relative w-full max-w-md mx-4 glass-heavy rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-scale">
@@ -61,9 +64,9 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
           </span>
           <button
             onClick={onClose}
-            className="text-white/30 hover:text-white/60 transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/8 transition-all duration-150 text-white/30 hover:text-white/60"
           >
-            <X size={14} />
+            <X size={13} />
           </button>
         </div>
 

@@ -101,10 +101,10 @@ export default function DropZone({ onTaskCreated }: Props) {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       className={`
-        mx-4 mb-4 rounded-xl border-2 border-dashed transition-all duration-200 cursor-default
+        mx-4 mb-4 rounded-xl border-2 border-dashed transition-all duration-300 cursor-default
         flex items-center justify-center gap-3 py-3 px-4
         ${isDragOver
-          ? 'border-accent-blue/60 bg-accent-blue/[0.06] scale-[1.01]'
+          ? 'border-accent-blue/60 bg-accent-blue/[0.06] scale-[1.01] shadow-glow-blue'
           : 'border-white/[0.07] bg-white/[0.015] hover:border-white/[0.12] hover:bg-white/[0.025]'
         }
         ${isProcessing ? 'opacity-60 pointer-events-none' : ''}

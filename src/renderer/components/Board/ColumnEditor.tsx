@@ -94,16 +94,19 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
     <div
       ref={containerRef}
       style={style}
-      className="rounded-xl border border-white/10 bg-[#1a1a2e]/95 backdrop-blur-md shadow-2xl p-3 flex flex-col gap-2.5"
+      className="relative rounded-xl glass-heavy shadow-2xl p-3 flex flex-col gap-2.5 overflow-hidden"
       onMouseDown={(e) => e.stopPropagation()}
     >
+      {/* Top gradient line */}
+      <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
+
       {/* Name */}
       <input
         autoFocus
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
-        className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-white/25"
+        className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
         placeholder="Название колонки"
       />
 
@@ -130,8 +133,8 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
       {/* Save */}
       <button
         onClick={handleSave}
-        className="w-full py-1.5 rounded-lg text-[12px] font-medium text-white/90 transition-colors"
-        style={{ backgroundColor: color + 'cc' }}
+        className="w-full py-1.5 rounded-lg text-[12px] font-medium text-white/90 transition-all duration-200 hover:brightness-110 active:scale-[0.97]"
+        style={{ backgroundColor: `${color}cc`, boxShadow: `0 0 12px ${color}20` }}
       >
         Сохранить
       </button>
@@ -155,7 +158,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
               <select
                 value={moveToId}
                 onChange={(e) => setMoveToId(e.target.value)}
-                className="w-full bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white/80 outline-none"
+                className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-2 py-1 text-[11px] text-white/80 transition-all duration-200"
               >
                 <option value="">— выберите колонку —</option>
                 {otherColumns.map((c) => (
