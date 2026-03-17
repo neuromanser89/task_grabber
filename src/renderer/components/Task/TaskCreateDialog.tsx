@@ -5,6 +5,7 @@ import Button from '../common/Button';
 import Input from '../common/Input';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
+import MarkdownEditor from '../common/MarkdownEditor';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
 import type { Priority } from '@shared/types';
 
@@ -95,14 +96,18 @@ export default function TaskCreateDialog({
           error={error && !title.trim() ? error : undefined}
         />
 
-        <Input
-          label="Описание"
-          placeholder="Подробности, ссылки, заметки..."
-          value={description}
-          onChange={setDescription}
-          multiline
-          rows={4}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+            Описание
+          </label>
+          <MarkdownEditor
+            value={description}
+            onChange={setDescription}
+            placeholder="Подробности, ссылки, заметки..."
+            rows={4}
+            defaultMode="edit"
+          />
+        </div>
 
         {/* Column selector */}
         <div className="flex flex-col gap-1.5">
