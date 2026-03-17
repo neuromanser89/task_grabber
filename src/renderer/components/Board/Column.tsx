@@ -7,9 +7,10 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 interface Props {
   column: ColumnType;
   tasks: Task[];
+  onTaskClick?: (task: Task) => void;
 }
 
-export default function Column({ column, tasks }: Props) {
+export default function Column({ column, tasks, onTaskClick }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -35,7 +36,7 @@ export default function Column({ column, tasks }: Props) {
           }`}
         >
           {sorted.map((task) => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard key={task.id} task={task} onClick={onTaskClick} />
           ))}
         </div>
       </SortableContext>

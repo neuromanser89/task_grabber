@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import Column from './Column';
 import TaskCard from '../Task/TaskCard';
+import TaskDetail from '../Task/TaskDetail';
 import {
   DndContext,
   DragOverlay,
@@ -18,6 +19,7 @@ import type { Task } from '@shared/types';
 export default function KanbanBoard() {
   const { columns, tasks, fetchAll, moveTask } = useTaskStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchAll();
@@ -97,25 +99,34 @@ export default function KanbanBoard() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden">
-        {columns.map((col) => (
-          <Column
-            key={col.id}
-            column={col}
-            tasks={tasks.filter((t) => t.column_id === col.id)}
-          />
-        ))}
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden">
+          {columns.map((col) => (
+            <Column
+              key={col.id}
+              column={col}
+              tasks={tasks.filter((t) => t.column_id === col.id)}
+              onTaskClick={setSelectedTask}
+            />
+          ))}
+        </div>
 
-      <DragOverlay>
-        {activeTask ? <TaskCard task={activeTask} isDragOverlay /> : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeTask ? <TaskCard task={activeTask} isDragOverlay /> : null}
+        </DragOverlay>
+      </DndContext>
+
+      <TaskDetail
+        task={selectedTask}
+        isOpen={selectedTask !== null}
+        onClose={() => setSelectedTask(null)}
+      />
+    </>
   );
 }

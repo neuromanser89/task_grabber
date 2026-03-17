@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface Props {
   task: Task;
   isDragOverlay?: boolean;
+  onClick?: (task: Task) => void;
 }
 
 const SOURCE_EMOJI: Record<string, string> = {
@@ -26,7 +27,7 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}д назад`;
 }
 
-export default function TaskCard({ task, isDragOverlay = false }: Props) {
+export default function TaskCard({ task, isDragOverlay = false, onClick }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = false;
 
@@ -51,6 +52,7 @@ export default function TaskCard({ task, isDragOverlay = false }: Props) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={(e) => { if (onClick && !isDragging) { e.stopPropagation(); onClick(task); } }}
       className={`group relative bg-[#0F0F1A] border border-white/5 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all ${
         isDragOverlay
           ? 'shadow-2xl border-white/20 rotate-1 scale-105'
