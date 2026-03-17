@@ -50,10 +50,13 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md mx-4 glass-heavy rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-4 glass-heavy rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-scale">
+        {/* Top gradient line */}
+        <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
+
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-          <span className="text-[12px] font-medium text-white/50 uppercase tracking-wider">
+          <span className="text-[11px] font-medium text-white/50 uppercase tracking-wider">
             Быстрая заметка
           </span>
           <button
