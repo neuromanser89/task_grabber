@@ -1,10 +1,11 @@
 import { app, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { initDatabase } from './db/database';
+import { initDatabase, closeDatabase } from './db/database';
 import * as queries from './db/queries';
 import { parseMsgFile } from './msg-parser';
 import { copyToStorage, saveBufferToStorage } from './file-handler';
+import { listBackups, restoreBackup, createBackup } from './backup';
 import type { Task, Column } from '../shared/types';
 
 export function setupIpcHandlers() {
@@ -248,5 +249,54 @@ export function setupIpcHandlers() {
   ipcMain.handle('related:remove', (_e, taskId: string, relatedTaskId: string) => {
     queries.removeRelatedTask(taskId, relatedTaskId);
     return true;
+  });
+
+  // ─── Export / Import ──────────────────────────────────────────────────────
+  ipcMain.handle('data:export', async () => {
+    const { filePath, canceled } = await dialog.showSaveDialog({
+      title: 'Экспорт данных',
+      defaultPath: `task_grabber_export_${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (canceled || !filePath) return { success: false };
+
+    const data = queries.exportAllData();
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    return { success: true, filePath };
+  });
+
+  ipcMain.handle('data:import', async () => {
+    const { filePaths, canceled } = await dialog.showOpenDialog({
+      title: 'Импорт данных',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile'],
+    });
+    if (canceled || filePaths.length === 0) return { success: false };
+
+    const raw = fs.readFileSync(filePaths[0], 'utf-8');
+    const data = JSON.parse(raw);
+
+    if (!data.version || !data.tasks || !data.columns) {
+      return { success: false, error: 'Неверный формат файла' };
+    }
+
+    queries.importAllData(data);
+    return { success: true };
+  });
+
+  // ─── Backup ───────────────────────────────────────────────────────────────
+  ipcMain.handle('backup:list', () => listBackups());
+
+  ipcMain.handle('backup:create', () => {
+    const backupPath = createBackup();
+    return { success: !!backupPath, backupPath };
+  });
+
+  ipcMain.handle('backup:restore', async (_e, backupPath: string) => {
+    // Close DB, restore, re-init
+    closeDatabase();
+    restoreBackup(backupPath);
+    initDatabase();
+    return { success: true };
   });
 }

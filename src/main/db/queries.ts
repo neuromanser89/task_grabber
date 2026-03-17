@@ -342,3 +342,87 @@ export function createTemplate(data: {
 export function deleteTemplate(id: string): void {
   getDb().prepare('DELETE FROM task_templates WHERE id = ?').run(id);
 }
+
+// ─── Export / Import ──────────────────────────────────────────────────────────
+
+export interface ExportData {
+  version: number;
+  exportedAt: string;
+  tasks: unknown[];
+  columns: unknown[];
+  tags: unknown[];
+  task_tags: unknown[];
+  notes: unknown[];
+  settings: unknown[];
+}
+
+export function exportAllData(): ExportData {
+  const db = getDb();
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    tasks: db.prepare('SELECT * FROM tasks').all(),
+    columns: db.prepare('SELECT * FROM columns').all(),
+    tags: db.prepare('SELECT * FROM tags').all(),
+    task_tags: db.prepare('SELECT * FROM task_tags').all(),
+    notes: db.prepare('SELECT * FROM notes').all(),
+    settings: db.prepare('SELECT * FROM settings').all(),
+  };
+}
+
+export function importAllData(data: ExportData): void {
+  const db = getDb();
+
+  db.transaction(() => {
+    // Clear existing data
+    db.prepare('DELETE FROM task_tags').run();
+    db.prepare('DELETE FROM attachments').run();
+    db.prepare('DELETE FROM tasks').run();
+    db.prepare('DELETE FROM columns').run();
+    db.prepare('DELETE FROM tags').run();
+    db.prepare('DELETE FROM notes').run();
+    db.prepare('DELETE FROM settings').run();
+
+    // Insert columns
+    const insertCol = db.prepare(
+      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, created_at, updated_at) VALUES (@id, @name, @color, @icon, @sort_order, @is_default, @created_at, @updated_at)'
+    );
+    for (const col of data.columns as Record<string, unknown>[]) {
+      insertCol.run(col);
+    }
+
+    // Insert tasks
+    const insertTask = db.prepare(
+      'INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date, created_at, updated_at) VALUES (@id, @title, @description, @column_id, @sort_order, @priority, @color, @source_type, @source_info, @due_date, @created_at, @updated_at)'
+    );
+    for (const task of data.tasks as Record<string, unknown>[]) {
+      insertTask.run(task);
+    }
+
+    // Insert tags
+    const insertTag = db.prepare('INSERT INTO tags (id, name, color) VALUES (@id, @name, @color)');
+    for (const tag of data.tags as Record<string, unknown>[]) {
+      insertTag.run(tag);
+    }
+
+    // Insert task_tags
+    const insertTaskTag = db.prepare('INSERT OR IGNORE INTO task_tags (task_id, tag_id) VALUES (@task_id, @tag_id)');
+    for (const tt of data.task_tags as Record<string, unknown>[]) {
+      insertTaskTag.run(tt);
+    }
+
+    // Insert notes
+    const insertNote = db.prepare(
+      'INSERT INTO notes (id, content, created_at, updated_at) VALUES (@id, @content, @created_at, @updated_at)'
+    );
+    for (const note of data.notes as Record<string, unknown>[]) {
+      insertNote.run(note);
+    }
+
+    // Insert settings
+    const insertSetting = db.prepare('INSERT INTO settings (key, value) VALUES (@key, @value)');
+    for (const setting of data.settings as Record<string, unknown>[]) {
+      insertSetting.run(setting);
+    }
+  })();
+}
