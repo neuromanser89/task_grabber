@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import TitleBar from './components/Layout/TitleBar';
 import KanbanBoard from './components/Board/KanbanBoard';
 import StatusBar from './components/Layout/StatusBar';
-import Sidebar from './components/Layout/Sidebar';
+import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
 import QuickNoteDialog from './components/Notes/QuickNoteDialog';
 import SettingsDialog from './components/Settings/SettingsDialog';
@@ -35,6 +35,7 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
   const { fetchNotes } = useNoteStore();
+  const sidebarRef = useRef<SidebarHandle>(null);
 
   // Load theme from settings on mount
   useEffect(() => {
@@ -83,11 +84,20 @@ export default function App() {
     };
   }, []);
 
-  const openCreateDialog = () => {
+  const openCreateDialog = useCallback(() => {
     setInitialText('');
     setInitialFiles([]);
     setShowCreateDialog(true);
-  };
+  }, []);
+
+  const focusSearch = useCallback(() => {
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+      setTimeout(() => sidebarRef.current?.focusSearch(), 150);
+    } else {
+      sidebarRef.current?.focusSearch();
+    }
+  }, [sidebarCollapsed]);
 
   const handleThemeChange = useCallback((newTheme: Theme) => {
     setTheme(newTheme);
@@ -101,8 +111,8 @@ export default function App() {
     <div className={`app-root flex flex-col h-screen select-none ${isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F8F9FA] text-gray-900'}`}>
       <TitleBar onNewTask={openCreateDialog} onSettings={() => setShowSettings(true)} />
       <main className="flex flex-1 overflow-hidden">
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
-        <KanbanBoard />
+        <Sidebar ref={sidebarRef} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
+        <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} />
       </main>
       <StatusBar />
       <TaskCreateDialog

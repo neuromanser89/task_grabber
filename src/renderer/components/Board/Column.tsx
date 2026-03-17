@@ -11,9 +11,10 @@ interface Props {
   tasks: TaskWithAttachments[];
   onTaskClick?: (task: TaskWithAttachments) => void;
   isDragOverlay?: boolean;
+  selectedTaskId?: string | null;
 }
 
-export default function Column({ column, tasks, onTaskClick, isDragOverlay }: Props) {
+export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -92,7 +93,11 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay }: Pr
           >
             {sorted.map((task, index) => (
               <div key={task.id} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in">
-                <TaskCard task={task} onClick={onTaskClick} />
+                <TaskCard
+                  task={task}
+                  onClick={onTaskClick}
+                  isSelected={selectedTaskId === task.id}
+                />
               </div>
             ))}
             {sorted.length === 0 && (

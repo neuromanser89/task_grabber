@@ -106,4 +106,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('reminder:show', handler);
     return () => { ipcRenderer.removeListener('reminder:show', handler); };
   },
+
+  // Generic IPC send (for widget → main communication)
+  ipcSend: (channel: string, ...args: unknown[]) => {
+    const allowed = ['widget:openTask'];
+    if (allowed.includes(channel)) ipcRenderer.send(channel, ...args);
+  },
+
+  // Widget: open task in main window (received by main window renderer)
+  onWidgetOpenTask: (callback: (taskId: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, taskId: string) => callback(taskId);
+    ipcRenderer.on('widget:openTask', handler);
+    return () => { ipcRenderer.removeListener('widget:openTask', handler); };
+  },
 });

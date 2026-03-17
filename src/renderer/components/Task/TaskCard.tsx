@@ -8,6 +8,7 @@ import { CalendarDays } from 'lucide-react';
 interface Props {
   task: TaskWithAttachments;
   isDragOverlay?: boolean;
+  isSelected?: boolean;
   onClick?: (task: TaskWithAttachments) => void;
 }
 
@@ -50,7 +51,7 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}д назад`;
 }
 
-export default function TaskCard({ task, isDragOverlay = false, onClick }: Props) {
+export default function TaskCard({ task, isDragOverlay = false, isSelected = false, onClick }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = false;
 
@@ -79,6 +80,8 @@ export default function TaskCard({ task, isDragOverlay = false, onClick }: Props
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-white/15'
+          : isSelected
+          ? 'glass-card bg-accent-blue/[0.06] border border-accent-blue/40 shadow-[0_0_12px_rgba(59,130,246,0.15),0_0_0_1px_rgba(59,130,246,0.25)] -translate-y-[1px]'
           : 'glass-card hover:bg-[#16162A]/80 hover:border-white/[0.08] hover:shadow-card-hover hover:-translate-y-[2px]'
       }`}
     >
