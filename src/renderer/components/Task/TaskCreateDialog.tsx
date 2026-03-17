@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, ChevronDown } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -7,7 +7,7 @@ import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import MarkdownEditor from '../common/MarkdownEditor';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
-import type { Priority } from '@shared/types';
+import type { Priority, TaskTemplate } from '@shared/types';
 
 interface TaskCreateDialogProps {
   isOpen: boolean;
@@ -34,7 +34,11 @@ export default function TaskCreateDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Reset state when dialog opens
+  // Templates
+  const [templates, setTemplates] = useState<TaskTemplate[]>([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  // Load templates when dialog opens
   useEffect(() => {
     if (!isOpen) return;
     const firstLine = initialText ? initialText.split('\n')[0].trim() : '';
@@ -43,7 +47,17 @@ export default function TaskCreateDialog({
     setColumnId(defaultColumn?.id ?? '');
     setPriority(0);
     setError('');
+    setShowTemplates(false);
+
+    window.electronAPI?.getTemplates().then(setTemplates).catch(() => setTemplates([]));
   }, [isOpen, initialText, defaultColumn?.id]);
+
+  const applyTemplate = (tpl: TaskTemplate) => {
+    setTitle(tpl.title);
+    setDescription(tpl.description ?? '');
+    setPriority(tpl.priority as Priority);
+    setShowTemplates(false);
+  };
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -70,6 +84,8 @@ export default function TaskCreateDialog({
         source_type: initialText ? 'text' : 'manual',
         source_info: null,
         due_date: null,
+        archived_at: null,
+        reminder_at: null,
       });
       onClose();
     } catch {
@@ -88,6 +104,47 @@ export default function TaskCreateDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Новая задача" size="md">
       <div className="flex flex-col gap-4" onKeyDown={handleKeyDown}>
+
+        {/* Template picker */}
+        {templates.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setShowTemplates((v) => !v)}
+              className="flex items-center gap-2 w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] rounded-lg text-[12px] text-white/40 hover:text-white/60 transition-all duration-150"
+            >
+              <span className="flex-1 text-left">Из шаблона...</span>
+              <ChevronDown size={12} className={`transition-transform duration-150 ${showTemplates ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showTemplates && (
+              <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1A1A2E] border border-white/[0.1] rounded-lg shadow-xl overflow-hidden">
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => applyTemplate(tpl)}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-white/[0.06] transition-colors text-left border-b border-white/[0.04] last:border-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] text-white/75 font-medium truncate">{tpl.title}</div>
+                      {tpl.description && (
+                        <div className="text-[10px] text-white/30 truncate mt-0.5">{tpl.description.slice(0, 60)}</div>
+                      )}
+                    </div>
+                    {tpl.priority > 0 && (
+                      <span
+                        className="text-[10px] font-semibold flex-shrink-0"
+                        style={{ color: PRIORITY_COLORS[tpl.priority as 1 | 2 | 3] }}
+                      >
+                        {PRIORITY_LABELS[tpl.priority as Priority]}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <Input
           label="Заголовок"
           placeholder="Название задачи..."
