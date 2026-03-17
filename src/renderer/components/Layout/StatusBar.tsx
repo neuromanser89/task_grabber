@@ -20,7 +20,7 @@ export default function StatusBar() {
   ).length;
 
   return (
-    <div className="relative flex items-center gap-4 h-7 bg-[#08080C]/90 backdrop-blur-sm px-4 text-[11px] text-white/30 flex-shrink-0">
+    <div className="relative flex items-center gap-4 h-7 backdrop-blur-sm px-4 text-[11px] flex-shrink-0" style={{ background: 'var(--glass-heavy)', color: 'var(--text-muted)' }}>
       {/* Gradient top border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
 

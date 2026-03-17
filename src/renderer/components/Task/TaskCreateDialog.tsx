@@ -117,7 +117,7 @@ export default function TaskCreateDialog({
             </button>
 
             {showTemplates && (
-              <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#1A1A2E] border border-white/[0.1] rounded-lg shadow-xl overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 z-50 glass-heavy border border-white/[0.1] rounded-lg shadow-2xl overflow-hidden">
                 {templates.map((tpl) => (
                   <button
                     key={tpl.id}

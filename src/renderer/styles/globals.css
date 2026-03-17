@@ -27,6 +27,7 @@ html, body, #root {
   --border-hover: rgba(255, 255, 255, 0.12);
   --glass-bg: rgba(26, 26, 46, 0.6);
   --glass-heavy: rgba(26, 26, 46, 0.8);
+  --glass-card: rgba(15, 15, 26, 0.7);
   --scrollbar-thumb: rgba(255, 255, 255, 0.08);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
 }
@@ -45,6 +46,7 @@ html, body, #root {
   --border-hover: rgba(0, 0, 0, 0.14);
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-heavy: rgba(255, 255, 255, 0.9);
+  --glass-card: rgba(255, 255, 255, 0.85);
   --scrollbar-thumb: rgba(0, 0, 0, 0.12);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
 }
@@ -114,10 +116,10 @@ body {
 }
 
 .glass-card {
-  background: rgba(15, 15, 26, 0.7);
+  background: var(--glass-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
 }
 
 /* === Gradient borders via pseudo-element === */
@@ -343,4 +345,91 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 9999;
+}
+
+.light .app-root::before {
+  opacity: 0.008;
+}
+
+/* === Light theme: Markdown overrides === */
+.light .markdown-body {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.light .markdown-body h1,
+.light .markdown-body h2,
+.light .markdown-body h3,
+.light .markdown-body h4 {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.light .markdown-body h4 { color: rgba(0, 0, 0, 0.6); }
+
+.light .markdown-body code {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(139, 92, 246, 0.85);
+}
+
+.light .markdown-body pre {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.light .markdown-body pre code {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.light .markdown-body blockquote {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.light .markdown-body hr {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.light .markdown-body th,
+.light .markdown-body td {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.light .markdown-body th {
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.light .markdown-body strong { color: rgba(0, 0, 0, 0.87); }
+.light .markdown-body em { color: rgba(0, 0, 0, 0.55); }
+
+/* === Light theme: Selection === */
+.light ::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: #000;
+}
+
+/* === Light theme: Column drop glow === */
+.light .column-drop-active {
+  box-shadow: inset 0 0 30px rgba(59, 130, 246, 0.08);
+}
+
+/* === Light theme: Date/time inputs === */
+.light input[type="date"],
+.light input[type="datetime-local"] {
+  color-scheme: light;
+}
+
+/* === Light theme: gradient borders softer === */
+.light .gradient-border-bottom::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.15) 30%,
+    rgba(139, 92, 246, 0.15) 70%,
+    transparent 100%
+  );
+}
+
+/* === Light theme: glow accent subtler === */
+.light .glow-accent::before {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.12));
 }

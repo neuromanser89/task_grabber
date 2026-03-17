@@ -82,7 +82,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-white/15'
           : isSelected
           ? 'glass-card bg-accent-blue/[0.06] border border-accent-blue/40 shadow-[0_0_12px_rgba(59,130,246,0.15),0_0_0_1px_rgba(59,130,246,0.25)] -translate-y-[1px]'
-          : 'glass-card hover:bg-[#16162A]/80 hover:border-white/[0.08] hover:shadow-card-hover hover:-translate-y-[2px]'
+          : 'glass-card hover:border-white/[0.08] hover:shadow-card-hover hover:-translate-y-[2px] hover:brightness-110'
       }`}
     >
       {/* Priority stripe with glow */}
