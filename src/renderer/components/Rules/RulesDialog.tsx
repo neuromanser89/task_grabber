@@ -77,6 +77,14 @@ const ALL_ACTIONS: RuleActionType[] = ['move_to_column', 'set_priority', 'add_ta
 
 const PRESET_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6', '#6B7280'];
 
+const SELECT_CLASS = 'bg-t-04 border border-t-08 text-t-70 rounded-lg px-3 py-2 text-[12px] appearance-none cursor-pointer outline-none focus:border-accent-blue/50 hover:border-t-10 transition-colors pr-8';
+const SELECT_ARROW_STYLE: React.CSSProperties = {
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 8px center',
+  colorScheme: 'dark',
+};
+
 // ── Empty rule template ──────────────────────────────────────────────────────
 
 function emptyRule(): Omit<Rule, 'id' | 'created_at'> {
@@ -130,10 +138,11 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
           {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k} className="bg-[#1A1A2E] text-white">{v}</option>
           ))}
         </select>
       );
@@ -142,11 +151,12 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
-          <option value="">— выбрать —</option>
+          <option value="" className="bg-[#1A1A2E] text-white">— выбрать —</option>
           {columns.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id} className="bg-[#1A1A2E] text-white">{c.name}</option>
           ))}
         </select>
       );
@@ -155,11 +165,12 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
-          <option value="">— выбрать —</option>
+          <option value="" className="bg-[#1A1A2E] text-white">— выбрать —</option>
           {tags.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+            <option key={t.id} value={t.id} className="bg-[#1A1A2E] text-white">{t.name}</option>
           ))}
         </select>
       );
@@ -168,10 +179,11 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
           {Object.entries(SOURCE_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k} className="bg-[#1A1A2E] text-white">{v}</option>
           ))}
         </select>
       );
@@ -219,11 +231,12 @@ function ActionValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
-          <option value="">— выбрать —</option>
+          <option value="" className="bg-[#1A1A2E] text-white">— выбрать —</option>
           {columns.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id} className="bg-[#1A1A2E] text-white">{c.name}</option>
           ))}
         </select>
       );
@@ -232,10 +245,11 @@ function ActionValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
           {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
+            <option key={k} value={k} className="bg-[#1A1A2E] text-white">{v}</option>
           ))}
         </select>
       );
@@ -244,11 +258,12 @@ function ActionValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+          className={SELECT_CLASS}
+          style={SELECT_ARROW_STYLE}
         >
-          <option value="">— выбрать —</option>
+          <option value="" className="bg-[#1A1A2E] text-white">— выбрать —</option>
           {tags.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+            <option key={t.id} value={t.id} className="bg-[#1A1A2E] text-white">{t.name}</option>
           ))}
         </select>
       );
@@ -451,11 +466,11 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                   <select
                     value={draft.trigger_field}
                     onChange={(e) => updateDraftField('trigger_field', e.target.value as RuleTriggerField)}
-                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
-                    style={{ colorScheme: 'dark' }}
+                    className={SELECT_CLASS}
+                    style={SELECT_ARROW_STYLE}
                   >
                     {(Object.keys(TRIGGER_FIELD_LABELS) as RuleTriggerField[]).map((f) => (
-                      <option key={f} value={f}>{TRIGGER_FIELD_LABELS[f]}</option>
+                      <option key={f} value={f} className="bg-[#1A1A2E] text-white">{TRIGGER_FIELD_LABELS[f]}</option>
                     ))}
                   </select>
 
@@ -463,11 +478,11 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                   <select
                     value={draft.trigger_op}
                     onChange={(e) => updateDraftField('trigger_op', e.target.value as RuleTriggerOp)}
-                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
-                    style={{ colorScheme: 'dark' }}
+                    className={SELECT_CLASS}
+                    style={SELECT_ARROW_STYLE}
                   >
                     {getOpsForField(draft.trigger_field).map((op) => (
-                      <option key={op} value={op}>{TRIGGER_OP_LABELS[op]}</option>
+                      <option key={op} value={op} className="bg-[#1A1A2E] text-white">{TRIGGER_OP_LABELS[op]}</option>
                     ))}
                   </select>
 
@@ -494,10 +509,11 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                       updateDraftField('action_type', e.target.value as RuleActionType);
                       updateDraftField('action_value', '');
                     }}
-                    className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-amber/50 transition-colors"
+                    className={SELECT_CLASS}
+                    style={SELECT_ARROW_STYLE}
                   >
                     {ALL_ACTIONS.map((a) => (
-                      <option key={a} value={a}>{ACTION_TYPE_LABELS[a]}</option>
+                      <option key={a} value={a} className="bg-[#1A1A2E] text-white">{ACTION_TYPE_LABELS[a]}</option>
                     ))}
                   </select>
 
