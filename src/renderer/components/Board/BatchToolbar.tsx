@@ -23,7 +23,9 @@ export default function BatchToolbar({ selectedIds, tasks, columns, onClear, onD
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-      <div className="glass-heavy border border-t-12 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl min-w-[420px]">
+      <div className="relative glass-heavy border border-t-12 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-2xl min-w-[420px]">
+        {/* Top gradient accent */}
+        <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-purple/30 to-transparent rounded-full" />
         {/* Selection info */}
         <div className="flex items-center gap-2 mr-2">
           <CheckSquare size={14} className="text-accent-blue" />

@@ -167,7 +167,8 @@ export default function TimelineView() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Controls */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-t-06 flex-shrink-0">
+      <div className="relative flex items-center gap-2 px-4 py-2 border-b border-t-06 flex-shrink-0">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-blue/15 to-transparent pointer-events-none" />
         <button
           onClick={() => pan(-1)}
           className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-t-08 text-t-40 hover:text-t-70 transition-colors"
@@ -198,7 +199,7 @@ export default function TimelineView() {
       {/* Timeline grid */}
       <div ref={containerRef} className="flex flex-1 overflow-auto">
         {/* Left labels */}
-        <div className="flex-shrink-0 sticky left-0 z-10" style={{ width: LABEL_W, backgroundColor: 'var(--glass-heavy, rgba(15,15,15,0.95))' }}>
+        <div className="flex-shrink-0 sticky left-0 z-10" style={{ width: LABEL_W, background: 'var(--glass-heavy)' }}>
           {/* Header spacer */}
           <div style={{ height: HEADER_H }} className="border-b border-t-06 border-r border-t-06 flex items-center px-3">
             <span className="text-xs text-t-30 font-medium uppercase tracking-wide">Задача</span>
@@ -231,7 +232,7 @@ export default function TimelineView() {
             {/* Day headers */}
             <div
               className="flex border-b border-t-06 sticky top-0 z-10"
-              style={{ height: HEADER_H, backgroundColor: 'var(--glass-heavy, rgba(15,15,15,0.95))' }}
+              style={{ height: HEADER_H, background: 'var(--glass-heavy)' }}
             >
               {days.map((d, i) => {
                 const isToday = isoDate(d) === isoDate(today);
@@ -291,8 +292,8 @@ export default function TimelineView() {
                     {visible && (
                       <div
                         className={`absolute top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-[11px] font-medium text-white
-                          cursor-grab active:cursor-grabbing select-none transition-opacity
-                          ${isDragging ? 'opacity-80 shadow-drag' : 'hover:brightness-110'}`}
+                          cursor-grab active:cursor-grabbing select-none transition-all duration-150
+                          ${isDragging ? 'opacity-80 shadow-drag scale-[1.02]' : 'hover:brightness-110 hover:shadow-md'}`}
                         style={{
                           left: clamp(left, 0, DAYS * DAY_W - DAY_W),
                           width: Math.min(width, DAYS * DAY_W - clamp(left, 0, DAYS * DAY_W - DAY_W)),
