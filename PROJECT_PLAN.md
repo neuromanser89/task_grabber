@@ -30,10 +30,14 @@ task_grabber/
 │   ├── main/                    # Electron main process
 │   │   ├── main.ts              # Entry point, app lifecycle
 │   │   ├── tray.ts              # System tray логика + контекстное меню
-│   │   ├── hotkeys.ts           # Глобальные хоткеи
-│   │   ├── clipboard.ts         # Перехват текста из clipboard
+│   │   ├── hotkeys.ts           # Глобальные хоткеи (кастомизируемые, reloadHotkeys)
 │   │   ├── file-handler.ts      # Обработка файлов (копирование в хранилище)
 │   │   ├── msg-parser.ts        # Парсинг .msg писем Outlook
+│   │   ├── widget.ts            # Desktop Widget окно (always-on-top)
+│   │   ├── focus-window.ts      # Focus Mode окно (Pomodoro таймер)
+│   │   ├── automation.ts        # Автоматизация (автоархив, напоминания)
+│   │   ├── backup.ts            # Автобэкап + восстановление БД
+│   │   ├── preload.ts           # Electron preload (contextBridge)
 │   │   ├── db/
 │   │   │   ├── database.ts      # Инициализация SQLite
 │   │   │   ├── migrations.ts    # Миграции схемы
@@ -41,44 +45,63 @@ task_grabber/
 │   │   └── ipc-handlers.ts      # IPC между main и renderer
 │   ├── renderer/                # React UI
 │   │   ├── index.html
-│   │   ├── App.tsx
+│   │   ├── widget.html          # Widget entry point
+│   │   ├── focus.html           # Focus Mode entry point
+│   │   ├── App.tsx              # Основное приложение
+│   │   ├── Widget.tsx           # Desktop Widget компонент
+│   │   ├── FocusWindow.tsx      # Focus Mode компонент
+│   │   ├── main.tsx             # Renderer entry
+│   │   ├── widget-entry.tsx     # Widget entry
+│   │   ├── focus-entry.tsx      # Focus entry
 │   │   ├── stores/
 │   │   │   ├── taskStore.ts     # Zustand store для задач
-│   │   │   └── columnStore.ts   # Zustand store для колонок
+│   │   │   ├── columnStore.ts   # Zustand store для колонок
+│   │   │   └── noteStore.ts     # Zustand store для заметок
 │   │   ├── components/
 │   │   │   ├── Board/
 │   │   │   │   ├── KanbanBoard.tsx    # Основная доска
-│   │   │   │   ├── Column.tsx         # Колонка канбана
-│   │   │   │   └── ColumnEditor.tsx   # Редактор колонок (добавить/удалить/переименовать)
+│   │   │   │   ├── Column.tsx         # Колонка канбана (WIP лимиты)
+│   │   │   │   └── ColumnEditor.tsx   # Редактор колонок
 │   │   │   ├── Task/
 │   │   │   │   ├── TaskCard.tsx        # Карточка задачи
 │   │   │   │   ├── TaskDetail.tsx      # Детальный вид задачи (модалка)
 │   │   │   │   ├── TaskCreateDialog.tsx # Диалог создания задачи
-│   │   │   │   └── TaskAttachments.tsx  # Блок вложений
+│   │   │   │   └── RelatedTasks.tsx    # Связанные задачи
+│   │   │   ├── AI/
+│   │   │   │   └── AIAssistantDialog.tsx # AI ассистент (OpenRouter/Ollama)
+│   │   │   ├── CommandPalette/
+│   │   │   │   └── CommandPalette.tsx  # Command Palette (Ctrl+K)
 │   │   │   ├── DropZone/
 │   │   │   │   └── DropZone.tsx        # Зона для drag&drop файлов/писем
 │   │   │   ├── Layout/
 │   │   │   │   ├── TitleBar.tsx        # Кастомный title bar
 │   │   │   │   ├── Sidebar.tsx         # Боковая панель (фильтры, поиск)
 │   │   │   │   └── StatusBar.tsx       # Статус бар внизу
+│   │   │   ├── Notes/
+│   │   │   │   ├── NotesPanel.tsx      # Панель заметок в sidebar
+│   │   │   │   └── QuickNoteDialog.tsx # Быстрая заметка
+│   │   │   ├── Settings/
+│   │   │   │   └── SettingsDialog.tsx  # Настройки (хоткеи, тема, автозапуск, автоматизация)
+│   │   │   ├── Stats/
+│   │   │   │   └── StatsPanel.tsx      # Статистика + архив
 │   │   │   └── common/
 │   │   │       ├── Button.tsx
 │   │   │       ├── Input.tsx
 │   │   │       ├── Modal.tsx
 │   │   │       └── Badge.tsx
 │   │   ├── hooks/
-│   │   │   ├── useTaskActions.ts
-│   │   │   └── useDragAndDrop.ts
+│   │   │   └── useKeyboardNav.ts       # Keyboard navigation по доске
 │   │   └── styles/
 │   │       └── globals.css
 │   └── shared/
 │       ├── types.ts             # Общие типы (Task, Column, etc.)
-│       └── constants.ts         # Константы (дефолтные колонки, хоткеи)
+│       └── constants.ts         # Константы (DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*)
 ├── assets/
 │   └── icons/                   # Иконки для трея и приложения
 ├── storage/                     # Хранилище вложений (создаётся runtime)
 ├── package.json
 ├── tsconfig.json
+├── tsconfig.main.json
 ├── tailwind.config.js
 ├── electron-builder.yml
 └── vite.config.ts               # Vite для сборки renderer
@@ -111,20 +134,33 @@ CREATE TABLE columns (
 | ✅ Готово | #10B981 (green) | check-circle |
 | 💀 Забито | #6B7280 (gray) | x-circle |
 
-### Таблица `tasks`
+### Таблица `columns` (обновлена)
+```sql
+-- Новые поля:
+wip_limit   INTEGER   -- Лимит задач в колонке (WIP limit), NULL = без лимита
+```
+
+### Таблица `tasks` (обновлена)
 ```sql
 CREATE TABLE tasks (
-    id           TEXT PRIMARY KEY,      -- UUID
-    title        TEXT NOT NULL,
-    description  TEXT,                  -- Полный текст / тело письма
-    column_id    TEXT NOT NULL REFERENCES columns(id),
-    sort_order   INTEGER NOT NULL,      -- Порядок внутри колонки
-    priority     INTEGER DEFAULT 0,     -- 0=none, 1=low, 2=medium, 3=high
-    color        TEXT,                  -- Цветная метка (опционально)
-    source_type  TEXT DEFAULT 'manual', -- 'manual' | 'text' | 'file' | 'email'
-    source_info  TEXT,                  -- JSON с инфой об источнике
-    created_at   TEXT DEFAULT (datetime('now')),
-    updated_at   TEXT DEFAULT (datetime('now'))
+    id              TEXT PRIMARY KEY,
+    title           TEXT NOT NULL,
+    description     TEXT,
+    column_id       TEXT NOT NULL REFERENCES columns(id),
+    sort_order      INTEGER NOT NULL,
+    priority        INTEGER DEFAULT 0,     -- 0=none, 1=low, 2=medium, 3=high
+    color           TEXT,
+    source_type     TEXT DEFAULT 'manual', -- 'manual' | 'text' | 'file' | 'email'
+    source_info     TEXT,
+    due_date        TEXT,                  -- Дедлайн (ISO date)
+    reminder_at     TEXT,                  -- Время напоминания (ISO datetime)
+    archived_at     TEXT,                  -- Дата архивирования (NULL = активна)
+    is_confidential INTEGER DEFAULT 0,    -- Скрывать из AI контекста
+    recurrence_rule TEXT,                  -- Правило повторения (RRULE / JSON)
+    recurrence_next TEXT,                  -- Дата следующего вхождения
+    time_spent      INTEGER DEFAULT 0,    -- Потраченное время (секунды)
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
 );
 ```
 
@@ -156,6 +192,57 @@ CREATE TABLE task_tags (
     task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (task_id, tag_id)
+);
+```
+
+### Таблица `notes`
+```sql
+CREATE TABLE notes (
+    id         TEXT PRIMARY KEY,
+    content    TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### Таблица `settings`
+```sql
+CREATE TABLE settings (
+    key   TEXT PRIMARY KEY,  -- 'autoLaunch', 'theme', 'hotkeys', 'automation_*'
+    value TEXT NOT NULL
+);
+```
+
+### Таблица `task_templates`
+```sql
+CREATE TABLE task_templates (
+    id          TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    description TEXT,
+    priority    INTEGER DEFAULT 0,
+    tags        TEXT DEFAULT '[]',   -- JSON массив тегов
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+```
+
+### Таблица `related_tasks`
+```sql
+CREATE TABLE related_tasks (
+    task_id         TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    related_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    PRIMARY KEY (task_id, related_task_id)
+);
+```
+
+### Таблица `focus_sessions`
+```sql
+CREATE TABLE focus_sessions (
+    id         TEXT PRIMARY KEY,
+    task_id    TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+    started_at TEXT NOT NULL,
+    ended_at   TEXT,
+    duration   INTEGER,  -- секунды
+    notes      TEXT
 );
 ```
 
@@ -261,16 +348,33 @@ CREATE TABLE task_tags (
 - [x] Sidebar — сворачиваемый, фильтры, заметки
 - [x] Glassmorphism UI polish (Phase 1 + Phase 2 компоненты)
 
-### Phase 3 — Полировка
+### Phase 3 — Полировка ✅ DONE
 - [x] Уведомления (напоминания по задачам) — reminder_at + Electron Notification + 30s поллинг
 - [x] Экспорт/импорт данных (JSON) — экспорт/импорт через dialog
-- [x] Бэкап БД — автобэкап + ручное восстановление
-- [x] Настройки хоткеев (кастомизация) — Settings dialog
+- [x] Бэкап БД — автобэкап + ручное восстановление (backup.ts)
+- [x] Настройки хоткеев (кастомизация) — Settings dialog + reloadHotkeys()
 - [x] Автозапуск с Windows — loginItem settings
 - [x] Статистика (сколько задач создано/закрыто) — StatsPanel в sidebar
-- [x] Светлая тема + переключатель — через Settings
+- [x] Светлая тема + переключатель — через Settings (dark/light/system)
 - [x] Архив задач — архивирование из TaskDetail + просмотр в StatsPanel
 - [x] Связанные задачи — RelatedTasks в TaskDetail, таблица related_tasks
+
+### Phase 4 — Продвинутые фичи ✅ DONE
+- [x] Focus Mode — отдельное окно (focus-window.ts + FocusWindow.tsx), always-on-top, таймер Pomodoro, фокус на одной задаче
+- [x] Desktop Widget — отдельное прозрачное окно (widget.ts + Widget.tsx), always-on-top, показывает приоритетные задачи
+- [x] Command Palette — `Ctrl+K`, поиск задач/команд/заметок, навигация, перемещение задач между колонками
+- [x] WIP-лимиты колонок — поле wip_limit в таблице columns, визуальное предупреждение при превышении
+- [x] Повторяющиеся задачи (recurring) — поля recurrence_rule + recurrence_next в tasks, автосоздание следующего вхождения
+- [x] Конфиденциальность задач — поле is_confidential, скрытие данных при экспорте в AI контекст
+- [x] Трекинг времени — поле time_spent в tasks, таблица focus_sessions, запись сессий фокуса
+
+### Phase 5 — AI и автоматизация ✅ DONE
+- [x] AI-ассистент — AIAssistantDialog.tsx, поддержка OpenRouter и Ollama, контекст из задач, исключение конфиденциальных
+- [x] Quick Capture (мгновенный захват) — двойное нажатие Ctrl+Shift+T → instant create без диалога
+- [x] Screenshot capture — хоткей Ctrl+Shift+S, захват экрана → вложение к задаче
+- [x] Автоматизация (automation.ts) — авто-архивация через N дней, напоминания о просроченных, предупреждения о залежавшихся важных задачах
+- [x] Шаблоны задач (task_templates) — создание задачи из шаблона, сохранение задачи как шаблон
+- [x] Keyboard navigation — useKeyboardNav.ts, навигация по доске без мыши
 
 ---
 
@@ -279,8 +383,13 @@ CREATE TABLE task_tags (
 | Хоткей | Действие |
 |--------|----------|
 | `Ctrl+Shift+T` | Захватить выделенный текст → диалог создания задачи (текст в описание) |
+| `Ctrl+Shift+T` (двойное) | Quick Capture — мгновенное создание задачи без диалога |
 | `Ctrl+Shift+F` | Захватить путь к выбранным файлам → диалог создания задачи (файлы как вложения) |
 | `Ctrl+Shift+N` | Быстрая заметка → мини-окно → Enter → сохранено |
+| `Ctrl+Shift+W` | Показать/скрыть Desktop Widget |
+| `Ctrl+Shift+F2` | Показать/скрыть Focus Mode окно |
+| `Ctrl+Shift+S` | Скриншот → вложение к новой задаче |
+| `Ctrl+K` | Command Palette (поиск задач, команды) |
 
 ### Логика работы хоткеев
 
@@ -293,12 +402,23 @@ CREATE TABLE task_tags (
 6. Первая строка текста → предзаполняем заголовок
 7. Восстанавливаем оригинальный clipboard
 
+**Ctrl+Shift+T (quick capture — двойное нажатие):**
+1. Второе нажатие в течение 500ms определяется как "быстрое"
+2. Мгновенное создание задачи из clipboard без диалога
+3. Задача попадает в дефолтную колонку
+
 **Ctrl+Shift+F (файлы):**
 1. Получаем пути выбранных файлов через clipboard (Explorer копирует пути)
 2. Или через Shell API для выбранных файлов
 3. Открываем диалог создания задачи
 4. Файлы подгружаются как вложения
 5. Имя первого файла → предзаполняем заголовок
+
+**Ctrl+K (Command Palette):**
+1. Открывается поверх доски
+2. Поиск по задачам, заметкам, командам
+3. Поддержка команд: новая задача, настройки, экспорт, AI, смена темы
+4. Inline перемещение задачи в другую колонку
 
 ---
 
@@ -366,8 +486,26 @@ CREATE TABLE task_tags (
 
 ## Текущий статус
 
-**Фаза:** Phase 3 завершена, код-ревью пройдено
-**Текущая задача:** Исправление замечаний из ревью
+**Фаза:** Phase 5 завершена
 **Прогресс Phase 1:** 12/12 ✅
 **Прогресс Phase 2:** 11/11 ✅
 **Прогресс Phase 3:** 9/9 ✅
+**Прогресс Phase 4:** 7/7 ✅
+**Прогресс Phase 5:** 6/6 ✅
+
+---
+
+## Phase 6 — Идеи и возможные направления
+
+- [ ] **Синхронизация** — облачная синхронизация через WebDAV / локальная сеть
+- [ ] **Мобильное companion-приложение** — просмотр задач с телефона
+- [ ] **Интеграции** — Telegram-бот для создания задач, webhook приём
+- [ ] **Расширенная аналитика** — графики продуктивности, тренды по неделям, heatmap активности
+- [ ] **Групповая работа** — шаринг досок между пользователями
+- [ ] **Drag из браузера** — расширение для браузера (захват URL/статей → задача)
+- [ ] **OCR из скриншота** — распознавание текста в захваченных скриншотах через Tesseract
+- [ ] **Голосовой ввод** — создание задачи голосом через Whisper API
+- [ ] **Outlook/Exchange интеграция** — двусторонняя синхронизация задач с Exchange Tasks
+- [ ] **Поддержка нескольких досок** — несколько независимых канбан-досок (проекты)
+- [ ] **Gantt-вид** — временная шкала для задач с дедлайнами
+- [ ] **Экспорт в CSV/Excel** — для отчётности
