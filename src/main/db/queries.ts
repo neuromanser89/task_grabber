@@ -56,14 +56,14 @@ export function createColumn(data: Omit<Column, 'id' | 'created_at' | 'updated_a
   const id = uuidv4();
   getDb()
     .prepare(
-      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id, column_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )
-    .run(id, data.name, data.color, data.icon, data.sort_order, data.is_default, data.board_id ?? null);
+    .run(id, data.name, data.color, data.icon, data.sort_order, data.is_default, data.board_id ?? null, data.column_type ?? null);
   return getDb().prepare('SELECT * FROM columns WHERE id = ?').get(id) as Column;
 }
 
 export function updateColumn(id: string, data: Partial<Column>): Column {
-  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default', 'wip_limit', 'board_id'];
+  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default', 'wip_limit', 'board_id', 'column_type'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)

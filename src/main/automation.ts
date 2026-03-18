@@ -30,8 +30,9 @@ function runAutoArchive(mainWindow: BrowserWindow | null) {
   const days = parseInt(queries.getSetting('automation_autoArchiveDays') ?? '7', 10);
   const columns = queries.getAllColumns();
 
-  // Find "done" and "cancelled" columns by name pattern
+  // Find columns by type (preferred) or fallback to name pattern
   const doneColumns = columns.filter((c) =>
+    c.column_type === 'done' || c.column_type === 'cancelled' ||
     /готово|done|complete|забито|cancel|discard/i.test(c.name)
   );
   if (doneColumns.length === 0) return;

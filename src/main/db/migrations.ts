@@ -199,6 +199,18 @@ export function runMigrations(db: Database.Database) {
     );
   `);
 
+  // Migrate: add column_type to columns table
+  const colMetaType = db.prepare("PRAGMA table_info(columns)").all() as { name: string }[];
+  if (!colMetaType.find((c) => c.name === 'column_type')) {
+    db.exec("ALTER TABLE columns ADD COLUMN column_type TEXT");
+    // Assign types to existing columns by name pattern
+    db.exec("UPDATE columns SET column_type = 'backlog' WHERE column_type IS NULL AND (LOWER(name) LIKE '%нов%' OR LOWER(name) LIKE '%inbox%' OR LOWER(name) LIKE '%new%')");
+    db.exec("UPDATE columns SET column_type = 'in_progress' WHERE column_type IS NULL AND (LOWER(name) LIKE '%работ%' OR LOWER(name) LIKE '%progress%')");
+    db.exec("UPDATE columns SET column_type = 'waiting' WHERE column_type IS NULL AND (LOWER(name) LIKE '%жд%' OR LOWER(name) LIKE '%wait%' OR LOWER(name) LIKE '%hold%')");
+    db.exec("UPDATE columns SET column_type = 'done' WHERE column_type IS NULL AND (LOWER(name) LIKE '%готов%' OR LOWER(name) LIKE '%done%' OR LOWER(name) LIKE '%complete%')");
+    db.exec("UPDATE columns SET column_type = 'cancelled' WHERE column_type IS NULL AND (LOWER(name) LIKE '%забит%' OR LOWER(name) LIKE '%cancel%' OR LOWER(name) LIKE '%discard%')");
+  }
+
   // Seed default board if empty, then seed columns with board_id
   const boardCount = db.prepare('SELECT COUNT(*) as cnt FROM boards').get() as { cnt: number };
   let defaultBoardId: string;
@@ -215,11 +227,11 @@ export function runMigrations(db: Database.Database) {
   const count = db.prepare('SELECT COUNT(*) as cnt FROM columns').get() as { cnt: number };
   if (count.cnt === 0) {
     const insert = db.prepare(
-      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id, column_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
     const insertMany = db.transaction(() => {
       for (const col of DEFAULT_COLUMNS) {
-        insert.run(uuidv4(), col.name, col.color, col.icon, col.sort_order, col.is_default, defaultBoardId);
+        insert.run(uuidv4(), col.name, col.color, col.icon, col.sort_order, col.is_default, defaultBoardId, col.column_type);
       }
     });
     insertMany();

@@ -4,7 +4,7 @@ import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft } from 'lucide-react';
+import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft, Check } from 'lucide-react';
 import { useBoardStore } from '../../stores/boardStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useTaskStore } from '../../stores/taskStore';
@@ -99,6 +99,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   }
 
 
+  async function handleComplete(e: React.MouseEvent) {
+    e.stopPropagation();
+    const doneCol = columns.find((c) => c.column_type === 'done');
+    if (!doneCol || task.column_id === doneCol.id) return;
+    const tasksInCol = tasks.filter((t) => t.column_id === doneCol.id);
+    const maxOrder = tasksInCol.reduce((m, t) => Math.max(m, t.sort_order), -1) + 1;
+    await moveTask(task.id, doneCol.id, maxOrder);
+  }
+
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
 
@@ -118,13 +127,17 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     const allColumns = (await window.electronAPI?.getColumns() ?? []) as typeof columns;
     let boardCols = allColumns.filter(c => c.board_id === targetBoardId);
 
-    // If target board has no columns, create a default one
+    // If target board has no columns, create default set
     if (boardCols.length === 0) {
-      const newCol = await window.electronAPI!.createColumn({
-        name: 'Новые', color: '#3B82F6', icon: null,
-        sort_order: 0, is_default: 1, board_id: targetBoardId,
-      });
-      boardCols = [newCol];
+      const defaults = [
+        { name: 'Новые', color: '#3B82F6', sort_order: 0, is_default: 1, column_type: 'backlog' },
+        { name: 'В работе', color: '#F59E0B', sort_order: 1, is_default: 0, column_type: 'in_progress' },
+        { name: 'Готово', color: '#10B981', sort_order: 2, is_default: 0, column_type: 'done' },
+      ];
+      for (const d of defaults) {
+        const col = await window.electronAPI!.createColumn({ ...d, icon: null, board_id: targetBoardId });
+        boardCols.push(col);
+      }
       useColumnStore.getState().fetchColumns();
     }
 
@@ -216,6 +229,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           {task.title}
         </p>
         <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+          {columns.some((c) => c.column_type === 'done' && c.id !== task.column_id) && (
+            <button
+              onClick={handleComplete}
+              className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity duration-200 text-t-40 hover:text-emerald-400 p-0.5 rounded"
+              title="Завершить задачу"
+            >
+              <Check size={11} />
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();

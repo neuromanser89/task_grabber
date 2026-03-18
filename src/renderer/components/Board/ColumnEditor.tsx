@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import type { Column } from '@shared/types';
+import type { Column, ColumnType } from '@shared/types';
+import { COLUMN_TYPE_LABELS } from '@shared/constants';
 import { useColumnStore } from '../../stores/columnStore';
 import { useTaskStore } from '../../stores/taskStore';
 
@@ -23,6 +24,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
   const [name, setName] = useState(column.name);
   const [color, setColor] = useState(column.color);
   const [wipLimit, setWipLimit] = useState<string>(column.wip_limit ? String(column.wip_limit) : '');
+  const [columnType, setColumnType] = useState<ColumnType>(column.column_type ?? null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moveToId, setMoveToId] = useState<string>('');
 
@@ -67,7 +69,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
   async function handleSave() {
     if (!name.trim()) return;
     const wip = wipLimit.trim() === '' ? null : parseInt(wipLimit, 10);
-    await updateColumn(column.id, { name: name.trim(), color, wip_limit: isNaN(wip as number) ? null : wip });
+    await updateColumn(column.id, { name: name.trim(), color, wip_limit: isNaN(wip as number) ? null : wip, column_type: columnType });
     onClose();
   }
 
@@ -144,6 +146,21 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
           className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
           placeholder="0 = без лимита"
         />
+      </div>
+
+      {/* Column type */}
+      <div>
+        <p className="text-[10px] text-t-30 mb-1.5 uppercase tracking-wider">Тип колонки</p>
+        <select
+          value={columnType ?? ''}
+          onChange={(e) => setColumnType((e.target.value || null) as ColumnType)}
+          className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-all duration-200 appearance-none cursor-pointer"
+        >
+          <option value="">— без типа —</option>
+          {Object.entries(COLUMN_TYPE_LABELS).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Save */}
