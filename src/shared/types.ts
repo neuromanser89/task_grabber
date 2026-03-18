@@ -1,5 +1,6 @@
 export type Priority = 0 | 1 | 2 | 3; // none, low, medium, high
 export type SourceType = 'manual' | 'text' | 'file' | 'email';
+export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'weekdays' | string; // 'custom:N:day|week|month'
 
 export interface Column {
   id: string;
@@ -8,6 +9,7 @@ export interface Column {
   icon: string | null;
   sort_order: number;
   is_default: number;
+  wip_limit: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +27,9 @@ export interface Task {
   due_date: string | null;
   archived_at: string | null;
   reminder_at: string | null;
+  is_confidential: number; // 0 or 1
+  recurrence_rule: RecurrenceRule | null;
+  recurrence_next: string | null; // ISO date when next instance should be created
   created_at: string;
   updated_at: string;
 }

@@ -10,7 +10,7 @@ import Button from '../common/Button';
 import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
-  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff,
+  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer,
 } from 'lucide-react';
 import RelatedTasks from './RelatedTasks';
 
@@ -149,6 +149,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [savedTemplate, setSavedTemplate] = useState(false);
   const [reminderAt, setReminderAt] = useState<string>('');
   const [confirmArchive, setConfirmArchive] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState<string>('');
+  const [recurrenceNext, setRecurrenceNext] = useState<string>('');
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -166,6 +168,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setSavedTemplate(false);
       setReminderAt(task.reminder_at ? task.reminder_at.slice(0, 16) : '');
       setConfirmArchive(false);
+      setRecurrenceRule(task.recurrence_rule ?? '');
+      setRecurrenceNext(task.recurrence_next ? task.recurrence_next.slice(0, 10) : '');
     }
   }, [task]);
 
@@ -236,6 +240,12 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const handleReminderChange = (val: string) => {
     setReminderAt(val);
     updateTask(task.id, { reminder_at: val ? new Date(val).toISOString() : null });
+  };
+
+  const handleRecurrenceChange = async (rule: string, next: string) => {
+    setRecurrenceRule(rule);
+    setRecurrenceNext(next);
+    await window.electronAPI?.recurringSetRule?.(task.id, rule || null, next || null);
   };
 
   const handleArchive = async () => {
@@ -477,6 +487,46 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           </div>
         </div>
 
+        {/* Recurrence */}
+        <div>
+          <div className="text-[11px] font-medium text-white/35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+            <Timer size={10} />
+            Повторение
+          </div>
+          <div className="flex flex-col gap-2">
+            <select
+              value={recurrenceRule}
+              onChange={(e) => handleRecurrenceChange(e.target.value, recurrenceNext)}
+              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+            >
+              <option value="">Не повторять</option>
+              <option value="daily">Каждый день</option>
+              <option value="weekdays">По будням (Пн–Пт)</option>
+              <option value="weekly">Каждую неделю</option>
+              <option value="monthly">Каждый месяц</option>
+              <option value="custom:2:day">Каждые 2 дня</option>
+              <option value="custom:2:week">Каждые 2 недели</option>
+              <option value="custom:3:month">Каждые 3 месяца</option>
+            </select>
+            {recurrenceRule && (
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-white/40 flex-shrink-0">Следующее:</label>
+                <input
+                  type="date"
+                  value={recurrenceNext}
+                  onChange={(e) => handleRecurrenceChange(recurrenceRule, e.target.value)}
+                  className="flex-1 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+                />
+              </div>
+            )}
+            {task.recurrence_rule && (
+              <p className="text-[10px] text-white/25 italic">
+                Новая задача создаётся автоматически когда наступает дата.
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Related tasks */}
         <RelatedTasks taskId={task.id} />
 
@@ -536,6 +586,15 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               title="Сохранить как шаблон"
             >
               {savedTemplate ? 'Сохранено!' : 'Шаблон'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Timer size={12} />}
+              onClick={() => window.electronAPI?.ipcSend('focus:openTask', task!.id)}
+              title="Открыть в Focus Mode"
+            >
+              Фокус
             </Button>
             <Button
               variant="ghost"

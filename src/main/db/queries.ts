@@ -27,7 +27,7 @@ export function createColumn(data: Omit<Column, 'id' | 'created_at' | 'updated_a
 }
 
 export function updateColumn(id: string, data: Partial<Column>): Column {
-  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default'];
+  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default', 'wip_limit'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -160,8 +160,8 @@ export function createTask(
   const id = uuidv4();
   getDb()
     .prepare(
-      `INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date, recurrence_rule, recurrence_next)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       id,
@@ -173,13 +173,15 @@ export function createTask(
       data.color,
       data.source_type ?? 'manual',
       data.source_info,
-      data.due_date ?? null
+      data.due_date ?? null,
+      (data as Record<string, unknown>).recurrence_rule ?? null,
+      (data as Record<string, unknown>).recurrence_next ?? null
     );
   return getDb().prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Task;
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at'];
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -341,6 +343,126 @@ export function createTemplate(data: {
 
 export function deleteTemplate(id: string): void {
   getDb().prepare('DELETE FROM task_templates WHERE id = ?').run(id);
+}
+
+// ─── Focus Sessions ───────────────────────────────────────────────────────────
+
+export interface FocusSession {
+  id: string;
+  task_id: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration: number | null; // seconds
+  notes: string | null;
+}
+
+export function createFocusSession(taskId: string | null): FocusSession {
+  const id = uuidv4();
+  const started_at = new Date().toISOString();
+  getDb()
+    .prepare('INSERT INTO focus_sessions (id, task_id, started_at) VALUES (?, ?, ?)')
+    .run(id, taskId, started_at);
+  return getDb().prepare('SELECT * FROM focus_sessions WHERE id = ?').get(id) as FocusSession;
+}
+
+export function endFocusSession(id: string, durationSeconds: number, notes: string | null): FocusSession {
+  const ended_at = new Date().toISOString();
+  getDb()
+    .prepare('UPDATE focus_sessions SET ended_at = ?, duration = ?, notes = ? WHERE id = ?')
+    .run(ended_at, durationSeconds, notes, id);
+  return getDb().prepare('SELECT * FROM focus_sessions WHERE id = ?').get(id) as FocusSession;
+}
+
+export function getFocusSessionsByTask(taskId: string): FocusSession[] {
+  return getDb()
+    .prepare('SELECT * FROM focus_sessions WHERE task_id = ? ORDER BY started_at DESC')
+    .all(taskId) as FocusSession[];
+}
+
+export function getTotalFocusTime(taskId: string): number {
+  const row = getDb()
+    .prepare('SELECT COALESCE(SUM(duration), 0) as total FROM focus_sessions WHERE task_id = ? AND duration IS NOT NULL')
+    .get(taskId) as { total: number };
+  return row.total;
+}
+
+// ─── Recurring Tasks ──────────────────────────────────────────────────────────
+
+export function getDueRecurringTasks(): Task[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return getDb()
+    .prepare(
+      `SELECT * FROM tasks
+       WHERE recurrence_rule IS NOT NULL
+         AND recurrence_next IS NOT NULL
+         AND recurrence_next <= ?
+         AND archived_at IS NULL`
+    )
+    .all(today) as Task[];
+}
+
+export function computeNextRecurrence(rule: string, from: Date): Date {
+  const next = new Date(from);
+  if (rule === 'daily') {
+    next.setDate(next.getDate() + 1);
+  } else if (rule === 'weekly') {
+    next.setDate(next.getDate() + 7);
+  } else if (rule === 'monthly') {
+    next.setMonth(next.getMonth() + 1);
+  } else if (rule === 'weekdays') {
+    next.setDate(next.getDate() + 1);
+    while (next.getDay() === 0 || next.getDay() === 6) {
+      next.setDate(next.getDate() + 1);
+    }
+  } else if (rule.startsWith('custom:')) {
+    const parts = rule.split(':');
+    const n = parseInt(parts[1] ?? '1', 10);
+    const unit = parts[2] ?? 'day';
+    if (unit === 'day') next.setDate(next.getDate() + n);
+    else if (unit === 'week') next.setDate(next.getDate() + n * 7);
+    else if (unit === 'month') next.setMonth(next.getMonth() + n);
+  }
+  return next;
+}
+
+export function spawnRecurringTask(task: Task): Task {
+  const columns = getAllColumns();
+  const defaultCol = columns.find((c) => c.is_default === 1) ?? columns[0];
+  if (!defaultCol) throw new Error('No columns');
+
+  const tasksInCol = getTasksByColumnId(defaultCol.id);
+  const maxOrder = tasksInCol.length > 0
+    ? Math.max(...tasksInCol.map((t) => t.sort_order)) + 1
+    : 0;
+
+  const newTask = createTask({
+    title: task.title,
+    description: task.description,
+    column_id: defaultCol.id,
+    sort_order: maxOrder,
+    priority: task.priority,
+    color: task.color,
+    source_type: 'manual',
+    source_info: JSON.stringify({ recurring_from: task.id }),
+    due_date: task.recurrence_next,
+    archived_at: null,
+    reminder_at: null,
+    is_confidential: task.is_confidential,
+    recurrence_rule: task.recurrence_rule,
+    recurrence_next: task.recurrence_next
+      ? computeNextRecurrence(task.recurrence_rule!, new Date(task.recurrence_next)).toISOString().slice(0, 10)
+      : null,
+  });
+
+  // Update the original task's recurrence_next
+  const nextDate = task.recurrence_next
+    ? computeNextRecurrence(task.recurrence_rule!, new Date(task.recurrence_next))
+    : null;
+  getDb()
+    .prepare("UPDATE tasks SET recurrence_next = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(nextDate ? nextDate.toISOString().slice(0, 10) : null, task.id);
+
+  return newTask;
 }
 
 // ─── Export / Import ──────────────────────────────────────────────────────────

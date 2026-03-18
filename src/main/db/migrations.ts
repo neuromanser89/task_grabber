@@ -83,6 +83,24 @@ export function runMigrations(db: Database.Database) {
     );
   `);
 
+  // Migrate: add focus_sessions table (time tracking)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS focus_sessions (
+      id         TEXT PRIMARY KEY,
+      task_id    TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+      started_at TEXT NOT NULL,
+      ended_at   TEXT,
+      duration   INTEGER,
+      notes      TEXT
+    );
+  `);
+
+  // Migrate: add wip_limit to columns table
+  const colMeta = db.prepare("PRAGMA table_info(columns)").all() as { name: string }[];
+  if (!colMeta.find((c) => c.name === 'wip_limit')) {
+    db.exec("ALTER TABLE columns ADD COLUMN wip_limit INTEGER");
+  }
+
   // Migrate: add missing columns (for existing DBs)
   const taskColumns = db.prepare("PRAGMA table_info(tasks)").all() as { name: string }[];
   if (!taskColumns.find((c) => c.name === 'due_date')) {
@@ -93,6 +111,15 @@ export function runMigrations(db: Database.Database) {
   }
   if (!taskColumns.find((c) => c.name === 'reminder_at')) {
     db.exec("ALTER TABLE tasks ADD COLUMN reminder_at TEXT");
+  }
+  if (!taskColumns.find((c) => c.name === 'is_confidential')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN is_confidential INTEGER DEFAULT 0");
+  }
+  if (!taskColumns.find((c) => c.name === 'recurrence_rule')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN recurrence_rule TEXT");
+  }
+  if (!taskColumns.find((c) => c.name === 'recurrence_next')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN recurrence_next TEXT");
   }
 
   // Seed default columns if empty
@@ -122,6 +149,10 @@ export function runMigrations(db: Database.Database) {
       insertSetting.run('autoLaunch', 'false');
       insertSetting.run('theme', 'dark');
       insertSetting.run('hotkeys', defaultHotkeys);
+      insertSetting.run('automation_autoArchive', 'true');
+      insertSetting.run('automation_autoArchiveDays', '7');
+      insertSetting.run('automation_overdueReminders', 'true');
+      insertSetting.run('automation_staleHighPriority', 'true');
     })();
   }
 }

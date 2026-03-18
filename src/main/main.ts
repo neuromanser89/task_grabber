@@ -4,7 +4,9 @@ import { setupTray } from './tray';
 import { setupHotkeys, reloadHotkeys } from './hotkeys';
 import { setupIpcHandlers } from './ipc-handlers';
 import { setupWidgetHotkey, setupWidgetIpc } from './widget';
+import { setupFocusHotkey, setupFocusIpc } from './focus-window';
 import { createBackup } from './backup';
+import { runAutomation } from './automation';
 import * as queries from './db/queries';
 
 let mainWindow: BrowserWindow | null = null;
@@ -56,6 +58,23 @@ function createWindow() {
   });
 }
 
+function startRecurringPoller() {
+  // Check once at startup, then every hour
+  const check = () => {
+    try {
+      const due = queries.getDueRecurringTasks();
+      for (const task of due) {
+        queries.spawnRecurringTask(task);
+        mainWindow?.webContents.send('tasks:refresh');
+      }
+    } catch {
+      // DB might not be ready
+    }
+  };
+  setTimeout(check, 3000);
+  setInterval(check, 60 * 60_000); // every hour
+}
+
 function startReminderPoller() {
   setInterval(() => {
     try {
@@ -86,12 +105,29 @@ app.whenReady().then(() => {
   setupIpcHandlers();
   setupWidgetHotkey();
   setupWidgetIpc(getMainWindow);
+  setupFocusHotkey();
+  setupFocusIpc(getMainWindow);
   startReminderPoller();
+  startRecurringPoller();
 
   // Auto-backup on startup (after DB is initialized)
   setTimeout(() => {
     try { createBackup(); } catch { /* ignore if DB not ready */ }
   }, 2000);
+
+  // Run automation on startup + every 5 minutes
+  setTimeout(() => {
+    runAutomation(mainWindow);
+  }, 5000);
+  setInterval(() => {
+    runAutomation(mainWindow);
+  }, 5 * 60_000);
+
+  // IPC: manual automation trigger
+  ipcMain.handle('automation:run', () => {
+    runAutomation(mainWindow);
+    return { ok: true };
+  });
 
   // Reload hotkeys when settings change
   ipcMain.on('hotkeys:reload', () => {

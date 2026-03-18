@@ -18,6 +18,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'src/renderer/index.html'),
         widget: path.resolve(__dirname, 'src/renderer/widget.html'),
+        focus: path.resolve(__dirname, 'src/renderer/focus.html'),
       },
     },
   },
