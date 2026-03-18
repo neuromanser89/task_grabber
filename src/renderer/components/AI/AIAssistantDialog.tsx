@@ -241,7 +241,9 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
       <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm"
         onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="w-full max-w-[620px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="relative w-full max-w-[620px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl flex flex-col animate-fade-in-scale" style={{ maxHeight: '80vh' }}>
+          {/* Top gradient line */}
+          <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-accent-purple/30 to-transparent rounded-full" />
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-t-06 flex-shrink-0">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center">

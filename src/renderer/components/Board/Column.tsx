@@ -53,15 +53,21 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
       <div
         ref={setSortRef}
         style={isDragOverlay ? {} : style}
-        className="flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300"
+        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
+          isOverWip ? 'ring-1 ring-red-500/15' : ''
+        }`}
       >
         {/* Header with colored top accent */}
         <div className="relative" ref={headerRef}>
-          {/* Colored top line */}
+          {/* Colored top line — pulses red when WIP exceeded */}
           <div
-            className="absolute top-0 left-4 right-4 h-[2px] rounded-full opacity-60"
-            style={{ backgroundColor: column.color }}
+            className={`absolute top-0 left-4 right-4 h-[2px] rounded-full transition-all duration-300 ${isOverWip ? 'opacity-90 animate-glow-pulse' : 'opacity-60'}`}
+            style={{ backgroundColor: isOverWip ? '#EF4444' : column.color }}
           />
+          {/* Red glow bleed when over WIP */}
+          {isOverWip && (
+            <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full blur-[4px] opacity-50 animate-glow-pulse" style={{ backgroundColor: '#EF4444' }} />
+          )}
           <div
             className="flex items-center gap-2.5 px-3.5 py-3 border-b border-t-04 cursor-pointer select-none"
             onContextMenu={handleContextMenu}

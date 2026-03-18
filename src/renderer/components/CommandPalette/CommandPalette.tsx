@@ -256,7 +256,7 @@ export default function CommandPalette({
   function renderItem(item: CommandAction, idx: number) {
     const isSelected = idx === selectedIndex;
     const base = `flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-100 ${
-      isSelected ? 'bg-accent-blue/20 border border-accent-blue/30' : 'hover:bg-t-04 border border-transparent'
+      isSelected ? 'bg-accent-blue/[0.12] border border-accent-blue/25 shadow-[0_0_12px_rgba(59,130,246,0.08)]' : 'hover:bg-t-04 border border-transparent'
     }`;
 
     if (item.type === 'command') {
@@ -355,7 +355,13 @@ export default function CommandPalette({
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-[580px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-[8vh] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-accent-blue/[0.04] rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="relative w-full max-w-[580px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl overflow-hidden animate-fade-in-scale">
+        {/* Top gradient line */}
+        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
+
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-t-06">
           <Search size={16} className="text-t-40 flex-shrink-0" />

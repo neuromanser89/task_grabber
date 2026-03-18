@@ -39,10 +39,16 @@ function Toast({ toast, onDismiss, onTaskClick }: ToastProps) {
     : <Info size={14} className="text-blue-400 flex-shrink-0" />;
 
   const borderColor = toast.type === 'success'
-    ? 'border-emerald-500/20'
+    ? 'border-emerald-500/20 border-l-emerald-500/60'
     : toast.type === 'error'
-    ? 'border-red-500/20'
-    : 'border-blue-500/20';
+    ? 'border-red-500/20 border-l-red-500/60'
+    : 'border-blue-500/20 border-l-blue-500/60';
+
+  const glowShadow = toast.type === 'success'
+    ? '0 4px 20px rgba(16,185,129,0.12)'
+    : toast.type === 'error'
+    ? '0 4px 20px rgba(239,68,68,0.12)'
+    : '0 4px 20px rgba(59,130,246,0.12)';
 
   const handleClick = () => {
     if (toast.taskId && onTaskClick) {
@@ -53,9 +59,10 @@ function Toast({ toast, onDismiss, onTaskClick }: ToastProps) {
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl glass-heavy shadow-2xl border ${borderColor} max-w-xs min-w-[200px] transition-all duration-300 ${
+      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl glass-heavy border border-l-2 ${borderColor} max-w-xs min-w-[200px] transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       } ${toast.taskId ? 'cursor-pointer hover:brightness-110' : ''}`}
+      style={{ boxShadow: visible ? glowShadow : 'none' }}
       onClick={handleClick}
     >
       {icon}
