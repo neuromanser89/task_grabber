@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import TitleBar from './components/Layout/TitleBar';
+import TitleBar, { type ViewMode } from './components/Layout/TitleBar';
 import KanbanBoard from './components/Board/KanbanBoard';
+import TimelineView from './components/Board/TimelineView';
+import CalendarView from './components/Board/CalendarView';
 import StatusBar from './components/Layout/StatusBar';
 import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
@@ -42,6 +44,7 @@ export default function App() {
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
+  const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
   const { createTask } = useTaskStore();
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -184,10 +187,18 @@ export default function App() {
 
   return (
     <div className={`app-root flex flex-col h-screen select-none ${isDark ? 'bg-[#0F0F0F] text-white' : 'bg-[#F8F9FA] text-gray-900'}`}>
-      <TitleBar onNewTask={openCreateDialog} onSettings={() => setShowSettings(true)} onAI={() => setShowAI(true)} />
+      <TitleBar
+        onNewTask={openCreateDialog}
+        onSettings={() => setShowSettings(true)}
+        onAI={() => setShowAI(true)}
+        viewMode={viewMode}
+        onViewChange={setViewMode}
+      />
       <main className="flex flex-1 overflow-hidden">
         <Sidebar ref={sidebarRef} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
-        <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} />
+        {viewMode === 'kanban' && <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} />}
+        {viewMode === 'timeline' && <TimelineView />}
+        {viewMode === 'calendar' && <CalendarView />}
       </main>
       <StatusBar />
       <TaskCreateDialog
