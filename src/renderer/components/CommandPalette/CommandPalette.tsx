@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Search, Plus, Settings, FileText, Hash, ArrowRight, Bot } from 'lucide-react';
+import {
+  Search, Plus, Settings, FileText, Hash, ArrowRight, Bot,
+  StickyNote, Download, Upload, Sun, Moon, Monitor, Archive,
+  LayoutDashboard, Timer, ChevronRight,
+} from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
+import { useNoteStore } from '../../stores/noteStore';
 import type { TaskWithAttachments } from '@shared/types';
 
 type CommandAction =
   | { type: 'task'; task: TaskWithAttachments }
-  | { type: 'command'; id: string; label: string; icon: React.ReactNode; action: () => void }
+  | { type: 'note'; id: string; snippet: string }
+  | { type: 'command'; id: string; label: string; icon: React.ReactNode; hint?: string; action: () => void }
   | { type: 'move'; task: TaskWithAttachments; columnId: string; columnName: string };
 
 interface CommandPaletteProps {
@@ -15,6 +21,9 @@ interface CommandPaletteProps {
   onNewTask: () => void;
   onSettings: () => void;
   onAI?: () => void;
+  onQuickNote?: () => void;
+  onThemeCycle?: () => void;
+  currentTheme?: 'dark' | 'light' | 'system';
 }
 
 function scoreMatch(text: string, query: string): number {
@@ -24,9 +33,7 @@ function scoreMatch(text: string, query: string): number {
   if (t === q) return 100;
   if (t.startsWith(q)) return 80;
   if (t.includes(q)) return 60;
-  // fuzzy: all chars of query appear in order
-  let ti = 0;
-  let qi = 0;
+  let ti = 0, qi = 0;
   while (ti < t.length && qi < q.length) {
     if (t[ti] === q[qi]) qi++;
     ti++;
@@ -36,14 +43,24 @@ function scoreMatch(text: string, query: string): number {
 
 const PRIORITY_LABELS = ['', 'Low', 'Medium', 'High'];
 const PRIORITY_COLORS = ['', 'text-blue-400', 'text-amber-400', 'text-red-400'];
-const SOURCE_ICONS: Record<string, React.ReactNode> = {
-  manual: <FileText size={11} />,
-  text: <FileText size={11} />,
-  file: <FileText size={11} />,
-  email: <FileText size={11} />,
+
+const THEME_ICONS: Record<string, React.ReactNode> = {
+  dark: <Moon size={14} />,
+  light: <Sun size={14} />,
+  system: <Monitor size={14} />,
 };
 
-export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings, onAI }: CommandPaletteProps) {
+function modeHint(query: string): string | null {
+  const q = query.trim();
+  if (q === '>') return 'Введите имя задачи для перемещения...';
+  if (q.startsWith('> ') && q.length === 2) return 'Введите имя задачи для перемещения...';
+  if (q === ':') return 'Введите текст для поиска по заметкам...';
+  return null;
+}
+
+export default function CommandPalette({
+  isOpen, onClose, onNewTask, onSettings, onAI, onQuickNote, onThemeCycle, currentTheme,
+}: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -51,48 +68,94 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
 
   const { tasks } = useTaskStore();
   const { columns } = useColumnStore();
+  const { notes } = useNoteStore();
 
-  // Static commands
-  const staticCommands = useMemo<CommandAction[]>(() => [
-    {
-      type: 'command',
-      id: 'new-task',
-      label: 'Создать задачу',
-      icon: <Plus size={14} />,
-      action: () => { onClose(); onNewTask(); },
-    },
-    {
-      type: 'command',
-      id: 'settings',
-      label: 'Настройки',
-      icon: <Settings size={14} />,
-      action: () => { onClose(); onSettings(); },
-    },
-    ...(onAI ? [{
-      type: 'command' as const,
-      id: 'ai',
-      label: 'AI Помощник',
-      icon: <Bot size={14} />,
-      action: () => { onClose(); onAI(); },
-    }] : []),
-  ], [onClose, onNewTask, onSettings, onAI]);
+  // All available commands
+  const allCommands = useMemo<CommandAction[]>(() => {
+    const nextTheme = currentTheme === 'dark' ? 'light' : currentTheme === 'light' ? 'system' : 'dark';
+    const themeLabel = `Тема: ${currentTheme === 'dark' ? 'Тёмная' : currentTheme === 'light' ? 'Светлая' : 'Системная'}`;
+    return [
+      {
+        type: 'command', id: 'new-task', label: 'Создать задачу', hint: 'Ctrl+Shift+T',
+        icon: <Plus size={14} />,
+        action: () => { onClose(); onNewTask(); },
+      },
+      {
+        type: 'command', id: 'quick-note', label: 'Быстрая заметка', hint: 'Ctrl+Shift+N',
+        icon: <StickyNote size={14} />,
+        action: () => { onClose(); onQuickNote?.(); },
+      },
+      ...(onAI ? [{
+        type: 'command' as const, id: 'ai', label: 'AI Помощник',
+        icon: <Bot size={14} />,
+        action: () => { onClose(); onAI(); },
+      }] : []),
+      {
+        type: 'command', id: 'settings', label: 'Настройки',
+        icon: <Settings size={14} />,
+        action: () => { onClose(); onSettings(); },
+      },
+      {
+        type: 'command', id: 'theme', label: themeLabel, hint: `→ ${nextTheme === 'dark' ? 'Тёмная' : nextTheme === 'light' ? 'Светлая' : 'Системная'}`,
+        icon: THEME_ICONS[currentTheme ?? 'dark'],
+        action: () => { onClose(); onThemeCycle?.(); },
+      },
+      {
+        type: 'command', id: 'export', label: 'Экспорт данных (JSON)',
+        icon: <Download size={14} />,
+        action: () => { onClose(); window.electronAPI?.exportData(); },
+      },
+      {
+        type: 'command', id: 'import', label: 'Импорт данных (JSON)',
+        icon: <Upload size={14} />,
+        action: () => { onClose(); window.electronAPI?.importData(); },
+      },
+      {
+        type: 'command', id: 'archive', label: 'Открыть архив',
+        icon: <Archive size={14} />,
+        action: () => { onClose(); window.dispatchEvent(new CustomEvent('sidebar:openArchive')); },
+      },
+      {
+        type: 'command', id: 'widget', label: 'Виджет вкл/выкл',
+        icon: <LayoutDashboard size={14} />,
+        action: () => { onClose(); window.electronAPI?.ipcSend('widget:toggle'); },
+      },
+      {
+        type: 'command', id: 'focus', label: 'Focus Mode',
+        icon: <Timer size={14} />,
+        action: () => { onClose(); window.electronAPI?.ipcSend('focus:openTask', ''); },
+      },
+    ] as CommandAction[];
+  }, [onClose, onNewTask, onSettings, onAI, onQuickNote, onThemeCycle, currentTheme]);
 
   const items = useMemo<CommandAction[]>(() => {
-    const q = query.trim().toLowerCase();
+    const raw = query.trim();
+    const q = raw.toLowerCase();
 
-    // Detect "move" prefix: "> " or ">"
-    const isMoveMode = q.startsWith('>');
-    if (isMoveMode) {
-      // ">" — show move commands for tasks
-      const moveQuery = q.slice(1).trim();
-      // Show all tasks filterable by move query
+    // `:` prefix — notes search
+    if (raw.startsWith(':')) {
+      const noteQuery = raw.slice(1).trim().toLowerCase();
+      if (!noteQuery) return [];
+      return notes
+        .filter((n) => n.content.toLowerCase().includes(noteQuery))
+        .slice(0, 8)
+        .map((n) => ({
+          type: 'note' as const,
+          id: n.id,
+          snippet: n.content.slice(0, 120),
+        }));
+    }
+
+    // `>` prefix — task move mode
+    if (raw.startsWith('>')) {
+      const moveQuery = raw.slice(1).trim().toLowerCase();
+      if (!moveQuery) return [];
       const results: CommandAction[] = [];
       for (const task of tasks.filter((t) => !t.archived_at)) {
         for (const targetCol of columns) {
           if (targetCol.id === task.column_id) continue;
           const combined = `${task.title} → ${targetCol.name}`;
-          const score = moveQuery ? scoreMatch(combined, moveQuery) : 50;
-          if (score > 0) {
+          if (scoreMatch(combined, moveQuery) > 0) {
             results.push({ type: 'move', task, columnId: targetCol.id, columnName: targetCol.name });
           }
         }
@@ -100,16 +163,17 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
       return results.slice(0, 12);
     }
 
-    if (!q) {
-      // Show commands first, then recent tasks
+    // No query — show all commands + recent tasks
+    if (!raw) {
       const recentTasks: CommandAction[] = tasks
         .filter((t) => !t.archived_at)
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, 6)
+        .slice(0, 5)
         .map((task) => ({ type: 'task', task }));
-      return [...staticCommands, ...recentTasks];
+      return [...allCommands, ...recentTasks];
     }
 
+    // Regular search — tasks + commands
     const taskResults: (CommandAction & { score: number })[] = tasks
       .filter((t) => !t.archived_at)
       .map((task) => {
@@ -122,18 +186,18 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    const cmdResults: (CommandAction & { score: number })[] = staticCommands
-      .filter((c) => c.type === 'command')
+    const cmdResults: (CommandAction & { score: number })[] = allCommands
+      .filter((c): c is CommandAction & { type: 'command'; label: string } => c.type === 'command')
       .map((c) => {
-        if (c.type !== 'command') return null;
         const score = scoreMatch(c.label, q);
         return score > 0 ? { ...c, score } : null;
       })
       .filter(Boolean) as (CommandAction & { score: number })[];
 
-    const combined = [...cmdResults, ...taskResults].sort((a, b) => b.score - a.score);
-    return combined.slice(0, 10);
-  }, [query, tasks, columns, staticCommands]);
+    return [...cmdResults, ...taskResults]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+  }, [query, tasks, columns, notes, allCommands]);
 
   useEffect(() => {
     if (isOpen) {
@@ -143,11 +207,8 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+  useEffect(() => { setSelectedIndex(0); }, [query]);
 
-  // Scroll selected into view
   useEffect(() => {
     if (!listRef.current) return;
     const el = listRef.current.querySelector(`[data-idx="${selectedIndex}"]`) as HTMLElement | null;
@@ -159,6 +220,9 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
       item.action();
     } else if (item.type === 'task') {
       window.dispatchEvent(new CustomEvent('board:openTask', { detail: item.task.id }));
+      onClose();
+    } else if (item.type === 'note') {
+      window.dispatchEvent(new CustomEvent('sidebar:openNote', { detail: item.id }));
       onClose();
     } else if (item.type === 'move') {
       const colTasks = tasks.filter((t) => t.column_id === item.columnId);
@@ -186,6 +250,8 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
   if (!isOpen) return null;
 
   const colMap = Object.fromEntries(columns.map((c) => [c.id, c]));
+  const hint = modeHint(query);
+  const mode = query.trimStart().startsWith(':') ? 'notes' : query.trimStart().startsWith('>') ? 'move' : 'default';
 
   function renderItem(item: CommandAction, idx: number) {
     const isSelected = idx === selectedIndex;
@@ -199,8 +265,9 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
           <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-blue/30 text-accent-blue' : 'bg-white/[0.06] text-white/50'}`}>
             {item.icon}
           </div>
-          <span className="text-sm text-white/85">{item.label}</span>
-          <span className="ml-auto text-[10px] text-white/25 font-mono">команда</span>
+          <span className="text-sm text-white/85 flex-1">{item.label}</span>
+          {item.hint && <span className="text-[10px] text-white/25 font-mono flex-shrink-0">{item.hint}</span>}
+          <ChevronRight size={11} className={`flex-shrink-0 ml-1 ${isSelected ? 'text-accent-blue/50' : 'text-white/10'}`} />
         </div>
       );
     }
@@ -240,6 +307,20 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
       );
     }
 
+    if (item.type === 'note') {
+      return (
+        <div key={item.id} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-green/30 text-accent-green' : 'bg-white/[0.04] text-white/30'}`}>
+            <StickyNote size={12} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-white/75 truncate">{item.snippet}</div>
+          </div>
+          <span className="text-[10px] text-white/25 flex-shrink-0">заметка</span>
+        </div>
+      );
+    }
+
     if (item.type === 'move') {
       return (
         <div key={`${item.task.id}::${item.columnId}`} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
@@ -263,12 +344,18 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
     return null;
   }
 
+  const modeBadge = mode === 'move'
+    ? <span className="px-1.5 py-0.5 rounded bg-accent-purple/20 text-accent-purple text-[10px] font-medium">Перемещение</span>
+    : mode === 'notes'
+    ? <span className="px-1.5 py-0.5 rounded bg-accent-green/20 text-accent-green text-[10px] font-medium">Заметки</span>
+    : null;
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-[560px] mx-4 glass-heavy rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[580px] mx-4 glass-heavy rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
           <Search size={16} className="text-white/40 flex-shrink-0" />
@@ -277,19 +364,22 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Поиск задач и команд... (> для перемещения)"
-            className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/30 outline-none"
+            placeholder="Поиск задач и команд...  >перемещение  :заметки"
+            className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25 outline-none"
             autoComplete="off"
             spellCheck={false}
           />
-          <kbd className="hidden sm:flex items-center h-5 px-1.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/30 font-mono">
+          {modeBadge}
+          <kbd className="hidden sm:flex items-center h-5 px-1.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/30 font-mono flex-shrink-0">
             Esc
           </kbd>
         </div>
 
         {/* Results */}
-        <div ref={listRef} className="max-h-[360px] overflow-y-auto p-2 space-y-0.5 scrollbar-thin">
-          {items.length === 0 ? (
+        <div ref={listRef} className="max-h-[380px] overflow-y-auto p-2 space-y-0.5 scrollbar-thin">
+          {hint ? (
+            <div className="py-6 text-center text-sm text-white/30">{hint}</div>
+          ) : items.length === 0 ? (
             <div className="py-8 text-center text-sm text-white/30">Ничего не найдено</div>
           ) : (
             items.map((item, idx) => renderItem(item, idx))
@@ -297,11 +387,12 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings,
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-white/[0.04] text-[10px] text-white/20">
-          <span className="flex items-center gap-1"><kbd className="font-mono">↑↓</kbd> навигация</span>
-          <span className="flex items-center gap-1"><kbd className="font-mono">Enter</kbd> выбрать</span>
-          <span className="flex items-center gap-1"><kbd className="font-mono">&gt;</kbd> перемещение задач</span>
-          <span className="ml-auto flex items-center gap-1"><kbd className="font-mono">Esc</kbd> закрыть</span>
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-white/[0.04] text-[10px] text-white/20">
+          <span><kbd className="font-mono">↑↓</kbd> навигация</span>
+          <span><kbd className="font-mono">Enter</kbd> выбрать</span>
+          <span><kbd className="font-mono">&gt;</kbd> переместить задачу</span>
+          <span><kbd className="font-mono">:</kbd> поиск заметок</span>
+          <span className="ml-auto"><kbd className="font-mono">Esc</kbd> закрыть</span>
         </div>
       </div>
     </div>
