@@ -141,7 +141,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Generic IPC send (for widget → main communication)
   ipcSend: (channel: string, ...args: unknown[]) => {
-    const allowed = ['widget:openTask', 'focus:openTask', 'widget:toggle', 'focus:close'];
+    const allowed = ['widget:openTask', 'focus:openTask', 'widget:toggle', 'focus:close', 'focus:set-mini'];
     if (allowed.includes(channel)) ipcRenderer.send(channel, ...args);
   },
 
