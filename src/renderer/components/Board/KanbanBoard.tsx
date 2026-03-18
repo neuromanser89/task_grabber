@@ -201,8 +201,8 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const handleBatchArchive = useCallback(async (ids: string[]) => {
     for (const id of ids) {
       await window.electronAPI!.archiveTask(id);
-      useTaskStore.getState().fetchAll();
     }
+    useTaskStore.getState().fetchAll();
   }, []);
 
   // Clear batch selection on Escape
@@ -276,7 +276,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
         addToast(`Лимит колонки "${overColumn.name}": ${wip} задач`, 'error');
         return;
       }
-      const sorted = tasksInTarget.sort((a, b) => a.sort_order - b.sort_order);
+      const sorted = [...tasksInTarget].sort((a, b) => a.sort_order - b.sort_order);
       const newSortOrder = sorted.length > 0 ? sorted[sorted.length - 1].sort_order + 1 : 0;
       moveTask(activeId, overColumn.id, newSortOrder);
       return;

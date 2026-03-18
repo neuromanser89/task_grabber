@@ -104,6 +104,7 @@ export default function FocusWindow() {
   const inputRef = useRef<HTMLInputElement>(null);
   // Track seconds accumulated since last DB flush
   const pendingSecondsRef = useRef(0);
+  const autoStartBreakRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null;
@@ -170,8 +171,8 @@ export default function FocusWindow() {
       setPomodoroCount((c) => c + 1);
       setPhase('break');
       setTimeLeft(BREAK_DURATION);
-      // Auto-start break
-      setTimeout(() => setIsRunning(true), 500);
+      // Auto-start break (cancellable)
+      autoStartBreakRef.current = setTimeout(() => setIsRunning(true), 500);
     } else {
       try {
         new Notification('Task Grabber — Перерыв закончился!', {
@@ -210,20 +211,20 @@ export default function FocusWindow() {
       setSessionStart(Date.now());
     }
     if (!isRunning || phase === 'break') {
-      if (elapsedRef.current) clearInterval(elapsedRef.current);
       return;
     }
 
-    elapsedRef.current = setInterval(() => {
+    const id = setInterval(() => {
       setElapsedDisplay((d) => d + 1);
       setSessionSeconds((s) => s + 1);
       pendingSecondsRef.current += 1;
     }, 1000);
+    elapsedRef.current = id;
 
     return () => {
-      if (elapsedRef.current) clearInterval(elapsedRef.current);
+      clearInterval(id);
     };
-  }, [isRunning, phase, sessionStart]);
+  }, [isRunning, phase]);
 
   // ─── Session control ───────────────────────────────────────────────────────
 
@@ -249,6 +250,7 @@ export default function FocusWindow() {
     setPhase('idle');
     setTimeLeft(WORK_DURATION);
     setElapsedDisplay(0);
+    if (autoStartBreakRef.current) { clearTimeout(autoStartBreakRef.current); autoStartBreakRef.current = null; }
   }
 
   async function completeTask() {
@@ -262,9 +264,8 @@ export default function FocusWindow() {
     setTimeLeft(WORK_DURATION);
     setElapsedDisplay(0);
     loadTasks();
-    window.electronAPI?.onTasksRefresh?.(() => {}); // trigger board refresh
-    // Notify main
-    window.electronAPI?.ipcSend('focus:openTask', ''); // signal board to refresh
+    // Notify main to refresh board
+    window.electronAPI?.ipcSend('tasks:refresh', '');
   }
 
   function toggleTimer() {
