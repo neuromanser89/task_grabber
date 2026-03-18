@@ -89,9 +89,9 @@ export interface TaskTemplate {
 }
 
 // Smart Rules
-export type RuleTriggerField = 'priority' | 'column_id' | 'due_date' | 'tag' | 'title' | 'source_type';
-export type RuleTriggerOp = 'equals' | 'not_equals' | 'contains' | 'overdue' | 'greater_than' | 'less_than';
-export type RuleActionType = 'move_to_column' | 'set_priority' | 'add_tag' | 'archive' | 'set_color';
+export type RuleTriggerField = 'priority' | 'column_id' | 'due_date' | 'tag' | 'title' | 'source_type' | 'in_column_days' | 'no_activity_days';
+export type RuleTriggerOp = 'equals' | 'not_equals' | 'contains' | 'overdue' | 'greater_than' | 'less_than' | 'more_than_days';
+export type RuleActionType = 'move_to_column' | 'set_priority' | 'add_tag' | 'archive' | 'set_color' | 'notify';
 
 export interface Rule {
   id: string;
