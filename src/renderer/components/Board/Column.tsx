@@ -115,7 +115,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
             }`}
           >
             {sorted.map((task, index) => (
-              <div key={task.id} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in">
+              <div key={task.id} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in transition-all duration-300">
                 <TaskCard
                   task={task}
                   onClick={onTaskClick}
