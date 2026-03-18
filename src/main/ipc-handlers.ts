@@ -401,13 +401,12 @@ export function setupIpcHandlers() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
     if (provider === 'ollama') {
-      // Validate baseUrl: only allow http(s) to localhost/127.0.0.1
+      // Validate baseUrl: only allow http(s), block file:/data:/ftp: etc.
       let ollamaBase = baseUrl ?? 'http://localhost:11434';
       try {
         const parsed = new URL(ollamaBase);
-        if (!['http:', 'https:'].includes(parsed.protocol) ||
-            !['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
-          throw new Error('Invalid Ollama URL');
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          throw new Error('Invalid Ollama URL: only http/https allowed');
         }
       } catch {
         ollamaBase = 'http://localhost:11434';
