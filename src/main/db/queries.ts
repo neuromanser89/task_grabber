@@ -1,6 +1,6 @@
 import { getDb } from './database';
 import { randomUUID as uuidv4 } from 'crypto';
-import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule, BoardFile } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule, BoardFile, Project } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
 
@@ -615,6 +615,65 @@ export function attachBoardFileToTask(fileId: string, taskId: string | null): vo
   getDb()
     .prepare('UPDATE board_files SET task_id = ? WHERE id = ?')
     .run(taskId, fileId);
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+const PROJECT_TAG_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6', '#F97316'];
+
+export function getAllProjects(): Project[] {
+  return getDb().prepare('SELECT * FROM projects ORDER BY sort_order').all() as Project[];
+}
+
+export function createProject(data: Omit<Project, 'id' | 'tag_id' | 'sort_order' | 'created_at' | 'updated_at'>): Project {
+  const id = uuidv4();
+  const tagId = uuidv4();
+  const colorIdx = Math.floor(Math.random() * PROJECT_TAG_COLORS.length);
+  const color = PROJECT_TAG_COLORS[colorIdx];
+  const sort_order = (getDb().prepare('SELECT COUNT(*) as n FROM projects').get() as { n: number }).n;
+
+  const createProjectTx = getDb().transaction(() => {
+    getDb()
+      .prepare('INSERT INTO tags (id, name, color) VALUES (?, ?, ?)')
+      .run(tagId, data.name, color);
+    getDb()
+      .prepare(
+        `INSERT INTO projects (id, name, confluence, pap_url, rp, start_year, pmi_done, pmi_url, architect, tag_id, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        id,
+        data.name,
+        data.confluence ?? null,
+        data.pap_url ?? null,
+        data.rp ?? null,
+        data.start_year ?? null,
+        data.pmi_done ?? 0,
+        data.pmi_url ?? null,
+        data.architect ?? 'Я',
+        tagId,
+        sort_order
+      );
+  });
+
+  createProjectTx();
+  return getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as Project;
+}
+
+export function updateProject(id: string, data: Partial<Project>): Project {
+  const allowed = ['name', 'confluence', 'pap_url', 'rp', 'start_year', 'pmi_done', 'pmi_url', 'architect', 'tag_id', 'sort_order'];
+  const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
+  const fields = Object.keys(filtered).map((k) => `${k} = ?`).join(', ');
+  if (fields) {
+    getDb()
+      .prepare(`UPDATE projects SET ${fields}, updated_at = datetime('now') WHERE id = ?`)
+      .run(...Object.values(filtered), id);
+  }
+  return getDb().prepare('SELECT * FROM projects WHERE id = ?').get(id) as Project;
+}
+
+export function deleteProject(id: string): void {
+  getDb().prepare('DELETE FROM projects WHERE id = ?').run(id);
 }
 
 // ─── Rules ───────────────────────────────────────────────────────────────────

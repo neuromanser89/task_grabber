@@ -207,4 +207,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('search:open', handler);
     return () => { ipcRenderer.removeListener('search:open', handler); };
   },
+
+  // Projects
+  getProjects: () => ipcRenderer.invoke('projects:getAll'),
+  createProject: (data: unknown) => ipcRenderer.invoke('projects:create', data),
+  updateProject: (id: string, data: unknown) => ipcRenderer.invoke('projects:update', id, data),
+  deleteProject: (id: string) => ipcRenderer.invoke('projects:delete', id),
+  openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
 });

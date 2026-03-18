@@ -180,6 +180,25 @@ export function runMigrations(db: Database.Database) {
     );
   `);
 
+  // Migrate: add projects table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS projects (
+      id          TEXT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      confluence  TEXT,
+      pap_url     TEXT,
+      rp          TEXT,
+      start_year  INTEGER,
+      pmi_done    INTEGER DEFAULT 0,
+      pmi_url     TEXT,
+      architect   TEXT DEFAULT 'Я',
+      tag_id      TEXT,
+      sort_order  INTEGER DEFAULT 0,
+      created_at  TEXT DEFAULT (datetime('now')),
+      updated_at  TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Seed default board if empty, then seed columns with board_id
   const boardCount = db.prepare('SELECT COUNT(*) as cnt FROM boards').get() as { cnt: number };
   let defaultBoardId: string;

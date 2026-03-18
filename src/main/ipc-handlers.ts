@@ -512,4 +512,20 @@ export function setupIpcHandlers() {
     const actionsApplied = runSmartRules(win);
     return { actionsApplied };
   });
+
+  // ─── Projects ────────────────────────────────────────────────────────────────
+  ipcMain.handle('projects:getAll', () => queries.getAllProjects());
+
+  ipcMain.handle('projects:create', (_e, data) => queries.createProject(data));
+
+  ipcMain.handle('projects:update', (_e, id: string, data) => queries.updateProject(id, data));
+
+  ipcMain.handle('projects:delete', (_e, id: string) => {
+    queries.deleteProject(id);
+    return true;
+  });
+
+  ipcMain.handle('shell:openExternal', async (_e, url: string) => {
+    await shell.openExternal(url);
+  });
 }

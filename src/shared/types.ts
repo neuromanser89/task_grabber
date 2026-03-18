@@ -127,3 +127,19 @@ export interface BoardFile {
   mime_type: string | null;
   created_at: string;
 }
+
+export interface Project {
+  id: string;
+  name: string;
+  confluence: string | null;
+  pap_url: string | null;
+  rp: string | null;
+  start_year: number | null;
+  pmi_done: number;
+  pmi_url: string | null;
+  architect: string;
+  tag_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
