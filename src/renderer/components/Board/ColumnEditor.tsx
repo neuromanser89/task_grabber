@@ -25,6 +25,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
   const [color, setColor] = useState(column.color);
   const [wipLimit, setWipLimit] = useState<string>(column.wip_limit ? String(column.wip_limit) : '');
   const [columnType, setColumnType] = useState<ColumnType>(column.column_type ?? null);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moveToId, setMoveToId] = useState<string>('');
 
@@ -150,24 +151,34 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
         />
       </div>
 
-      {/* Column type */}
+      {/* Column type — custom dropdown */}
       <div>
         <p className="text-[10px] text-t-30 mb-1.5 uppercase tracking-wider">Тип колонки</p>
-        <select
-          value={columnType ?? ''}
-          onChange={(e) => setColumnType((e.target.value || null) as ColumnType)}
-          className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-all duration-200 appearance-none cursor-pointer pr-8"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 8px center',
-          }}
-        >
-          <option value="">— без типа —</option>
-          {Object.entries(COLUMN_TYPE_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowTypeMenu((v) => !v)}
+            className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-all duration-200 cursor-pointer text-left flex items-center justify-between"
+          >
+            <span>{columnType ? COLUMN_TYPE_LABELS[columnType] : '— без типа —'}</span>
+            <span className="text-t-30 text-[10px]">▾</span>
+          </button>
+          {showTypeMenu && (
+            <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-lg glass-heavy border border-t-10 shadow-2xl overflow-hidden">
+              <button
+                onClick={() => { setColumnType(null); setShowTypeMenu(false); }}
+                className={`w-full text-left px-2.5 py-1.5 text-[11px] transition-colors ${!columnType ? 'text-accent-blue bg-accent-blue/10' : 'text-t-50 hover:bg-t-06 hover:text-t-80'}`}
+              >— без типа —</button>
+              {Object.entries(COLUMN_TYPE_LABELS).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => { setColumnType(key as ColumnType); setShowTypeMenu(false); }}
+                  className={`w-full text-left px-2.5 py-1.5 text-[11px] transition-colors ${columnType === key ? 'text-accent-blue bg-accent-blue/10' : 'text-t-60 hover:bg-t-06 hover:text-t-80'}`}
+                >{label}</button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Save */}
