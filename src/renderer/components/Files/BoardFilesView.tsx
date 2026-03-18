@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Upload, Search, Trash2, Paperclip, FolderOpen, File, X } from 'lucide-react';
 import { useBoardStore } from '../../stores/boardStore';
 import { useTaskStore } from '../../stores/taskStore';
+import { useColumnStore } from '../../stores/columnStore';
 import type { BoardFile } from '@shared/types';
 
 function formatSize(bytes: number | null): string {
@@ -47,12 +48,14 @@ interface ContextMenu {
 export default function BoardFilesView() {
   const { activeBoardId } = useBoardStore();
   const { tasks } = useTaskStore();
+  const { columns } = useColumnStore();
   const [files, setFiles] = useState<BoardFile[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const [attachingFileId, setAttachingFileId] = useState<string | null>(null);
+  const [attachSearch, setAttachSearch] = useState('');
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -252,31 +255,55 @@ export default function BoardFilesView() {
             Открыть
           </button>
           {attachingFileId === contextMenu.file.id ? (
-            <div className="max-h-48 overflow-y-auto">
-              <div className="px-3 py-1.5 text-xs text-t-40 font-medium uppercase tracking-wide">Привязать к задаче</div>
-              {contextMenu.file.task_id && (
-                <button
-                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-t-08"
-                  onClick={() => handleAttachToTask(contextMenu.file.id, null)}
-                >
-                  Отвязать
-                </button>
-              )}
-              {boardTasks.map((t) => (
-                <button
-                  key={t.id}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-t-08 truncate
-                    ${t.id === contextMenu.file.task_id ? 'text-accent-blue' : 'text-t-primary'}`}
-                  onClick={() => handleAttachToTask(contextMenu.file.id, t.id)}
-                >
-                  {t.title}
-                </button>
-              ))}
+            <div className="max-h-64 overflow-hidden flex flex-col">
+              <div className="px-3 py-1.5 text-xs text-t-40 font-medium uppercase tracking-wide flex-shrink-0">Привязать к задаче</div>
+              <div className="px-2 pb-1.5 flex-shrink-0">
+                <input
+                  type="text"
+                  value={attachSearch}
+                  onChange={(e) => setAttachSearch(e.target.value)}
+                  placeholder="Поиск задачи..."
+                  className="w-full bg-t-06 border border-t-10 rounded px-2 py-1 text-xs text-t-primary placeholder:text-t-40 outline-none focus:border-accent-blue/50"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="overflow-y-auto flex-1">
+                {contextMenu.file.task_id && (
+                  <button
+                    className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-t-08"
+                    onClick={() => handleAttachToTask(contextMenu.file.id, null)}
+                  >
+                    Отвязать
+                  </button>
+                )}
+                {boardTasks
+                  .filter((t) => !attachSearch || t.title.toLowerCase().includes(attachSearch.toLowerCase()))
+                  .slice(0, 20)
+                  .map((t) => {
+                    const col = columns.find((c) => c.id === t.column_id);
+                    return (
+                      <button
+                        key={t.id}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-t-08 flex items-center gap-2
+                          ${t.id === contextMenu.file.task_id ? 'text-accent-blue' : 'text-t-primary'}`}
+                        onClick={() => handleAttachToTask(contextMenu.file.id, t.id)}
+                      >
+                        <span className="truncate flex-1">{t.title}</span>
+                        {col && (
+                          <span className="text-[10px] text-t-30 flex-shrink-0 px-1.5 py-0.5 rounded bg-t-06">
+                            {col.name}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
           ) : (
             <button
               className="w-full text-left px-3 py-2 text-sm text-t-primary hover:bg-t-08 flex items-center gap-2"
-              onClick={() => setAttachingFileId(contextMenu.file.id)}
+              onClick={() => { setAttachingFileId(contextMenu.file.id); setAttachSearch(''); }}
             >
               <Paperclip size={13} className="text-t-40" />
               Привязать к задаче
