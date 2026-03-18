@@ -454,10 +454,8 @@ export function spawnRecurringTask(task: Task): Task {
     archived_at: null,
     reminder_at: null,
     is_confidential: task.is_confidential ?? 0,
-    recurrence_rule: task.recurrence_rule ?? null,
-    recurrence_next: task.recurrence_next
-      ? computeNextRecurrence(task.recurrence_rule!, new Date(task.recurrence_next)).toISOString().slice(0, 10)
-      : null,
+    recurrence_rule: null,
+    recurrence_next: null,
   });
 
   // Update the original task's recurrence_next
@@ -494,7 +492,7 @@ export function exportAllData(): ExportData {
     tags: db.prepare('SELECT * FROM tags').all(),
     task_tags: db.prepare('SELECT * FROM task_tags').all(),
     notes: db.prepare('SELECT * FROM notes').all(),
-    settings: db.prepare('SELECT * FROM settings').all(),
+    settings: db.prepare("SELECT * FROM settings WHERE key NOT IN ('ai_api_key')").all(),
   };
 }
 

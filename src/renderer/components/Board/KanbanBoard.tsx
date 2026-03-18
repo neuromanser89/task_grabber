@@ -269,6 +269,8 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     setNewColName('');
   }
 
+  const allFilteredTasks = filteredTasks();
+
   return (
     <>
       <DndContext
@@ -288,7 +290,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
               <Column
                 key={col.id}
                 column={col}
-                tasks={filteredTasks().filter((t) => t.column_id === col.id)}
+                tasks={allFilteredTasks.filter((t) => t.column_id === col.id)}
                 onTaskClick={setSelectedTask}
                 selectedTaskId={selectedColumnIndex === colIdx ? selectedTaskId : null}
               />
