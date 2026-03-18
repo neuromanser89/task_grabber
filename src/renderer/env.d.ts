@@ -81,6 +81,34 @@ interface ElectronAPI {
   // Widget
   ipcSend: (channel: string, ...args: unknown[]) => void;
   onWidgetOpenTask?: (cb: (taskId: string) => void) => () => void;
+
+  // Focus sessions
+  focusStart?: (taskId: string | null) => Promise<{ id: string; task_id: string | null; started_at: string }>;
+  focusEnd?: (id: string, duration: number, notes: string | null) => Promise<unknown>;
+  focusGetByTask?: (taskId: string) => Promise<unknown[]>;
+  focusGetTotalTime?: (taskId: string) => Promise<number>;
+  onFocusSetTask?: (cb: (taskId: string) => void) => () => void;
+
+  // Recurring tasks
+  recurringSetRule?: (taskId: string, rule: string | null, startDate: string | null) => Promise<boolean>;
+
+  // Refresh signal
+  onTasksRefresh?: (cb: () => void) => () => void;
+
+  // Quick capture / screenshot
+  onGrabInstant?: (cb: (clipText: string) => void) => () => void;
+  onScreenshotCapture?: (cb: () => void) => () => void;
+  onAutomationToast?: (cb: (message: string) => void) => () => void;
+  runAutomation?: () => Promise<{ ok: boolean }>;
+
+  // AI assistant
+  aiQuery?: (payload: {
+    provider: 'openrouter' | 'ollama';
+    model: string;
+    apiKey: string | null;
+    baseUrl: string | null;
+    messages: { role: string; content: string }[];
+  }) => Promise<{ content: string }>;
 }
 
 declare global {

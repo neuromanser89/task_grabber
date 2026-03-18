@@ -11,6 +11,8 @@ export const HOTKEYS = {
   GRAB_FILES: 'CommandOrControl+Shift+F',
   QUICK_NOTE: 'CommandOrControl+Shift+N',
   WIDGET: 'CommandOrControl+Shift+W',
+  FOCUS: 'CommandOrControl+Shift+F2',
+  SCREENSHOT: 'CommandOrControl+Shift+S',
 } as const;
 
 export const PRIORITY_LABELS: Record<number, string> = {

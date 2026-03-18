@@ -286,6 +286,17 @@ export function setupIpcHandlers() {
     return { success: true };
   });
 
+  // ─── Focus Sessions ────────────────────────────────────────────────────────
+  ipcMain.handle('focus:start', (_e, taskId: string | null) => queries.createFocusSession(taskId));
+
+  ipcMain.handle('focus:end', (_e, id: string, duration: number, notes: string | null) =>
+    queries.endFocusSession(id, duration, notes)
+  );
+
+  ipcMain.handle('focus:getByTask', (_e, taskId: string) => queries.getFocusSessionsByTask(taskId));
+
+  ipcMain.handle('focus:getTotalTime', (_e, taskId: string) => queries.getTotalFocusTime(taskId));
+
   // ─── Backup ───────────────────────────────────────────────────────────────
   ipcMain.handle('backup:list', () => listBackups());
 
@@ -300,5 +311,58 @@ export function setupIpcHandlers() {
     restoreBackup(backupPath);
     initDatabase();
     return { success: true };
+  });
+
+  // ─── AI Query ─────────────────────────────────────────────────────────────
+  ipcMain.handle('ai:query', async (_e, payload: {
+    provider: 'openrouter' | 'ollama';
+    model: string;
+    apiKey: string | null;
+    baseUrl: string | null;
+    messages: { role: string; content: string }[];
+  }) => {
+    const { provider, model, apiKey, baseUrl, messages } = payload;
+
+    let endpoint: string;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (provider === 'ollama') {
+      endpoint = `${baseUrl ?? 'http://localhost:11434'}/v1/chat/completions`;
+    } else {
+      // openrouter
+      endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+        headers['HTTP-Referer'] = 'task-grabber';
+      }
+    }
+
+    const body = JSON.stringify({ model, messages, stream: false });
+
+    // Use Node.js built-in fetch (available in Node 18+/Electron 28+)
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body,
+      signal: AbortSignal.timeout(60_000),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`AI request failed ${response.status}: ${text.slice(0, 200)}`);
+    }
+
+    const data = await response.json() as { choices: { message: { content: string } }[] };
+    const content = data.choices?.[0]?.message?.content ?? '';
+    return { content };
+  });
+
+  // ─── Recurring Tasks ────────────────────────────────────────────────────────
+  ipcMain.handle('recurring:setRule', (_e, taskId: string, rule: string | null, startDate: string | null) => {
+    queries.updateTask(taskId, {
+      recurrence_rule: rule as Task['recurrence_rule'],
+      recurrence_next: startDate,
+    });
+    return true;
   });
 }
