@@ -1,12 +1,13 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Settings } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings, Bot } from 'lucide-react';
 
 interface TitleBarProps {
   onNewTask?: () => void;
   onSettings?: () => void;
+  onAI?: () => void;
 }
 
-export default function TitleBar({ onNewTask, onSettings }: TitleBarProps) {
+export default function TitleBar({ onNewTask, onSettings, onAI }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -21,7 +22,7 @@ export default function TitleBar({ onNewTask, onSettings }: TitleBarProps) {
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple" />
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple animate-glow-pulse blur-sm opacity-50" />
         </div>
-        <span className="text-sm font-semibold bg-gradient-to-r from-white/90 to-white/60 bg-clip-text text-transparent tracking-tight">
+        <span className="text-sm font-semibold text-t-primary tracking-tight">
           Task Grabber
         </span>
       </div>
@@ -36,10 +37,19 @@ export default function TitleBar({ onNewTask, onSettings }: TitleBarProps) {
             Задача
           </button>
         )}
+        {onAI && (
+          <button
+            onClick={onAI}
+            className="w-7 h-7 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-accent-purple"
+            title="AI Помощник"
+          >
+            <Bot size={14} />
+          </button>
+        )}
         {onSettings && (
           <button
             onClick={onSettings}
-            className="w-7 h-7 flex items-center justify-center hover:bg-white/8 rounded-md transition-all duration-150 text-white/40 hover:text-white/70"
+            className="w-7 h-7 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-t-70"
             title="Настройки"
           >
             <Settings size={14} />
@@ -49,19 +59,19 @@ export default function TitleBar({ onNewTask, onSettings }: TitleBarProps) {
         <div className="flex items-center ml-1">
           <button
             onClick={minimize}
-            className="w-8 h-8 flex items-center justify-center hover:bg-white/8 rounded-md transition-all duration-150 text-white/40 hover:text-white/70"
+            className="w-8 h-8 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-t-70"
           >
             <Minus size={14} />
           </button>
           <button
             onClick={maximize}
-            className="w-8 h-8 flex items-center justify-center hover:bg-white/8 rounded-md transition-all duration-150 text-white/40 hover:text-white/70"
+            className="w-8 h-8 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-t-70"
           >
             <Square size={11} />
           </button>
           <button
             onClick={close}
-            className="w-8 h-8 flex items-center justify-center hover:bg-red-500/20 rounded-md transition-all duration-150 text-white/40 hover:text-red-400"
+            className="w-8 h-8 flex items-center justify-center hover:bg-red-500/20 rounded-md transition-all duration-150 text-t-40 hover:text-red-400"
           >
             <X size={14} />
           </button>

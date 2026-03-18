@@ -211,6 +211,7 @@ export default function App() {
         onClose={() => setShowPalette(false)}
         onNewTask={openCreateDialog}
         onSettings={() => setShowSettings(true)}
+        onAI={() => setShowAI(true)}
       />
       <AIAssistantDialog
         isOpen={showAI}
