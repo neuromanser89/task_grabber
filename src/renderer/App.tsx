@@ -5,6 +5,7 @@ import TimelineView from './components/Board/TimelineView';
 import CalendarView from './components/Board/CalendarView';
 import NotesCanvasView from './components/Notes/NotesCanvasView';
 import BoardFilesView from './components/Files/BoardFilesView';
+import ProjectsCanvasView from './components/Projects/ProjectsCanvasView';
 import StatusBar from './components/Layout/StatusBar';
 import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
@@ -255,6 +256,7 @@ export default function App() {
         {viewMode === 'calendar' && <CalendarView />}
         {viewMode === 'notes' && <NotesCanvasView />}
         {viewMode === 'files' && <BoardFilesView />}
+        {viewMode === 'projects' && <ProjectsCanvasView />}
       </main>
       <StatusBar />
       <TaskCreateDialog

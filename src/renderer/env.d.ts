@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats, Rule, Board, BoardFile } from '../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats, Rule, Board, BoardFile, Project } from '../shared/types';
 
 interface ElectronAPI {
   getFilePath: (file: File) => string;
@@ -134,6 +134,13 @@ interface ElectronAPI {
   boardFilesDelete?: (id: string) => Promise<boolean>;
   boardFilesAttachToTask?: (fileId: string, taskId: string | null) => Promise<boolean>;
   boardFilesOpenDialog?: () => Promise<string[]>;
+
+  // Projects
+  getProjects?: () => Promise<Project[]>;
+  createProject?: (data: unknown) => Promise<Project>;
+  updateProject?: (id: string, data: unknown) => Promise<Project>;
+  deleteProject?: (id: string) => Promise<boolean>;
+  openExternal?: (url: string) => Promise<void>;
 }
 
 declare global {
