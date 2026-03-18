@@ -450,11 +450,11 @@ export function spawnRecurringTask(task: Task): Task {
     color: task.color,
     source_type: 'manual',
     source_info: JSON.stringify({ recurring_from: task.id }),
-    due_date: task.recurrence_next,
+    due_date: task.recurrence_next ?? null,
     archived_at: null,
     reminder_at: null,
-    is_confidential: task.is_confidential,
-    recurrence_rule: task.recurrence_rule,
+    is_confidential: task.is_confidential ?? 0,
+    recurrence_rule: task.recurrence_rule ?? null,
     recurrence_next: task.recurrence_next
       ? computeNextRecurrence(task.recurrence_rule!, new Date(task.recurrence_next)).toISOString().slice(0, 10)
       : null,

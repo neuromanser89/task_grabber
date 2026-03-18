@@ -173,10 +173,10 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               <Repeat size={8} />
             </span>
           )}
-          {task.time_spent > 0 && (
+          {(task.time_spent ?? 0) > 0 && (
             <span className="flex items-center gap-0.5 text-[10px] text-t-20">
               <Timer size={9} />
-              {Math.round(task.time_spent / 60)}м
+              {Math.round((task.time_spent ?? 0) / 60)}м
             </span>
           )}
           {task.due_date && (() => {

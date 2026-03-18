@@ -180,7 +180,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
     ];
 
     try {
-      const result = await window.electronAPI?.aiQuery({
+      const result = await window.electronAPI?.aiQuery?.({
         provider: config.provider,
         model: config.model,
         apiKey: config.apiKey || null,
