@@ -79,6 +79,8 @@ function startRecurringPoller() {
 function startReminderPoller() {
   setInterval(() => {
     try {
+      const dnd = queries.getSetting('automation_doNotDisturb');
+      if (dnd === 'true') return;
       const due = queries.getDueReminders();
       for (const task of due) {
         queries.clearReminder(task.id);
@@ -117,15 +119,19 @@ app.whenReady().then(() => {
     try { createBackup(); } catch { /* ignore if DB not ready */ }
   }, 2000);
 
-  // Run automation + smart rules on startup + every 5 minutes
-  setTimeout(() => {
+  // Run automation + smart rules on startup + every N minutes (default 5)
+  const getAutomationInterval = () => {
+    const mins = parseInt(queries.getSetting('automation_intervalMinutes') ?? '5', 10);
+    return Math.max(1, mins) * 60_000;
+  };
+  const runAutomationIfEnabled = () => {
+    const dnd = queries.getSetting('automation_doNotDisturb');
+    if (dnd === 'true') return;
     runAutomation(mainWindow);
     runSmartRules(mainWindow);
-  }, 5000);
-  setInterval(() => {
-    runAutomation(mainWindow);
-    runSmartRules(mainWindow);
-  }, 5 * 60_000);
+  };
+  setTimeout(runAutomationIfEnabled, 5000);
+  setInterval(runAutomationIfEnabled, getAutomationInterval());
 
   // IPC: manual automation trigger
   ipcMain.handle('automation:run', () => {

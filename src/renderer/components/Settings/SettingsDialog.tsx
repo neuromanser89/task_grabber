@@ -76,6 +76,8 @@ export default function SettingsDialog({
   const [autoArchiveDays, setAutoArchiveDays] = useState('7');
   const [overdueReminders, setOverdueReminders] = useState(true);
   const [staleHighPriority, setStaleHighPriority] = useState(true);
+  const [doNotDisturb, setDoNotDisturb] = useState(false);
+  const [automationInterval, setAutomationInterval] = useState('5');
 
   // AI settings
   const [aiProvider, setAiProvider] = useState<'openrouter' | 'ollama'>('openrouter');
@@ -105,11 +107,15 @@ export default function SettingsDialog({
       window.electronAPI?.getSetting('automation_autoArchiveDays'),
       window.electronAPI?.getSetting('automation_overdueReminders'),
       window.electronAPI?.getSetting('automation_staleHighPriority'),
-    ]).then(([arch, days, overdue, stale]) => {
+      window.electronAPI?.getSetting('automation_doNotDisturb'),
+      window.electronAPI?.getSetting('automation_intervalMinutes'),
+    ]).then(([arch, days, overdue, stale, dnd, interval]) => {
       setAutoArchive(arch !== 'false');
       if (days) setAutoArchiveDays(days as string);
       setOverdueReminders(overdue !== 'false');
       setStaleHighPriority(stale !== 'false');
+      setDoNotDisturb(dnd === 'true');
+      if (interval) setAutomationInterval(interval as string);
     });
     // Load AI settings
     Promise.all([
@@ -578,6 +584,50 @@ export default function SettingsDialog({
       {/* Automation tab */}
       {activeTab === 'automation' && (
         <div className="space-y-4">
+          {/* Do Not Disturb */}
+          <div className="p-3.5 rounded-lg bg-t-03 border border-t-06 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-t-85">Не беспокоить</div>
+                <div className="text-xs text-t-40">Отключить все автоматические уведомления и напоминания</div>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !doNotDisturb;
+                  setDoNotDisturb(next);
+                  window.electronAPI?.setSetting('automation_doNotDisturb', String(next));
+                }}
+                className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
+                  doNotDisturb ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]' : 'bg-t-12'
+                }`}
+              >
+                <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${doNotDisturb ? 'left-[21px]' : 'left-[3px]'}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Automation interval */}
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-t-03 border border-t-06">
+            <div>
+              <div className="text-sm font-medium text-t-85">Интервал автоматизации</div>
+              <div className="text-xs text-t-40">Как часто проверять правила и напоминания</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={automationInterval}
+                onChange={(e) => {
+                  setAutomationInterval(e.target.value);
+                  window.electronAPI?.setSetting('automation_intervalMinutes', e.target.value);
+                }}
+                className="w-16 bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-lg px-2.5 py-1 text-xs text-t-85 outline-none transition-colors"
+              />
+              <span className="text-xs text-t-50">мин</span>
+            </div>
+          </div>
+
           {/* Auto-archive */}
           <div className="p-3.5 rounded-lg bg-t-03 border border-t-06 space-y-3">
             <div className="flex items-center justify-between">
