@@ -56,7 +56,6 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
-  const { createTask } = useTaskStore();
   const { fetchBoards, setActiveBoard } = useBoardStore();
   const sidebarRef = useRef<SidebarHandle>(null);
   const { toasts, addToast, dismiss } = useToast();
@@ -131,7 +130,7 @@ export default function App() {
       const sortOrder = tasks.length > 0 ? Math.max(...tasks.map((t) => t.sort_order)) + 1 : 0;
 
       try {
-        const task = await createTask({
+        const task = await useTaskStore.getState().createTask({
           title,
           description,
           column_id: defaultCol.id,
@@ -206,7 +205,8 @@ export default function App() {
       unsubReminder?.();
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [fetchNotes, createTask, addToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openCreateDialog = useCallback(() => {
     setInitialText('');

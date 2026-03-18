@@ -127,7 +127,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
 
   const { tasks } = useTaskStore();
   const { columns } = useColumnStore();
-  const colMap = Object.fromEntries(columns.map((c) => [c.id, c.name]));
+  const colMap = React.useMemo(() => Object.fromEntries(columns.map((c) => [c.id, c.name])), [columns]);
 
   // Load AI config from settings
   useEffect(() => {
@@ -161,6 +161,9 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
 
   const activeTasks = tasks.filter((t) => !t.archived_at);
 
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
   const sendMessage = useCallback(async (userContent: string, systemOverride?: string) => {
     if (!config || !userContent.trim()) return;
 
@@ -175,7 +178,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
 
     const allMessages = [
       { role: 'system', content: systemPrompt },
-      ...messages,
+      ...messagesRef.current,
       userMsg,
     ];
 
@@ -199,7 +202,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
     } finally {
       setLoading(false);
     }
-  }, [config, messages]);
+  }, [config]);
 
   const handleDaySummary = useCallback(() => {
     if (!config) return;
