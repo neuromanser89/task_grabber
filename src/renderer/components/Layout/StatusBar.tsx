@@ -1,19 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { Keyboard, LayoutGrid } from 'lucide-react';
 
 export default function StatusBar() {
   const tasks = useTaskStore((s) => s.tasks);
+  const searchQuery = useTaskStore((s) => s.searchQuery);
+  const filterTags = useTaskStore((s) => s.filterTags);
+  const filterPriority = useTaskStore((s) => s.filterPriority);
+  const filterSource = useTaskStore((s) => s.filterSource);
   const filteredTasks = useTaskStore((s) => s.filteredTasks);
-  const hasFilters = useTaskStore(
-    (s) =>
-      s.searchQuery.length > 0 ||
-      s.filterTags.length > 0 ||
-      s.filterPriority.length > 0 ||
-      s.filterSource.length > 0
-  );
+  const hasFilters = searchQuery.length > 0 || filterTags.length > 0 || filterPriority.length > 0 || filterSource.length > 0;
 
-  const visible = filteredTasks();
+  const visible = useMemo(() => filteredTasks(), [tasks, searchQuery, filterTags, filterPriority, filterSource]);
   const today = new Date().toDateString();
   const todayCount = tasks.filter(
     (t) => new Date(t.created_at).toDateString() === today

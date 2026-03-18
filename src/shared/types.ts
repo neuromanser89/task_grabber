@@ -10,7 +10,7 @@ export interface Board {
 
 export type Priority = 0 | 1 | 2 | 3; // none, low, medium, high
 export type SourceType = 'manual' | 'text' | 'file' | 'email';
-export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'weekdays' | string; // 'custom:N:day|week|month'
+export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'weekdays' | (string & {}); // 'custom:N:day|week|month'
 
 export interface Column {
   id: string;
@@ -106,45 +106,6 @@ export interface Rule {
   sort_order: number;
   created_at: string;
 }
-
-// IPC channel names
-export const IPC = {
-  TASKS_GET_ALL: 'tasks:getAll',
-  TASKS_CREATE: 'tasks:create',
-  TASKS_UPDATE: 'tasks:update',
-  TASKS_DELETE: 'tasks:delete',
-  TASKS_MOVE: 'tasks:move',
-  COLUMNS_GET_ALL: 'columns:getAll',
-  COLUMNS_CREATE: 'columns:create',
-  COLUMNS_UPDATE: 'columns:update',
-  COLUMNS_DELETE: 'columns:delete',
-  ATTACHMENTS_ADD: 'attachments:add',
-  ATTACHMENTS_DELETE: 'attachments:delete',
-  OPEN_FILE: 'file:open',
-  SHOW_WINDOW: 'window:show',
-  HIDE_WINDOW: 'window:hide',
-  MINIMIZE_WINDOW: 'window:minimize',
-  MAXIMIZE_WINDOW: 'window:maximize',
-  CLOSE_WINDOW: 'window:close',
-  NOTES_GET_ALL: 'notes:getAll',
-  NOTES_CREATE: 'notes:create',
-  NOTES_UPDATE: 'notes:update',
-  NOTES_DELETE: 'notes:delete',
-  TEMPLATES_GET_ALL: 'templates:getAll',
-  TEMPLATES_CREATE: 'templates:create',
-  TEMPLATES_DELETE: 'templates:delete',
-  TASKS_ARCHIVE: 'tasks:archive',
-  TASKS_UNARCHIVE: 'tasks:unarchive',
-  TASKS_GET_ARCHIVED: 'tasks:getArchived',
-  TASKS_GET_STATS: 'tasks:getStats',
-  RELATED_ADD: 'related:add',
-  RELATED_REMOVE: 'related:remove',
-  RELATED_GET: 'related:get',
-  BOARDS_GET_ALL: 'boards:getAll',
-  BOARDS_CREATE: 'boards:create',
-  BOARDS_UPDATE: 'boards:update',
-  BOARDS_DELETE: 'boards:delete',
-} as const;
 
 export interface TaskStats {
   total: number;
