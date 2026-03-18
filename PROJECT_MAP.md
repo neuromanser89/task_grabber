@@ -1,673 +1,687 @@
-# PROJECT_MAP.md — Task Grabber
+# Task Grabber — PROJECT MAP
 
-> Карта проекта для Claude. Читать перед любой работой с кодом.
+> Актуально после Phase 1–6 (2026-03-18)
 
 ---
 
 ## 1. Обзор проекта
 
-**Task Grabber** — Windows tray-приложение для мгновенного создания задач из любого места: выделенный текст, файлы, письма Outlook (.msg). Канбан-доска с drag&drop, кастомными колонками, тегами, вложениями, фокус-сессиями и автоматизацией.
-
-**Статус:** Phase 3 полностью завершена. Все фичи реализованы.
+**Task Grabber** — Windows tray-приложение для мгновенного создания задач из любого места: выделенный текст, файлы, письма Outlook (.msg). Включает канбан-доску с несколькими досками, Focus Mode (Pomodoro), Desktop Widget, AI-ассистент, Smart Rules, глобальный поиск, Timeline/Calendar view.
 
 ### Стек
 
-| Компонент | Технология |
-|-----------|-----------|
+| Слой | Технология |
+|------|-----------|
 | Runtime | Electron 33 |
-| Frontend | React 18 + TypeScript |
+| Frontend | React 18 + TypeScript 5 |
 | State | Zustand 4 |
 | UI | Tailwind CSS 3 + Framer Motion 11 |
-| Drag&Drop | @dnd-kit/core + @dnd-kit/sortable |
-| БД | SQLite (better-sqlite3, синхронный) |
-| Глобальные хоткеи | Electron globalShortcut |
-| .msg парсинг | msgreader |
-| Markdown | react-markdown + remark-gfm |
+| Drag & Drop | @dnd-kit/core + @dnd-kit/sortable |
+| БД | SQLite (better-sqlite3 11, синхронный) |
+| Хоткеи | Electron globalShortcut |
+| MSG-парсинг | msgreader |
 | Иконки | Lucide React |
-| Сборка | electron-builder (NSIS для Windows) |
+| Сборка | Vite 5 (renderer) + tsc (main) + electron-builder 26 |
 
-### Запуск
+### Как запустить
 
 ```bash
-npm run dev      # Dev режим: Vite (порт 6173) + Electron
-npm run build    # Сборка: tsc + vite build
-npm run pack     # Сборка + создание инсталлятора
+npm run dev     # Electron + Vite dev server (порт 6173)
+npm run build   # tsc (main) + vite build (renderer)
+npm run pack    # build + electron-builder → release/
 ```
 
 ---
 
-## 2. Структура файлов
+## 2. Дерево файлов
 
 ```
 task_grabber/
 ├── src/
-│   ├── main/                         # Electron main process (Node.js)
-│   │   ├── main.ts                   # Entry: создаёт окно, запускает всё
-│   │   ├── preload.ts                # Мост main↔renderer (contextBridge)
-│   │   ├── ipc-handlers.ts           # Все IPC handle/on обработчики
-│   │   ├── hotkeys.ts                # Глобальные хоткеи (Ctrl+Shift+T/F/N/S)
+│   ├── main/                         # Electron main process
+│   │   ├── main.ts                   # Entry point: createWindow, tray, hotkeys, IPC, поллеры
 │   │   ├── tray.ts                   # System tray + контекстное меню
-│   │   ├── widget.ts                 # Мини-виджет окно (alwaysOnTop)
-│   │   ├── focus-window.ts           # Фокус-таймер окно (alwaysOnTop)
-│   │   ├── automation.ts             # Автоматизация: автоархив, напоминания
-│   │   ├── backup.ts                 # Бэкап/восстановление БД
-│   │   ├── msg-parser.ts             # Парсинг .msg файлов Outlook
+│   │   ├── hotkeys.ts                # Глобальные хоткеи (кастомизируемые, reloadHotkeys)
+│   │   ├── ipc-handlers.ts           # Все ipcMain.handle — полный API между main и renderer
+│   │   ├── preload.ts                # contextBridge: window.electronAPI
+│   │   ├── widget.ts                 # Desktop Widget окно (always-on-top, transparent)
+│   │   ├── focus-window.ts           # Focus Mode окно (Pomodoro таймер, always-on-top)
+│   │   ├── automation.ts             # Авто-архив, напоминания об overdue, stale-задачи
+│   │   ├── smart-rules.ts            # Движок Smart Rules (триггеры → действия)
+│   │   ├── backup.ts                 # Автобэкап + восстановление БД
 │   │   ├── file-handler.ts           # Копирование файлов в userData/storage
+│   │   ├── msg-parser.ts             # Парсинг .msg писем Outlook (msgreader)
 │   │   └── db/
-│   │       ├── database.ts           # Инициализация SQLite (WAL mode)
-│   │       ├── migrations.ts         # Создание таблиц + ALTER migrations
-│   │       └── queries.ts            # Все CRUD операции
+│   │       ├── database.ts           # Инициализация SQLite + путь к файлу БД
+│   │       ├── migrations.ts         # DDL всех таблиц + сидирование дефолтных данных
+│   │       └── queries.ts            # Все CRUD-запросы (синхронные)
 │   ├── renderer/                     # React UI
-│   │   ├── index.html                # Главное окно
-│   │   ├── widget.html               # HTML для виджет-окна
-│   │   ├── focus.html                # HTML для фокус-окна
-│   │   ├── main.tsx                  # React entry для главного окна
-│   │   ├── widget-entry.tsx          # React entry для виджета
-│   │   ├── focus-entry.tsx           # React entry для фокуса
-│   │   ├── App.tsx                   # Root компонент: layout + глобальные события
-│   │   ├── Widget.tsx                # Виджет компонент (мини-доска)
-│   │   ├── FocusWindow.tsx           # Фокус-таймер компонент
+│   │   ├── index.html                # Entry для главного окна
+│   │   ├── widget.html               # Entry для Desktop Widget
+│   │   ├── focus.html                # Entry для Focus Mode
+│   │   ├── main.tsx                  # ReactDOM.render → App
+│   │   ├── widget-entry.tsx          # ReactDOM.render → Widget
+│   │   ├── focus-entry.tsx           # ReactDOM.render → FocusWindow
 │   │   ├── env.d.ts                  # Типы для window.electronAPI
+│   │   ├── App.tsx                   # Корневой компонент: layout, темы, IPC-подписки
+│   │   ├── Widget.tsx                # Desktop Widget: топ-задачи, клик → открыть
+│   │   ├── FocusWindow.tsx           # Focus Mode: Pomodoro таймер, задача, сессии
 │   │   ├── stores/
 │   │   │   ├── taskStore.ts          # Zustand: задачи + фильтры
 │   │   │   ├── columnStore.ts        # Zustand: колонки
+│   │   │   ├── boardStore.ts         # Zustand: доски + activeBoardId
 │   │   │   └── noteStore.ts          # Zustand: заметки
 │   │   ├── hooks/
-│   │   │   └── useKeyboardNav.ts     # Хук: клавиатурная навигация по доске
-│   │   ├── components/
-│   │   │   ├── Board/
-│   │   │   │   ├── KanbanBoard.tsx   # Главная доска + DnD контекст
-│   │   │   │   ├── Column.tsx        # Колонка: сортируемая, droppable
-│   │   │   │   └── ColumnEditor.tsx  # Попап редактора колонки (правый клик)
-│   │   │   ├── Task/
-│   │   │   │   ├── TaskCard.tsx      # Карточка задачи (sortable)
-│   │   │   │   ├── TaskDetail.tsx    # Модалка детального вида задачи
-│   │   │   │   ├── TaskCreateDialog.tsx # Диалог создания задачи
-│   │   │   │   └── RelatedTasks.tsx  # Блок связанных задач
-│   │   │   ├── DropZone/
-│   │   │   │   └── DropZone.tsx      # Зона drag&drop файлов/писем (внизу)
-│   │   │   ├── Layout/
-│   │   │   │   ├── TitleBar.tsx      # Кастомный title bar (frameless window)
-│   │   │   │   ├── Sidebar.tsx       # Боковая панель (фильтры/заметки/статистика)
-│   │   │   │   └── StatusBar.tsx     # Статус бар снизу
-│   │   │   ├── Notes/
-│   │   │   │   ├── QuickNoteDialog.tsx  # Диалог быстрой заметки
-│   │   │   │   └── NotesPanel.tsx    # Панель заметок в Sidebar
-│   │   │   ├── Stats/
-│   │   │   │   └── StatsPanel.tsx    # Панель статистики + архив
-│   │   │   ├── Settings/
-│   │   │   │   └── SettingsDialog.tsx # Настройки: хоткеи, тема, автозапуск и т.д.
-│   │   │   ├── CommandPalette/
-│   │   │   │   └── CommandPalette.tsx # Ctrl+K палитра команд
-│   │   │   ├── AI/
-│   │   │   │   └── AIAssistantDialog.tsx # AI ассистент (OpenRouter/Ollama)
-│   │   │   └── common/
-│   │   │       ├── Button.tsx        # Кнопка
-│   │   │       ├── Input.tsx         # Инпут
-│   │   │       ├── Modal.tsx         # Базовая модалка
-│   │   │       ├── Badge.tsx         # Бейдж
-│   │   │       ├── Toast.tsx         # Toast уведомления + useToast хук
-│   │   │       ├── TagInput.tsx      # Инпут тегов с autocomplete
-│   │   │       └── MarkdownEditor.tsx # Редактор markdown
-│   │   └── styles/
-│   │       └── globals.css           # Глобальные стили, CSS переменные, .glass классы
+│   │   │   └── useKeyboardNav.ts     # Навигация по доске стрелками
+│   │   ├── styles/
+│   │   │   └── globals.css           # CSS-переменные тем, theme-aware классы, анимации
+│   │   └── components/
+│   │       ├── Board/
+│   │       │   ├── KanbanBoard.tsx   # Канбан: DnD-контекст, колонки, фильтрация по доске
+│   │       │   ├── Column.tsx        # Колонка: WIP-лимит, заголовок, список карточек
+│   │       │   ├── ColumnEditor.tsx  # Редактор колонок (добавление, удаление, ренейм, цвет)
+│   │       │   ├── BoardSwitcher.tsx # Переключатель досок в TitleBar
+│   │       │   ├── TimelineView.tsx  # Timeline/Gantt вид задач
+│   │       │   ├── CalendarView.tsx  # Календарный вид задач по датам
+│   │       │   └── BatchToolbar.tsx  # Тулбар массовых действий
+│   │       ├── Task/
+│   │       │   ├── TaskCard.tsx      # Карточка задачи: приоритет, теги, вложения, источник
+│   │       │   ├── TaskDetail.tsx    # Детальный вид (модалка): редактирование, вложения, теги, recurring, time tracking
+│   │       │   ├── TaskCreateDialog.tsx # Диалог создания задачи (предзаполнение из clipboard/файлов)
+│   │       │   └── RelatedTasks.tsx  # Связанные задачи в TaskDetail
+│   │       ├── AI/
+│   │       │   └── AIAssistantDialog.tsx # AI-ассистент: OpenRouter / Ollama, контекст из задач
+│   │       ├── CommandPalette/
+│   │       │   └── CommandPalette.tsx    # Ctrl+K: поиск задач/команд, навигация, смена темы
+│   │       ├── GlobalSearch/
+│   │       │   └── GlobalSearch.tsx      # Ctrl+Space: поиск по задачам/заметкам/доскам с подсветкой
+│   │       ├── Rules/
+│   │       │   └── RulesDialog.tsx       # Визуальный конструктор Smart Rules (ЕСЛИ → ТО)
+│   │       ├── DropZone/
+│   │       │   └── DropZone.tsx          # Drag&drop зона для файлов и .msg
+│   │       ├── Layout/
+│   │       │   ├── TitleBar.tsx          # Кастомный title bar: BoardSwitcher, поиск, кнопки вида
+│   │       │   ├── Sidebar.tsx           # Боковая панель: фильтры, теги, заметки, статистика
+│   │       │   └── StatusBar.tsx         # Статус-бар: счётчики задач, хоткеи-подсказки
+│   │       ├── Notes/
+│   │       │   ├── NotesPanel.tsx        # Список заметок в Sidebar
+│   │       │   └── QuickNoteDialog.tsx   # Ctrl+Shift+N: быстрая заметка
+│   │       ├── Settings/
+│   │       │   └── SettingsDialog.tsx    # Настройки: тема, хоткеи, автозапуск, автоматизация, бэкап
+│   │       ├── Stats/
+│   │       │   └── StatsPanel.tsx        # Статистика задач + архив
+│   │       └── common/
+│   │           ├── Button.tsx
+│   │           ├── Input.tsx
+│   │           ├── Modal.tsx
+│   │           ├── Badge.tsx
+│   │           ├── TagInput.tsx          # Autocomplete для тегов
+│   │           ├── MarkdownEditor.tsx    # Markdown редактор с preview
+│   │           └── Toast.tsx             # Toast-уведомления (success/error/info)
 │   └── shared/
-│       ├── types.ts                  # Все TypeScript типы + IPC константы
-│       └── constants.ts             # DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*
+│       ├── types.ts                  # Все интерфейсы + IPC-константы
+│       └── constants.ts              # DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*, SOURCE_ICONS
 ├── assets/
-│   └── icons/                       # Иконки приложения (icon.ico)
+│   └── icons/
+│       └── icon.ico                  # Иконка приложения
 ├── package.json
-├── tsconfig.json                    # Renderer TypeScript конфиг
-├── tsconfig.main.json               # Main process TypeScript конфиг
+├── vite.config.ts
+├── tsconfig.json                     # Для renderer
+├── tsconfig.main.json                # Для main process
 ├── tailwind.config.js
-├── vite.config.ts                   # Vite: 3 entry points (main/widget/focus)
-└── electron-builder.yml             # Сборка: NSIS x64
+├── electron-builder.yml
+└── PROJECT_MAP.md
 ```
 
 ---
 
 ## 3. Архитектура
 
-### Main Process vs Renderer
+### Процессы Electron
 
 ```
-Main Process (Node.js)          Renderer Process (React)
-─────────────────────           ────────────────────────
-main.ts                         App.tsx
-  ├─ setupTray()                  ├─ KanbanBoard
-  ├─ setupHotkeys()               ├─ Sidebar
-  ├─ setupIpcHandlers()           ├─ TaskDetail (modal)
-  ├─ setupWidgetHotkey/Ipc()      ├─ SettingsDialog
-  ├─ setupFocusHotkey/Ipc()       ├─ CommandPalette
-  ├─ startReminderPoller()        └─ AIAssistantDialog
-  ├─ startRecurringPoller()
-  └─ runAutomation() (5min)
-
-Preload (contextBridge):
-  window.electronAPI = { все методы }
+┌─────────────────────────────────────────────────────────────┐
+│  Main Process (Node.js)                                      │
+│  main.ts → tray, hotkeys, ipc-handlers, widget, focus,      │
+│            automation, smart-rules, backup, reminder-poller  │
+│                                                              │
+│  IPC (ipcMain.handle / ipcMain.on)                          │
+│         ↕                                                    │
+│  preload.ts (contextBridge → window.electronAPI)            │
+│                                                              │
+│  Renderer Processes (Chromium)                              │
+│  ┌──────────────────┐ ┌────────────┐ ┌──────────────────┐  │
+│  │  Main Window     │ │   Widget   │ │   Focus Window   │  │
+│  │  App.tsx         │ │ Widget.tsx │ │ FocusWindow.tsx  │  │
+│  │  index.html:6173 │ │widget.html │ │  focus.html      │  │
+│  └──────────────────┘ └────────────┘ └──────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Windows
+### Три окна
 
-| Окно | Файл | Размер | Особенности |
-|------|------|--------|-------------|
-| Главное | `index.html` | 1200×800 | `frame: false`, тёмный фон |
-| Виджет | `widget.html` | 300×400 | `alwaysOnTop`, `transparent`, `skipTaskbar` |
-| Фокус | `focus.html` | 360×520 | `alwaysOnTop`, `transparent`, `skipTaskbar` |
+| Окно | Файл | Описание |
+|------|------|----------|
+| Main | `main.ts` → `index.html` | 1200×800, frameless, скрывается в трей |
+| Widget | `widget.ts` → `widget.html` | Прозрачное, always-on-top, перетаскиваемое |
+| Focus | `focus-window.ts` → `focus.html` | Pomodoro таймер, always-on-top |
 
-### Безопасность
+### Поллеры в main.ts
 
-- `contextIsolation: true`, `nodeIntegration: false`
-- Все IPC через `contextBridge.exposeInMainWorld`
-- SQL injection защита: `safeFilterFields()` с whitelist полей
-- Path traversal защита: `file:open` только из `userData/storage`
-- Размер вложений: макс 100MB
+- **Reminder poller** — каждые 30 сек проверяет `getDueReminders()`, показывает `Notification`
+- **Recurring poller** — каждый час проверяет `getDueRecurringTasks()`, спавнит новые вхождения
+- **Automation + Smart Rules** — при старте через 5 сек, затем каждые 5 мин
 
 ---
 
-## 4. Компоненты
+## 4. React-компоненты
 
 ### App.tsx
-Root компонент. Управляет: темой, модалками, глобальными IPC событиями.
-- Props: нет (root)
-- State: `showCreateDialog`, `showQuickNote`, `showSettings`, `showPalette`, `showAI`, `initialText`, `initialFiles`, `sidebarCollapsed`, `theme`
-- IPC listeners: `onGrabText`, `onGrabFiles`, `onShowCreateDialog`, `onShowQuickNote`, `onGrabInstant`, `onScreenshotCapture`, `onAutomationToast`
-- Keyboard: `Ctrl+K` → CommandPalette
+Корневой компонент. Управляет состоянием всех диалогов/оверлеев, темой, IPC-подписками.
 
-### KanbanBoard.tsx
-Главная доска с DnD. Управляет колонками и задачами через dnd-kit.
-- Props: `onCreateTask?`, `onFocusSearch?`
-- Загружает задачи и колонки при mount
-- DnD: задачи между колонками + сортировка колонок
-- WIP limit: показывает toast при превышении
-- Keyboard nav через `useKeyboardNav`
+Рендерит: TitleBar → (KanbanBoard | TimelineView | CalendarView) + Sidebar + StatusBar + все диалоги.
 
-### Column.tsx
-Одна колонка канбана.
-- Props: `column`, `tasks`, `onTaskClick?`, `isDragOverlay?`, `selectedTaskId?`
-- `useSortable` с ID `col::${column.id}` (префикс для различения от task IDs)
-- `useDroppable` с ID `column.id`
-- WIP limit: красная полоска + badge `tasks/limit` при превышении
-- ContextMenu (правый клик) → открывает `ColumnEditor`
+Диалоги: TaskCreateDialog, QuickNoteDialog, SettingsDialog, CommandPalette, AIAssistantDialog, RulesDialog, GlobalSearch.
 
-### TaskCard.tsx
-Карточка задачи.
-- Props: `task`, `isDragOverlay?`, `isSelected?`, `onClick?`
-- `useSortable` с ID `task.id`
-- Показывает: приоритет (полоска), теги, дедлайн, вложения, чеклист прогресс, время
-- Кнопка фокус-таймера (hover, отправляет `focus:openTask` IPC)
+### Board/KanbanBoard.tsx
+DnD-контекст (@dnd-kit). Фильтрует задачи по `activeBoardId`. Рендерит Column-ы.
 
-### TaskDetail.tsx
-Модалка детального вида задачи.
-- Props: `task`, `isOpen`, `onClose`
-- Редактирование: title, description (markdown), priority, column, due_date, reminder, tags
-- Вложения: drag&drop + превью изображений
-- Чеклисты: кликабельные (toggle done/undone)
-- Архивирование задачи
-- Связанные задачи через `RelatedTasks`
-- Конфиденциальность (`is_confidential`)
-- Повторяемость (`recurrence_rule`)
+Props: `onCreateTask: () => void`, `onFocusSearch: () => void`
 
-### TaskCreateDialog.tsx
-Диалог создания задачи (открывается по хоткею или кнопке).
-- Props: `isOpen`, `onClose`, `initialText?`, `initialFiles?`
-- Предзаполняет title из первой строки текста
-- Поддерживает drag&drop файлов прямо в диалог
-- Поддерживает шаблоны задач
+### Board/Column.tsx
+Заголовок с иконкой, цветом, WIP-лимитом (визуальное предупреждение при превышении). SortableContext для карточек.
 
-### Sidebar.tsx
-Боковая панель (200px, сворачивается до 10px).
-- Props: `collapsed`, `onToggle`
-- Ref: `SidebarHandle { focusSearch() }`
-- Вкладки: Фильтры / Заметки / Статистика
-- Фильтры: текстовый поиск, теги, приоритет, источник
+Props: `column: Column`, `tasks: TaskWithAttachments[]`, `onCreateTask: () => void`
 
-### TitleBar.tsx
-Кастомный title bar для frameless окна.
-- Props: `onNewTask`, `onSettings`, `onAI`
-- Кнопки: drag region, новая задача, настройки, AI, minimize/maximize/close
+### Board/ColumnEditor.tsx
+Модалка редактирования колонок: добавить, удалить, переименовать, изменить цвет, иконку, WIP-лимит, порядок.
 
-### StatusBar.tsx
-Нижний статус бар. Показывает: кол-во задач, создано сегодня, хоткей подсказка.
+### Board/BoardSwitcher.tsx
+Дропдаун в TitleBar для выбора активной доски. Создание/удаление досок.
 
-### SettingsDialog.tsx
-Настройки приложения.
-- Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
-- Разделы: Тема, Хоткеи, Автозапуск, Экспорт/Импорт, Бэкапы, Автоматизация, Шаблоны, AI
+### Board/TimelineView.tsx
+Горизонтальная временная шкала с задачами по `due_date`.
 
-### CommandPalette.tsx
-Палитра команд (Ctrl+K).
-- Props: `isOpen`, `onClose`, `onNewTask`, `onSettings`, `onAI`, `onQuickNote`, `onThemeCycle`, `currentTheme`
-- Fuzzy search по командам
+### Board/CalendarView.tsx
+Сетка-календарь по месяцам, задачи в ячейках дат.
 
-### AIAssistantDialog.tsx
-AI ассистент. Поддерживает OpenRouter и Ollama.
-- Props: `isOpen`, `onClose`
-- Читает настройки `ai_provider`, `ai_model`, `ai_api_key`, `ai_base_url`
-- Отправляет через `window.electronAPI.aiQuery()`
+### Board/BatchToolbar.tsx
+Тулбар для массовых действий над выбранными задачами.
 
-### DropZone.tsx
-Зона внизу доски для drag&drop файлов и .msg писем.
-- Автоопределяет .msg → парсит через `window.electronAPI.parseMsg()`
-- Обычные файлы → создаёт задачу с вложениями
+### Task/TaskCard.tsx
+Карточка задачи с цветной полосой приоритета, тегами, иконкой источника, счётчиком вложений, датой.
 
-### Widget.tsx / FocusWindow.tsx
-Отдельные React-приложения для popup окон. Используют тот же `window.electronAPI`.
+Props: `task: TaskWithAttachments`, `onClick: () => void`
+
+### Task/TaskDetail.tsx
+Полная модалка задачи: редактирование заголовка/описания (Markdown), теги, вложения, дедлайн, напоминание, связанные задачи, recurring-правило, time tracking, архивирование, конфиденциальность.
+
+Props: `task: TaskWithAttachments | null`, `onClose: () => void`
+
+### Task/TaskCreateDialog.tsx
+Диалог создания задачи. Предзаполнение из `initialText` (clipboard) и `initialFiles` (пути). Выбор колонки, приоритета, тегов, шаблонов.
+
+Props: `isOpen: boolean`, `onClose: () => void`, `initialText: string`, `initialFiles: string[]`
+
+### Task/RelatedTasks.tsx
+Секция связанных задач в TaskDetail. Поиск и привязка.
+
+Props: `taskId: string`
+
+### AI/AIAssistantDialog.tsx
+Чат-окно AI-ассистента. Провайдеры: OpenRouter и Ollama. Контекст из активных задач (конфиденциальные исключаются).
+
+Props: `isOpen: boolean`, `onClose: () => void`
+
+### CommandPalette/CommandPalette.tsx
+Ctrl+K. Поиск задач, заметок, команд. Встроенные команды: новая задача, настройки, AI, смена темы, quick note, export, перемещение задачи в колонку.
+
+Props: `isOpen`, `onClose`, `onNewTask`, `onSettings`, `onAI`, `onQuickNote`, `onThemeCycle`, `currentTheme`
+
+### GlobalSearch/GlobalSearch.tsx
+Ctrl+Space. Поиск по задачам, заметкам, доскам с подсветкой совпадений. Фильтры по типу, навигация клавиатурой.
+
+Props: `isOpen: boolean`, `onClose: () => void`
+
+### Rules/RulesDialog.tsx
+Визуальный конструктор Smart Rules. ЕСЛИ (trigger_field + trigger_op + trigger_value) → ТО (action_type + action_value).
+
+Props: `isOpen: boolean`, `onClose: () => void`
+
+### DropZone/DropZone.tsx
+Зона перетаскивания файлов. .msg → `parseMsg()`, остальные файлы → создаёт задачу с вложениями.
+
+### Layout/TitleBar.tsx
+Кастомный title bar: логотип, BoardSwitcher, кнопки вида (kanban/timeline/calendar), кнопки Settings/AI/Rules, кнопки окна.
+
+Props: `onNewTask`, `onSettings`, `onAI`, `onRules`, `viewMode: ViewMode`, `onViewChange`
+
+### Layout/Sidebar.tsx
+Сворачиваемый sidebar: поиск, фильтры по тегам/приоритету/источнику, NotesPanel, StatsPanel.
+
+Ref handle: `{ focusSearch: () => void }`
+
+### Layout/StatusBar.tsx
+Нижняя строка: общее число задач, создано сегодня, хоткей-подсказки.
+
+### Notes/QuickNoteDialog.tsx
+Мини-диалог быстрой заметки (Ctrl+Shift+N). Enter → сохранить.
+
+Props: `isOpen: boolean`, `onClose: () => void`
+
+### Settings/SettingsDialog.tsx
+Настройки: тема (dark/light/system), кастомные хоткеи, автозапуск, параметры автоматизации, бэкап/восстановление, экспорт/импорт JSON.
+
+Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
+
+### common/Toast.tsx
+`useToast()` hook + `ToastContainer`. Типы: `success | error | info`. Клик по тосту с taskId открывает задачу.
+
+### common/MarkdownEditor.tsx
+Переключение между редактированием и preview. Рендеринг через react-markdown + remark-gfm. Кликабельные чеклисты.
+
+### common/TagInput.tsx
+Автокомплит тегов с созданием новых. Рандомный цвет для новых тегов.
 
 ---
 
 ## 5. Zustand Stores
 
-### taskStore.ts (`useTaskStore`)
+### taskStore.ts — `useTaskStore`
 
-```typescript
-State:
-  tasks: TaskWithAttachments[]
-  loading: boolean
-  searchQuery: string
-  filterTags: string[]        // tag IDs
-  filterPriority: Priority[]
-  filterSource: SourceType[]
+| Поле / Action | Тип | Описание |
+|---------------|-----|----------|
+| `tasks` | `TaskWithAttachments[]` | Все активные задачи |
+| `loading` | `boolean` | |
+| `searchQuery` | `string` | |
+| `filterTags` | `string[]` | tag ID |
+| `filterPriority` | `Priority[]` | |
+| `filterSource` | `SourceType[]` | |
+| `fetchAll()` | `() => Promise<void>` | |
+| `createTask(data)` | `=> Promise<Task>` | |
+| `updateTask(id, data)` | `=> Promise<void>` | |
+| `deleteTask(id)` | `=> Promise<void>` | |
+| `moveTask(id, colId, order)` | `=> Promise<void>` | |
+| `addTaskToStore(task)` | `=> void` | Добавить без IPC |
+| `updateTaskTags(taskId, tags)` | `=> void` | Обновить теги локально |
+| `deleteAttachment(taskId, attId)` | `=> Promise<void>` | |
+| `setSearch(q)` | `=> void` | |
+| `toggleTagFilter(tagId)` | `=> void` | |
+| `togglePriorityFilter(p)` | `=> void` | |
+| `toggleSourceFilter(s)` | `=> void` | |
+| `resetFilters()` | `=> void` | |
+| `filteredTasks()` | `=> TaskWithAttachments[]` | Computed (не getter) |
 
-Actions:
-  fetchAll()                  // Загрузить все задачи из БД
-  createTask(data)            // Создать + добавить в store
-  updateTask(id, data)        // Обновить в БД + store
-  deleteTask(id)              // Удалить из БД + store
-  moveTask(id, colId, order)  // Переместить задачу
-  addTaskToStore(task)        // Добавить уже созданную задачу
-  updateTaskTags(taskId, tags) // Обновить теги в store
-  deleteAttachment(taskId, attId) // Удалить вложение
+### columnStore.ts — `useColumnStore`
 
-  setSearch(q)
-  toggleTagFilter(tagId)
-  togglePriorityFilter(p)
-  toggleSourceFilter(s)
-  resetFilters()
-  filteredTasks()             // Computed: применяет все фильтры
-```
+| Action | Описание |
+|--------|----------|
+| `fetchColumns()` | |
+| `createColumn(data)` | |
+| `updateColumn(id, data)` | |
+| `deleteColumn(id)` | |
+| `reorderColumns(columns)` | Оптимистичное обновление + persist |
 
-### columnStore.ts (`useColumnStore`)
+### boardStore.ts — `useBoardStore`
 
-```typescript
-State:
-  columns: Column[]
-  loading: boolean
+| Поле / Action | Описание |
+|---------------|----------|
+| `boards: Board[]` | |
+| `activeBoardId: string \| null` | Текущая доска |
+| `fetchBoards()` | Загрузить, установить первую активной |
+| `createBoard(data)` | |
+| `updateBoard(id, data)` | |
+| `deleteBoard(id)` | Удалить, переключить на следующую |
+| `setActiveBoard(id)` | |
 
-Actions:
-  fetchColumns()
-  createColumn(data)
-  updateColumn(id, data)
-  deleteColumn(id)
-  reorderColumns(columns)   // Оптимистично обновляет sort_order
-```
+### noteStore.ts — `useNoteStore`
 
-### noteStore.ts (`useNoteStore`)
-
-```typescript
-State:
-  notes: Note[]
-  loading: boolean
-
-Actions:
-  fetchNotes()
-  createNote(content)
-  updateNote(id, content)
-  deleteNote(id)
-```
+| Action | Описание |
+|--------|----------|
+| `fetchNotes()` | |
+| `createNote(content)` | |
+| `updateNote(id, content)` | |
+| `deleteNote(id)` | |
 
 ---
 
-## 6. IPC каналы
+## 6. IPC-каналы
 
-### Renderer → Main (invoke/handle)
+### ipcMain.handle (invoke из renderer)
 
-| Канал | Параметры | Возвращает |
-|-------|-----------|-----------|
-| `tasks:getAll` | — | `TaskWithAttachments[]` |
-| `tasks:create` | `Omit<Task, 'id'\|'created_at'\|'updated_at'>` | `Task` |
-| `tasks:update` | `id, Partial<Task>` | `Task` |
-| `tasks:delete` | `id` | `true` |
-| `tasks:move` | `id, columnId, sortOrder` | `true` |
-| `tasks:archive` | `id` | `true` |
-| `tasks:unarchive` | `id` | `true` |
-| `tasks:getArchived` | — | `TaskWithAttachments[]` |
-| `tasks:getStats` | — | `TaskStats` |
-| `columns:getAll` | — | `Column[]` |
-| `columns:create` | data | `Column` |
-| `columns:update` | `id, data` | `Column` |
-| `columns:delete` | `id` | `true` |
-| `attachments:add` | `taskId, filePath` | `Attachment` |
-| `attachments:delete` | `id` | `true` |
-| `file:open` | `filePath` | `true` |
-| `msg:parse` | `filePath` | `TaskWithAttachments` |
-| `tags:getAll` | — | `Tag[]` |
-| `tags:create` | `name, color` | `Tag` |
-| `tags:delete` | `id` | `true` |
-| `task-tags:add` | `taskId, tagId` | `true` |
-| `task-tags:remove` | `taskId, tagId` | `true` |
-| `notes:getAll` | — | `Note[]` |
-| `notes:create` | `content` | `Note` |
-| `notes:update` | `id, content` | `Note` |
-| `notes:delete` | `id` | `true` |
-| `templates:getAll` | — | `TaskTemplate[]` |
-| `templates:create` | data | `TaskTemplate` |
-| `templates:delete` | `id` | `true` |
-| `settings:getAll` | — | `Record<string,string>` |
-| `settings:get` | `key` | `string\|null` |
-| `settings:set` | `key, value` | `true` |
-| `settings:getAutoLaunch` | — | `boolean` |
-| `settings:setAutoLaunch` | `enable` | `true` |
-| `related:get` | `taskId` | `Task[]` |
-| `related:add` | `taskId, relatedId` | `true` |
-| `related:remove` | `taskId, relatedId` | `true` |
-| `data:export` | — | `{success, filePath?}` |
-| `data:import` | — | `{success, error?}` |
-| `backup:list` | — | `string[]` |
-| `backup:create` | — | `{success, backupPath}` |
-| `backup:restore` | `backupPath` | `{success}` |
-| `focus:start` | `taskId\|null` | `FocusSession` |
-| `focus:end` | `id, duration, notes` | `FocusSession` |
-| `focus:getByTask` | `taskId` | `FocusSession[]` |
-| `focus:getTotalTime` | `taskId` | `number` (seconds) |
-| `focus:update-time` | `taskId, seconds` | `true` |
-| `focus:complete` | `taskId, seconds` | `true` |
-| `ai:query` | `{provider, model, apiKey, baseUrl, messages}` | `{content}` |
-| `automation:run` | — | `{ok}` |
-| `recurring:setRule` | `taskId, rule, startDate` | `true` |
+| Канал | Описание |
+|-------|----------|
+| `boards:getAll` | Все доски |
+| `boards:create` | Создать доску |
+| `boards:update` | Обновить |
+| `boards:delete` | Удалить |
+| `columns:getAll` | Все колонки |
+| `columns:create` | Создать |
+| `columns:update` | Обновить |
+| `columns:delete` | Удалить |
+| `tasks:getAll` | Все активные задачи с вложениями и тегами |
+| `tasks:create` | Создать |
+| `tasks:update` | Обновить |
+| `tasks:move` | Переместить (columnId + sortOrder) |
+| `tasks:delete` | Удалить |
+| `tasks:archive` | Архивировать |
+| `tasks:unarchive` | Разархивировать |
+| `tasks:getArchived` | Архивированные |
+| `tasks:getStats` | Статистика |
+| `attachments:add` | Добавить вложение (путь → storage) |
+| `attachments:delete` | Удалить |
+| `file:open` | Открыть файл из storage (shell.openPath) |
+| `msg:parse` | Парсить .msg → создать задачу автоматически |
+| `tags:getAll` | Все теги |
+| `tags:create` | Создать |
+| `tags:delete` | Удалить |
+| `task-tags:add` | Привязать тег к задаче |
+| `task-tags:remove` | Отвязать |
+| `notes:getAll` | |
+| `notes:create` | |
+| `notes:update` | |
+| `notes:delete` | |
+| `templates:getAll` | |
+| `templates:create` | |
+| `templates:delete` | |
+| `related:get` | Связанные задачи |
+| `related:add` | Добавить связь |
+| `related:remove` | Убрать |
+| `settings:getAll` | Все настройки |
+| `settings:get` | Одна по key |
+| `settings:set` | Установить |
+| `settings:getAutoLaunch` | Статус автозапуска |
+| `settings:setAutoLaunch` | Вкл/выкл |
+| `data:export` | Экспорт JSON (dialog) |
+| `data:import` | Импорт JSON (dialog) |
+| `backup:list` | Список бэкапов |
+| `backup:create` | Создать бэкап |
+| `backup:restore` | Восстановить |
+| `focus:start` | Начать фокус-сессию |
+| `focus:end` | Завершить (duration + notes) |
+| `focus:getByTask` | Сессии по задаче |
+| `focus:getTotalTime` | Суммарное время |
+| `focus:update-time` | Добавить время |
+| `focus:complete` | Завершить + переместить в "Готово" |
+| `ai:query` | Запрос к AI (OpenRouter/Ollama) |
+| `recurring:setRule` | Установить правило повторения |
+| `rules:getAll` | Все Smart Rules |
+| `rules:create` | |
+| `rules:update` | |
+| `rules:delete` | |
+| `rules:run` | Запустить вручную |
+| `automation:run` | Запустить автоматизацию вручную |
 
-### Renderer → Main (send/on, без ответа)
+### ipcMain.on (send из renderer)
 
-| Канал | Параметры |
-|-------|-----------|
-| `window:minimize` | — |
-| `window:maximize` | — |
-| `window:close` | — |
-| `hotkeys:reload` | — |
-| `widget:openTask` | `taskId` |
-| `widget:toggle` | — |
-| `focus:openTask` | `taskId` |
+| Канал | Описание |
+|-------|----------|
+| `window:minimize` | |
+| `window:maximize` | |
+| `window:close` | Скрыть в трей |
+| `hotkeys:reload` | Перезагрузить хоткеи из settings |
+| `widget:openTask` | Открыть задачу из Widget |
+| `focus:close` | Закрыть Focus окно |
+| `focus:set-mini` | Переключить в мини-режим |
 
-### Main → Renderer (send → on)
+### Main → Renderer (webContents.send)
 
-| Канал | Данные | Когда |
-|-------|--------|-------|
-| `grab:text` | `text: string` | Хоткей Ctrl+Shift+T (long press) |
-| `grab:files` | `files: string[]` | Хоткей Ctrl+Shift+F |
-| `grab:instant` | `clipText: string` | Хоткей Ctrl+Shift+T (quick press) |
-| `dialog:showCreate` | — | Хоткей или tray меню |
-| `dialog:showQuickNote` | — | Хоткей Ctrl+Shift+N |
-| `screenshot:capture` | — | Хоткей Ctrl+Shift+S |
-| `reminder:show` | `taskId: string` | Клик на системное уведомление |
-| `automation:toast` | `message: string` | Автоматизация выполнила действие |
-| `widget:openTask` | `taskId: string` | Клик в виджете |
-| `focus:setTask` | `taskId: string` | Открытие фокус-окна с задачей |
-| `tasks:refresh` | — | Recurring spawner создал новую задачу |
+| Канал | Данные | Описание |
+|-------|--------|----------|
+| `grab:text` | `string` | Текст для создания задачи |
+| `grab:files` | `string[]` | Пути файлов |
+| `grab:instant` | `string` | Quick capture без диалога |
+| `dialog:showCreate` | — | Открыть диалог создания |
+| `dialog:showQuickNote` | — | |
+| `reminder:show` | `taskId` | Кликнули по напоминанию |
+| `screenshot:capture` | — | |
+| `automation:toast` | `string` | Тост от автоматизации |
+| `tasks:refresh` | — | Обновить задачи (recurring) |
+| `focus:setTask` | `taskId` | Передать задачу в Focus |
+| `widget:openTask` | `taskId` | Открыть из Widget |
+| `search:open` | — | Открыть Global Search |
 
 ---
 
-## 7. БД Схема
+## 7. Схема БД (SQLite)
 
-**Файл:** `userData/tasks.db` (SQLite WAL mode, foreign keys ON)
+БД: `app.getPath('userData')/taskgrabber.db`
 
-### Таблица `columns`
+### boards
+```sql
+CREATE TABLE boards (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL,
+  color TEXT NOT NULL DEFAULT '#3B82F6', icon TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
 
-| Поле | Тип | Описание |
-|------|-----|---------|
-| id | TEXT PK | UUID |
-| name | TEXT NOT NULL | Название |
-| color | TEXT NOT NULL | HEX цвет |
-| icon | TEXT | Имя иконки Lucide |
-| sort_order | INTEGER NOT NULL | Порядок отображения |
-| is_default | INTEGER DEFAULT 0 | 1 = колонка по умолчанию |
-| wip_limit | INTEGER | WIP лимит (0/NULL = нет) |
-| created_at | TEXT | datetime('now') |
-| updated_at | TEXT | datetime('now') |
+### columns
+```sql
+CREATE TABLE columns (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL, icon TEXT,
+  sort_order INTEGER NOT NULL, is_default INTEGER DEFAULT 0,
+  board_id TEXT,        -- FK → boards.id (добавлен через ALTER)
+  wip_limit INTEGER,    -- NULL = без лимита
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+Дефолтные колонки: Новые (#3B82F6), В работе (#F59E0B), Ждём (#8B5CF6), Готово (#10B981), Забито (#6B7280).
 
-### Таблица `tasks`
+### tasks
+```sql
+CREATE TABLE tasks (
+  id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+  column_id TEXT NOT NULL REFERENCES columns(id),
+  sort_order INTEGER NOT NULL,
+  priority INTEGER DEFAULT 0,         -- 0=нет 1=низкий 2=средний 3=высокий
+  color TEXT,
+  source_type TEXT DEFAULT 'manual',  -- 'manual'|'text'|'file'|'email'
+  source_info TEXT,                   -- JSON с метаданными источника
+  due_date TEXT,                      -- ISO date
+  reminder_at TEXT,                   -- ISO datetime
+  archived_at TEXT,                   -- NULL = активна
+  is_confidential INTEGER DEFAULT 0,  -- скрывать из AI-контекста
+  recurrence_rule TEXT,               -- 'daily'|'weekly'|'monthly'|'weekdays'|'custom:N:day|week|month'
+  recurrence_next TEXT,               -- ISO date следующего вхождения
+  time_spent INTEGER DEFAULT 0,       -- секунды фокуса
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
 
-| Поле | Тип | Описание |
-|------|-----|---------|
-| id | TEXT PK | UUID |
-| title | TEXT NOT NULL | Заголовок |
-| description | TEXT | Markdown текст |
-| column_id | TEXT FK→columns | Колонка |
-| sort_order | INTEGER NOT NULL | Порядок в колонке |
-| priority | INTEGER DEFAULT 0 | 0=нет, 1=низкий, 2=средний, 3=высокий |
-| color | TEXT | Цветная метка |
-| source_type | TEXT DEFAULT 'manual' | 'manual'\|'text'\|'file'\|'email' |
-| source_info | TEXT | JSON с инфой об источнике |
-| due_date | TEXT | ISO дата дедлайна |
-| archived_at | TEXT | NULL = не архивирована |
-| reminder_at | TEXT | ISO datetime напоминания |
-| is_confidential | INTEGER DEFAULT 0 | 1 = скрыть содержимое |
-| recurrence_rule | TEXT | NULL\|'daily'\|'weekly'\|'monthly'\|'weekdays'\|'custom:N:day\|week\|month' |
-| recurrence_next | TEXT | ISO дата следующего экземпляра |
-| time_spent | INTEGER DEFAULT 0 | Секунды фокус-времени |
-| created_at | TEXT | datetime('now') |
-| updated_at | TEXT | datetime('now') |
+### attachments
+```sql
+CREATE TABLE attachments (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  filename TEXT NOT NULL, filepath TEXT NOT NULL,
+  filesize INTEGER, mime_type TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+-- Лимит размера: 100 MB
+```
 
-### Таблица `attachments`
+### tags
+```sql
+CREATE TABLE tags (id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, color TEXT NOT NULL);
+```
 
-| Поле | Тип | Описание |
-|------|-----|---------|
-| id | TEXT PK | UUID |
-| task_id | TEXT FK→tasks CASCADE | Задача |
-| filename | TEXT NOT NULL | Оригинальное имя файла |
-| filepath | TEXT NOT NULL | Путь в userData/storage/ |
-| filesize | INTEGER | Размер в байтах |
-| mime_type | TEXT | MIME тип (пока null) |
-| created_at | TEXT | datetime('now') |
+### task_tags
+```sql
+CREATE TABLE task_tags (
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  tag_id  TEXT NOT NULL REFERENCES tags(id)  ON DELETE CASCADE,
+  PRIMARY KEY (task_id, tag_id)
+);
+```
 
-### Таблица `tags`
+### notes
+```sql
+CREATE TABLE notes (
+  id TEXT PRIMARY KEY, content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
 
-| Поле | Тип | Описание |
-|------|-----|---------|
-| id | TEXT PK | UUID |
-| name | TEXT NOT NULL UNIQUE | Название |
-| color | TEXT NOT NULL | HEX цвет |
+### settings
+```sql
+CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+```
+Ключи: `autoLaunch`, `theme`, `hotkeys` (JSON), `automation_autoArchive`, `automation_autoArchiveDays`, `automation_overdueReminders`, `automation_staleHighPriority`.
 
-### Таблица `task_tags`
+### task_templates
+```sql
+CREATE TABLE task_templates (
+  id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+  priority INTEGER DEFAULT 0, tags TEXT DEFAULT '[]',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+```
 
-| Поле | Тип |
-|------|-----|
-| task_id | TEXT FK→tasks CASCADE |
-| tag_id | TEXT FK→tags CASCADE |
-| PK | (task_id, tag_id) |
+### related_tasks
+```sql
+CREATE TABLE related_tasks (
+  task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  related_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  PRIMARY KEY (task_id, related_task_id)
+);
+```
 
-### Таблица `notes`
+### focus_sessions
+```sql
+CREATE TABLE focus_sessions (
+  id TEXT PRIMARY KEY,
+  task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+  started_at TEXT NOT NULL, ended_at TEXT,
+  duration INTEGER, notes TEXT
+);
+```
 
-| Поле | Тип |
-|------|-----|
-| id | TEXT PK |
-| content | TEXT NOT NULL |
-| created_at | TEXT |
-| updated_at | TEXT |
-
-### Таблица `settings`
-
-| Поле | Тип |
-|------|-----|
-| key | TEXT PK |
-| value | TEXT NOT NULL |
-
-**Дефолтные настройки:**
-- `autoLaunch`: `'false'`
-- `theme`: `'dark'` | `'light'` | `'system'`
-- `hotkeys`: JSON строка с настройками хоткеев
-- `automation_autoArchive`: `'true'`
-- `automation_autoArchiveDays`: `'7'`
-- `automation_overdueReminders`: `'true'`
-- `automation_staleHighPriority`: `'true'`
-- `ai_provider`: `'openrouter'` | `'ollama'`
-- `ai_model`: строка
-- `ai_api_key`: строка (не экспортируется!)
-- `ai_base_url`: строка
-
-### Таблица `task_templates`
-
-| Поле | Тип |
-|------|-----|
-| id | TEXT PK |
-| title | TEXT NOT NULL |
-| description | TEXT |
-| priority | INTEGER DEFAULT 0 |
-| tags | TEXT DEFAULT '[]' | JSON массив имён тегов |
-| created_at | TEXT |
-
-### Таблица `related_tasks`
-
-| Поле | Тип |
-|------|-----|
-| task_id | TEXT FK→tasks CASCADE |
-| related_task_id | TEXT FK→tasks CASCADE |
-| PK | (task_id, related_task_id) |
-
-Хранится в каноническом виде: меньший UUID всегда в `task_id`.
-
-### Таблица `focus_sessions`
-
-| Поле | Тип |
-|------|-----|
-| id | TEXT PK |
-| task_id | TEXT FK→tasks ON DELETE SET NULL |
-| started_at | TEXT NOT NULL |
-| ended_at | TEXT |
-| duration | INTEGER | Секунды |
-| notes | TEXT |
+### rules (Smart Rules)
+```sql
+CREATE TABLE rules (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, enabled INTEGER DEFAULT 1,
+  trigger_field TEXT NOT NULL,  -- 'priority'|'column_id'|'due_date'|'tag'|'title'|'source_type'|'in_column_days'|'no_activity_days'
+  trigger_op TEXT NOT NULL,     -- 'equals'|'not_equals'|'contains'|'overdue'|'greater_than'|'less_than'|'more_than_days'
+  trigger_value TEXT NOT NULL,
+  action_type TEXT NOT NULL,    -- 'move_to_column'|'set_priority'|'add_tag'|'archive'|'set_color'|'notify'
+  action_value TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+```
 
 ---
 
 ## 8. Хоткеи
 
-### Глобальные (работают из любого приложения)
+### Глобальные (из любого места Windows)
 
-| Хоткей | Действие | Настраиваемый |
-|--------|----------|--------------|
-| `Ctrl+Shift+T` | Захватить текст: быстрый press (<500ms) = instant create, долгий = диалог | Да |
-| `Ctrl+Shift+F` | Открыть диалог создания (для файлов) | Да |
-| `Ctrl+Shift+N` | Диалог быстрой заметки | Да |
-| `Ctrl+Shift+S` | Скриншот (открывает диалог создания) | Да |
-| `Ctrl+Shift+W` | Показать/скрыть виджет | Нет |
-| `Ctrl+Shift+F2` | Показать/скрыть фокус-окно | Нет |
+| Хоткей | Действие |
+|--------|----------|
+| `Ctrl+Shift+T` (первое нажатие) | Открыть диалог создания задачи с текстом из clipboard |
+| `Ctrl+Shift+T` (второе нажатие < 500ms) | Quick Capture — создать задачу без диалога |
+| `Ctrl+Shift+F` | Открыть диалог создания (для файлов) |
+| `Ctrl+Shift+N` | Быстрая заметка |
+| `Ctrl+Shift+W` | Показать / скрыть Desktop Widget |
+| `Ctrl+Shift+F2` | Показать / скрыть Focus Mode |
+| `Ctrl+Shift+S` | Скриншот → диалог создания задачи |
+| `Ctrl+Space` | Global Search Overlay |
 
-### Локальные (только внутри приложения)
+GRAB_TEXT, GRAB_FILES, QUICK_NOTE, SCREENSHOT — кастомизируются в Settings, хранятся в `settings.hotkeys` (JSON).
+
+### Внутри приложения
 
 | Хоткей | Действие |
 |--------|----------|
 | `Ctrl+K` | Command Palette |
-| `←→` | Навигация между колонками |
-| `↑↓` | Навигация между задачами в колонке |
-| `Enter` | Открыть задачу |
-| `N` | Новая задача |
-| `Del/Backspace` | Удалить задачу (с подтверждением) |
-| `Shift+←→` | Переместить задачу в другую колонку |
-| `Ctrl+F` / `/` | Фокус на поиск |
+| Стрелки | Навигация по задачам (useKeyboardNav) |
 
 ---
 
 ## 9. Конфиги
 
 ### vite.config.ts
-- root: `src/renderer`
+- Root: `src/renderer`
 - 3 entry points: `index.html`, `widget.html`, `focus.html`
-- alias `@shared` → `src/shared`
-- dev server: порт 6173 (strictPort)
-- build output: `dist/renderer`
+- Output: `dist/renderer`
+- Dev server: порт **6173** (strictPort)
+- Alias: `@shared` → `src/shared`
 
-### tsconfig.json (renderer)
-- target: ES2020, module: ESNext, jsx: react-jsx
-- strict: true
-- path alias: `@shared/*` → `src/shared/*`
-- include: только `src/renderer`
-
-### tsconfig.main.json (main process)
-- Отдельный конфиг для компиляции Electron main
-- output: `dist/main`
+### tsconfig.main.json
+Компилирует `src/main/**/*.ts` → `dist/main/`. Для main process.
 
 ### tailwind.config.js
-- darkMode: `'class'` (через `.dark` на `<html>`)
-- content: `src/renderer/**/*.{html,js,ts,jsx,tsx}`
+- `darkMode: 'class'` (переключение через `.light` / `.dark` на `<html>`)
+- Цвета: `bg.*`, `glass.*`, `accent.*`
+- Анимации: `fade-in`, `fade-in-scale`, `slide-up`, `glow-pulse`, `shimmer`
+- Тени: `glow-blue`, `glow-purple`, `glow-sm`, `card-hover`, `drag`
 
 ### electron-builder.yml
-- appId: `com.taskgrabber.app`
-- Windows: NSIS x64
-- icon: `assets/icons/icon.ico`
-- extraResources: `assets/`
+- `appId: com.taskgrabber.app`
+- Target: Windows NSIS x64
+- `asar: true`, `asarUnpack: better-sqlite3` (нативный модуль)
+- Output: `release/`
 
 ---
 
 ## 10. Дизайн-система
 
-### Цвета (Tailwind custom)
+### CSS-переменные тем (`globals.css`)
 
-```
-bg-primary:    #0F0F0F   — основной фон
-bg-secondary:  #1A1A2E   — вторичный фон
-bg-tertiary:   #16213E   — третичный фон
-bg-card:       #0F0F1A   — фон карточки
-bg-card-hover: #16162A   — фон карточки при hover
+| Переменная | Dark | Light |
+|-----------|------|-------|
+| `--bg-primary` | `#0F0F0F` | `#F8F9FA` |
+| `--bg-secondary` | `#1A1A2E` | `#FFFFFF` |
+| `--bg-tertiary` | `#16213E` | `#EFF1F5` |
+| `--bg-card` | `#0F0F1A` | `#FFFFFF` |
+| `--text-primary` | `rgba(255,255,255,0.9)` | `rgba(0,0,0,0.87)` |
+| `--text-secondary` | `rgba(255,255,255,0.6)` | `rgba(0,0,0,0.55)` |
+| `--text-muted` | `rgba(255,255,255,0.35)` | `rgba(0,0,0,0.35)` |
+| `--border-color` | `rgba(255,255,255,0.06)` | `rgba(0,0,0,0.08)` |
+| `--glass-bg` | `rgba(26,26,46,0.6)` | `rgba(255,255,255,0.7)` |
+| `--glass-heavy` | `rgba(26,26,46,0.8)` | `rgba(255,255,255,0.9)` |
 
-glass-light:   rgba(255,255,255,0.05)
-glass-medium:  rgba(255,255,255,0.08)
-glass-heavy:   rgba(255,255,255,0.12)
+### Theme-aware utility-классы
 
-accent-blue:   #3B82F6
-accent-purple: #8B5CF6
-accent-amber:  #F59E0B
-accent-green:  #10B981
-accent-red:    #EF4444
-```
+Паттерн: `.text-t-XX` (текст opacity XX%), `.bg-t-XX` (фон), `.border-t-XX` (граница). При `.light` на `<html>` — автоматически переключаются на `rgba(0,0,0,...)`.
 
-### CSS классы (globals.css)
+- `.text-t-primary` / `.text-t-secondary` / `.text-t-muted` — семантические
+- `.text-t-50`, `.text-t-70`, `.text-t-85` — процентные (05–90)
+- `.bg-t-02`–`.bg-t-12` — тонкие фоновые оверлеи
+- `.border-t-04`–`.border-t-15` — границы
+- Hover-варианты: `.hover:bg-t-08`, `.hover:text-t-80` и т.д.
+- Group-hover: `.group-hover:text-t-90`, `.group-hover:opacity-t-100`
 
-- `.glass` — glassmorphism карточка (backdrop-blur + border + bg)
-- `.glass-card` — более насыщенная версия для карточек задач
-- `.glass-heavy` — тяжёлый glass для модалок
-- `.t-NN` — текстовые opacity классы: `text-t-15`, `text-t-25`, `text-t-30`, `text-t-40`, `text-t-50`, `text-t-60`, `text-t-70`, `text-t-75`, `text-t-80`, `text-t-85`, `text-t-90`
-- `.bg-t-NN` — фоновые opacity: `bg-t-03`, `bg-t-04`, `bg-t-05`, `bg-t-06`, `bg-t-07`, `bg-t-08`, `bg-t-10`, `bg-t-12`, `bg-t-15`
-- `.border-t-NN` — border opacity аналогично
+### Glassmorphism-классы
 
-### Анимации (Tailwind keyframes)
+| Класс | Blur | Описание |
+|-------|------|----------|
+| `.glass` | 16px | `var(--glass-bg)` + border |
+| `.glass-heavy` | 24px | `var(--glass-heavy)` |
+| `.glass-card` | 8px | `var(--glass-card)` |
+
+### CSS-анимации (globals.css)
+
+| Keyframe | Описание |
+|----------|----------|
+| `fadeInScale` | Появление с лёгким масштабом (модалки) |
+| `overlayFadeIn` | Плавное появление оверлея |
+| `cardEnter` | Карточка снизу вверх |
+
+### Прочие утилиты
 
 | Класс | Описание |
-|-------|---------|
-| `animate-fade-in` | 0.2s opacity 0→1 |
-| `animate-fade-in-scale` | 0.2s opacity+scale+translateY |
-| `animate-slide-up` | 0.25s opacity+translateY(8px→0) |
-| `animate-glow-pulse` | 2s pulse opacity 0.4→0.8 |
-| `animate-shimmer` | 2s background-position sweep |
-
-### Box shadows
-
-- `shadow-glow-blue` — синее свечение для фокуса
-- `shadow-glow-purple` — фиолетовое свечение
-- `shadow-glow-sm` — слабое свечение
-- `shadow-card-hover` — тень при hover карточки
-- `shadow-drag` — тень при drag
-
-### Темы
-
-Переключение: добавить/убрать `dark` класс на `<html>`. CSS переменные автоматически подхватываются. Настройка хранится в `settings.theme` (`'dark'|'light'|'system'`).
-
----
-
-## 11. Автоматизация (automation.ts)
-
-Запускается при старте + каждые 5 минут.
-
-| Правило | Настройка | Логика |
-|---------|-----------|--------|
-| Автоархив | `automation_autoArchive`, `automation_autoArchiveDays` | Архивирует задачи из "done/cancelled" колонок старше N дней |
-| Просроченные напоминания | `automation_overdueReminders` | Ставит reminder_at+1min для просроченных задач без напоминания |
-| Залежавшиеся важные | `automation_staleHighPriority` | Toast: высокоприоритетные задачи в "inbox" > 3 дней |
-
----
-
-## 12. Файловое хранилище
-
-- Вложения копируются в `userData/storage/` через `file-handler.ts`
-- `copyToStorage(src)` — копирует файл, возвращает dest путь
-- `saveBufferToStorage(name, buffer)` — сохраняет буфер (из .msg)
-- Открывать файлы только через `file:open` IPC (защита path traversal)
-- Бэкапы БД: `userData/backups/tasks_YYYY-MM-DD_HH-MM-SS.db`
+|-------|----------|
+| `.drag-region` | `-webkit-app-region: drag` (frameless) |
+| `.no-drag` | Отмена drag в drag-регионе |
+| `.gradient-border-bottom` / `.gradient-border-top` | Градиентные линии через `::after`/`::before` |
+| `.glow-accent` | Hover-свечение через `::before` |
+| `.column-drop-active` | Glow при DnD-дропе в колонку |
+| `.markdown-body` | Стили для Markdown-рендеринга |
+| `.scrollbar-thin` | Тонкий кастомный скроллбар |
