@@ -41,8 +41,8 @@ function diagnoseTask(task: TaskWithAttachments, columns: Column[]): DiagInfo[] 
       diags.push({ id: 'deadline_soon', label: `Дедлайн через ${daysUntilDue === 0 ? 'сегодня' : daysUntilDue + ' дн.'} — нет напоминания`, severity: 'warning' });
     }
   }
-  if (task.priority >= 2 && !task.due_date && !task.archived_at)
-    diags.push({ id: 'no_deadline', label: 'Нет дедлайна у важной задачи', severity: 'warning' });
+  if (!task.due_date && !task.archived_at)
+    diags.push({ id: 'no_deadline', label: 'Нет дедлайна', severity: task.priority >= 2 ? 'error' : 'warning' });
   if (!task.description || task.description.trim().length < 10)
     diags.push({ id: 'empty_description', label: 'Нет описания', severity: 'warning' });
   const col = columns.find((c) => c.id === task.column_id);
