@@ -12,20 +12,12 @@ interface Props {
   defaultMode?: 'edit' | 'preview';
 }
 
-function toggleCheckbox(text: string, index: number): string {
+function toggleCheckbox(text: string, lineIndex: number): string {
   const lines = text.split('\n');
-  let checkboxCount = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(/^([\s]*[-*]\s+)\[([ xX])\](.*)$/);
-    if (match) {
-      if (checkboxCount === index) {
-        const state = match[2];
-        const newState = state.trim() === '' ? 'x' : ' ';
-        lines[i] = `${match[1]}[${newState}]${match[3]}`;
-        break;
-      }
-      checkboxCount++;
-    }
+  const match = lines[lineIndex]?.match(/^([\s]*[-*]\s+)\[([ xX])\](.*)$/);
+  if (match) {
+    const newState = match[2].trim() === '' ? 'x' : ' ';
+    lines[lineIndex] = `${match[1]}[${newState}]${match[3]}`;
   }
   return lines.join('\n');
 }
@@ -42,9 +34,6 @@ export default function MarkdownEditor({
     defaultMode === 'preview' && value ? 'preview' : defaultMode
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Counter ref to track checkbox index during a single render pass
-  const cbCounterRef = useRef(0);
 
   const applyFormat = useCallback((type: 'bold' | 'italic' | 'checkbox' | 'list' | 'heading' | 'code') => {
     const ta = textareaRef.current;
@@ -98,9 +87,6 @@ export default function MarkdownEditor({
       ta.setSelectionRange(cursorPos, cursorPos);
     });
   }, [value, onChange]);
-
-  // Reset counter at start of every render so it's consistent
-  cbCounterRef.current = 0;
 
   const hasContent = value.trim().length > 0;
 
@@ -183,14 +169,14 @@ export default function MarkdownEditor({
               remarkPlugins={[remarkGfm]}
               components={{
                 // Intercept list items to make checkboxes clickable
-                input({ type, checked }) {
+                input({ type, checked, node }) {
                   if (type === 'checkbox') {
-                    const idx = cbCounterRef.current++;
+                    const lineIndex = (node as any)?.position?.start?.line - 1;
                     return (
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => onChange(toggleCheckbox(value, idx))}
+                        onChange={() => onChange(toggleCheckbox(value, lineIndex))}
                         className="mr-1.5 cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                         style={{ accentColor: '#3B82F6' }}

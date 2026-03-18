@@ -59,19 +59,12 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function toggleChecklistItem(text: string, index: number): string {
+function toggleChecklistItem(text: string, lineIndex: number): string {
   const lines = text.split('\n');
-  let checkboxCount = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(/^(\s*[-*]\s+)\[([ xX])\](.*)$/);
-    if (match) {
-      if (checkboxCount === index) {
-        const newState = match[2].trim() === '' ? 'x' : ' ';
-        lines[i] = `${match[1]}[${newState}]${match[3]}`;
-        break;
-      }
-      checkboxCount++;
-    }
+  const match = lines[lineIndex]?.match(/^(\s*[-*]\s+)\[([ xX])\](.*)$/);
+  if (match) {
+    const newState = match[2].trim() === '' ? 'x' : ' ';
+    lines[lineIndex] = `${match[1]}[${newState}]${match[3]}`;
   }
   return lines.join('\n');
 }
@@ -163,7 +156,6 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
   const titleRef = useRef<HTMLInputElement>(null);
-  const checkboxIndexRef = useRef(0);
 
   useEffect(() => {
     if (task) {
@@ -383,7 +375,6 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             >
               {description ? (
                 (() => {
-                  checkboxIndexRef.current = 0;
                   return (
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
@@ -396,13 +387,13 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                           }
                           return <li className="ml-1" {...props}>{children}</li>;
                         },
-                        input: ({ checked }) => {
-                          const idx = checkboxIndexRef.current++;
+                        input: ({ checked, node }) => {
+                          const lineIndex = (node as any)?.position?.start?.line - 1;
                           return (
                             <input
                               type="checkbox"
                               checked={checked ?? false}
-                              onChange={(e) => { e.stopPropagation(); handleCheckboxToggle(idx); }}
+                              onChange={(e) => { e.stopPropagation(); handleCheckboxToggle(lineIndex); }}
                               onClick={(e) => e.stopPropagation()}
                               className="mt-0.5 accent-blue-500 cursor-pointer flex-shrink-0"
                             />
