@@ -25,7 +25,7 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, viewMod
   const close = () => window.electronAPI?.closeWindow();
 
   return (
-    <div className="drag-region relative flex items-center justify-between h-11 backdrop-blur-md px-4 flex-shrink-0" style={{ backgroundColor: 'var(--glass-heavy)' }}>
+    <div className="drag-region relative z-30 flex items-center justify-between h-11 backdrop-blur-md px-4 flex-shrink-0" style={{ backgroundColor: 'var(--glass-heavy)' }}>
       {/* Gradient bottom border */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-blue/20 to-transparent" />
 
