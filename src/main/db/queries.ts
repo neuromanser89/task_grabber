@@ -1,6 +1,6 @@
 import { getDb } from './database';
 import { randomUUID as uuidv4 } from 'crypto';
-import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule, BoardFile } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
 
@@ -587,6 +587,34 @@ export function importAllData(data: ExportData): void {
       insertSetting.run(setting);
     }
   })();
+}
+
+// ─── Board Files ─────────────────────────────────────────────────────────────
+
+export function getBoardFiles(boardId: string): BoardFile[] {
+  return getDb()
+    .prepare('SELECT * FROM board_files WHERE board_id = ? ORDER BY created_at DESC')
+    .all(boardId) as BoardFile[];
+}
+
+export function createBoardFile(data: Omit<BoardFile, 'id' | 'created_at'>): BoardFile {
+  const id = uuidv4();
+  getDb()
+    .prepare(
+      'INSERT INTO board_files (id, board_id, task_id, filename, filepath, filesize, mime_type) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    )
+    .run(id, data.board_id, data.task_id ?? null, data.filename, data.filepath, data.filesize ?? null, data.mime_type ?? null);
+  return getDb().prepare('SELECT * FROM board_files WHERE id = ?').get(id) as BoardFile;
+}
+
+export function deleteBoardFile(id: string): void {
+  getDb().prepare('DELETE FROM board_files WHERE id = ?').run(id);
+}
+
+export function attachBoardFileToTask(fileId: string, taskId: string | null): void {
+  getDb()
+    .prepare('UPDATE board_files SET task_id = ? WHERE id = ?')
+    .run(taskId, fileId);
 }
 
 // ─── Rules ───────────────────────────────────────────────────────────────────

@@ -160,6 +160,20 @@ export function runMigrations(db: Database.Database) {
     db.exec("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0");
   }
 
+  // Migrate: add board_files table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS board_files (
+      id        TEXT PRIMARY KEY,
+      board_id  TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+      task_id   TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+      filename  TEXT NOT NULL,
+      filepath  TEXT NOT NULL,
+      filesize  INTEGER,
+      mime_type TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Seed default board if empty, then seed columns with board_id
   const boardCount = db.prepare('SELECT COUNT(*) as cnt FROM boards').get() as { cnt: number };
   let defaultBoardId: string;

@@ -154,3 +154,14 @@ export interface TaskStats {
   archivedTotal: number;
   byPriority: { priority: number; count: number }[];
 }
+
+export interface BoardFile {
+  id: string;
+  board_id: string;
+  task_id: string | null; // null = загружен напрямую
+  filename: string;
+  filepath: string;
+  filesize: number | null;
+  mime_type: string | null;
+  created_at: string;
+}
