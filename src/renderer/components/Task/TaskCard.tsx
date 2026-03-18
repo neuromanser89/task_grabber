@@ -53,7 +53,7 @@ function relativeTime(dateStr: string): string {
 
 export default function TaskCard({ task, isDragOverlay = false, isSelected = false, onClick }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
-  const hasAttachments = false;
+  const hasAttachments = task.attachments && task.attachments.length > 0;
 
   const {
     attributes,

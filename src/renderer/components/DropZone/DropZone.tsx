@@ -89,6 +89,11 @@ export default function DropZone({ onTaskCreated }: Props) {
 
       setIsProcessing(true);
       try {
+        // Fetch columns and tasks once before the loop to avoid N+1 IPC calls
+        const columns = await window.electronAPI?.getColumns() ?? [];
+        const defaultCol = columns.find((c: { is_default: number }) => c.is_default === 1) ?? columns[0];
+        let currentTasks = await window.electronAPI?.getTasks() ?? [];
+
         for (const file of files) {
           const filePath = window.electronAPI?.getFilePath(file);
           if (!filePath) continue;
@@ -100,12 +105,9 @@ export default function DropZone({ onTaskCreated }: Props) {
               onTaskCreated?.(task);
             }
           } else {
-            const columns = await window.electronAPI?.getColumns() ?? [];
-            const defaultCol = columns.find((c: { is_default: number }) => c.is_default === 1) ?? columns[0];
             if (!defaultCol) continue;
 
-            const tasks = await window.electronAPI?.getTasks() ?? [];
-            const colTasks = tasks.filter((t: { column_id: string }) => t.column_id === defaultCol.id);
+            const colTasks = currentTasks.filter((t: { column_id: string }) => t.column_id === defaultCol.id);
             const maxOrder = colTasks.length > 0
               ? Math.max(...colTasks.map((t: { sort_order: number }) => t.sort_order)) + 1
               : 0;
@@ -131,6 +133,8 @@ export default function DropZone({ onTaskCreated }: Props) {
               };
               addTaskToStore(fullTask);
               onTaskCreated?.(fullTask);
+              // Update local tasks list so next iteration has correct sort_order
+              currentTasks = [...currentTasks, fullTask as any];
             }
           }
         }

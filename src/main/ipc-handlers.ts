@@ -61,8 +61,13 @@ export function setupIpcHandlers() {
     if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
       throw new Error('Invalid file path');
     }
-    const dest = copyToStorage(resolved);
     const stats = fs.statSync(resolved);
+    // Limit file size to 100MB
+    const MAX_FILE_SIZE = 100 * 1024 * 1024;
+    if (stats.size > MAX_FILE_SIZE) {
+      throw new Error('File too large: maximum 100MB');
+    }
+    const dest = copyToStorage(resolved);
     return queries.createAttachment({
       task_id: taskId,
       filename: path.basename(resolved),
@@ -92,6 +97,9 @@ export function setupIpcHandlers() {
   // ─── MSG Parsing ──────────────────────────────────────────────────────────
   ipcMain.handle('msg:parse', (_e, filePath: string) => {
     const resolved = path.resolve(filePath);
+    if (!resolved.toLowerCase().endsWith('.msg')) {
+      throw new Error('Only .msg files are supported');
+    }
     if (!fs.existsSync(resolved)) {
       throw new Error('File not found');
     }
@@ -278,8 +286,27 @@ export function setupIpcHandlers() {
     const raw = fs.readFileSync(filePaths[0], 'utf-8');
     const data = JSON.parse(raw);
 
-    if (!data.version || !data.tasks || !data.columns) {
+    if (!data.version || !Array.isArray(data.tasks) || !Array.isArray(data.columns)) {
       return { success: false, error: 'Неверный формат файла' };
+    }
+
+    // Validate required fields in each object
+    for (const col of data.columns) {
+      if (!col.id || !col.name || col.sort_order == null) {
+        return { success: false, error: 'Невалидная колонка: отсутствуют обязательные поля (id, name, sort_order)' };
+      }
+    }
+    for (const task of data.tasks) {
+      if (!task.id || !task.title || !task.column_id || task.sort_order == null) {
+        return { success: false, error: 'Невалидная задача: отсутствуют обязательные поля (id, title, column_id, sort_order)' };
+      }
+    }
+    if (Array.isArray(data.tags)) {
+      for (const tag of data.tags) {
+        if (!tag.id || !tag.name || !tag.color) {
+          return { success: false, error: 'Невалидный тег: отсутствуют обязательные поля (id, name, color)' };
+        }
+      }
     }
 
     queries.importAllData(data);

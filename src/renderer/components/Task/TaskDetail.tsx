@@ -572,8 +572,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               {formatDate(task.updated_at)}
             </span>
           )}
-          {(task as unknown as { time_spent?: number }).time_spent != null && (task as unknown as { time_spent: number }).time_spent > 0 && (() => {
-            const secs = (task as unknown as { time_spent: number }).time_spent;
+          {task.time_spent != null && task.time_spent > 0 && (() => {
+            const secs = task.time_spent;
             const h = Math.floor(secs / 3600);
             const m = Math.floor((secs % 3600) / 60);
             const timeStr = h > 0 ? `${h}ч ${m}м` : `${m}м`;
