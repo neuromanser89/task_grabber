@@ -10,10 +10,12 @@ import QuickNoteDialog from './components/Notes/QuickNoteDialog';
 import SettingsDialog from './components/Settings/SettingsDialog';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import AIAssistantDialog from './components/AI/AIAssistantDialog';
+import GlobalSearch from './components/GlobalSearch/GlobalSearch';
 import { ToastContainer, useToast } from './components/common/Toast';
 import { useNoteStore } from './stores/noteStore';
 import { useTaskStore } from './stores/taskStore';
 import { useColumnStore } from './stores/columnStore';
+import { useBoardStore } from './stores/boardStore';
 // useColumnStore is used via getState() in instant capture callback
 
 type Theme = 'dark' | 'light' | 'system';
@@ -40,6 +42,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -47,6 +50,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
   const { createTask } = useTaskStore();
+  const { fetchBoards, setActiveBoard } = useBoardStore();
   const sidebarRef = useRef<SidebarHandle>(null);
   const { toasts, addToast, dismiss } = useToast();
 
@@ -67,6 +71,21 @@ export default function App() {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
+
+  // Init boards on mount
+  useEffect(() => {
+    fetchBoards();
+  }, [fetchBoards]);
+
+  // Handle board switch event from GlobalSearch
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const boardId = (e as CustomEvent<string>).detail;
+      setActiveBoard(boardId);
+    };
+    window.addEventListener('board:switchBoard', handler);
+    return () => window.removeEventListener('board:switchBoard', handler);
+  }, [setActiveBoard]);
 
   useEffect(() => {
     fetchNotes();
@@ -137,6 +156,11 @@ export default function App() {
       addToast(message, 'info');
     });
 
+    // Global search IPC from hotkey (Ctrl+Space)
+    const unsubSearch = window.electronAPI?.onSearchOpen?.(() => {
+      setShowGlobalSearch(true);
+    });
+
     // Ctrl+K — Command Palette
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -154,6 +178,7 @@ export default function App() {
       unsubInstant?.();
       unsubScreenshot?.();
       unsubAutomation?.();
+      unsubSearch?.();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [fetchNotes, createTask, addToast]);
@@ -233,6 +258,10 @@ export default function App() {
       <AIAssistantDialog
         isOpen={showAI}
         onClose={() => setShowAI(false)}
+      />
+      <GlobalSearch
+        isOpen={showGlobalSearch}
+        onClose={() => setShowGlobalSearch(false)}
       />
       <ToastContainer toasts={toasts} onDismiss={dismiss} onTaskClick={handleToastTaskClick} />
     </div>

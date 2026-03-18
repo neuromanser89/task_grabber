@@ -17,6 +17,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   moveTask: (id: string, columnId: string, sortOrder: number) =>
     ipcRenderer.invoke('tasks:move', id, columnId, sortOrder),
 
+  // Boards
+  getBoards: () => ipcRenderer.invoke('boards:getAll'),
+  createBoard: (data: unknown) => ipcRenderer.invoke('boards:create', data),
+  updateBoard: (id: string, data: unknown) => ipcRenderer.invoke('boards:update', id, data),
+  deleteBoard: (id: string) => ipcRenderer.invoke('boards:delete', id),
+
   // Columns
   getColumns: () => ipcRenderer.invoke('columns:getAll'),
   createColumn: (data: unknown) => ipcRenderer.invoke('columns:create', data),
@@ -172,10 +178,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   recurringSetRule: (taskId: string, rule: string | null, startDate: string | null) =>
     ipcRenderer.invoke('recurring:setRule', taskId, rule, startDate),
 
+  // Smart Rules
+  getRules: () => ipcRenderer.invoke('rules:getAll'),
+  createRule: (data: unknown) => ipcRenderer.invoke('rules:create', data),
+  updateRule: (id: string, data: unknown) => ipcRenderer.invoke('rules:update', id, data),
+  deleteRule: (id: string) => ipcRenderer.invoke('rules:delete', id),
+  runRules: () => ipcRenderer.invoke('rules:run'),
+
   // Listen for tasks refresh (triggered by recurring spawner etc.)
   onTasksRefresh: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on('tasks:refresh', handler);
     return () => { ipcRenderer.removeListener('tasks:refresh', handler); };
+  },
+
+  // Global Search Overlay
+  onSearchOpen: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('search:open', handler);
+    return () => { ipcRenderer.removeListener('search:open', handler); };
   },
 });

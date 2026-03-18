@@ -1,3 +1,13 @@
+export interface Board {
+  id: string;
+  name: string;
+  color: string;
+  icon: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export type Priority = 0 | 1 | 2 | 3; // none, low, medium, high
 export type SourceType = 'manual' | 'text' | 'file' | 'email';
 export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'weekdays' | string; // 'custom:N:day|week|month'
@@ -10,6 +20,7 @@ export interface Column {
   sort_order: number;
   is_default: number;
   wip_limit?: number | null;
+  board_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +88,24 @@ export interface TaskTemplate {
   created_at: string;
 }
 
+// Smart Rules
+export type RuleTriggerField = 'priority' | 'column_id' | 'due_date' | 'tag' | 'title' | 'source_type';
+export type RuleTriggerOp = 'equals' | 'not_equals' | 'contains' | 'overdue' | 'greater_than' | 'less_than';
+export type RuleActionType = 'move_to_column' | 'set_priority' | 'add_tag' | 'archive' | 'set_color';
+
+export interface Rule {
+  id: string;
+  name: string;
+  enabled: number; // 0 or 1
+  trigger_field: RuleTriggerField;
+  trigger_op: RuleTriggerOp;
+  trigger_value: string;
+  action_type: RuleActionType;
+  action_value: string;
+  sort_order: number;
+  created_at: string;
+}
+
 // IPC channel names
 export const IPC = {
   TASKS_GET_ALL: 'tasks:getAll',
@@ -110,6 +139,10 @@ export const IPC = {
   RELATED_ADD: 'related:add',
   RELATED_REMOVE: 'related:remove',
   RELATED_GET: 'related:get',
+  BOARDS_GET_ALL: 'boards:getAll',
+  BOARDS_CREATE: 'boards:create',
+  BOARDS_UPDATE: 'boards:update',
+  BOARDS_DELETE: 'boards:delete',
 } as const;
 
 export interface TaskStats {

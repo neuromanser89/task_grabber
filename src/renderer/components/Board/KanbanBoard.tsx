@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
+import { useBoardStore } from '../../stores/boardStore';
 import Column from './Column';
 import TaskCard from '../Task/TaskCard';
 import TaskDetail from '../Task/TaskDetail';
 import DropZone from '../DropZone/DropZone';
+import BatchToolbar from './BatchToolbar';
 import { ToastContainer, useToast } from '../common/Toast';
 import { Plus } from 'lucide-react';
 import {
@@ -39,6 +41,7 @@ interface Props {
 export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const { tasks, fetchAll, moveTask, filteredTasks, deleteTask } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
+  const { activeBoardId } = useBoardStore();
   const { toasts, addToast, dismiss } = useToast();
 
   const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
@@ -49,6 +52,10 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<TaskWithAttachments | null>(null);
+
+  // Batch selection state
+  const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
+  const lastClickedTaskId = useRef<string | null>(null);
 
   // Inline new column state
   const [addingColumn, setAddingColumn] = useState(false);
@@ -93,7 +100,9 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  const sortedColumns = [...columns].sort((a, b) => a.sort_order - b.sort_order);
+  const sortedColumns = [...columns]
+    .filter((c) => !activeBoardId || !c.board_id || c.board_id === activeBoardId)
+    .sort((a, b) => a.sort_order - b.sort_order);
   const columnDndIds = sortedColumns.map((c) => `col::${c.id}`);
 
   // Get currently selected task ID for highlighting
@@ -135,6 +144,74 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     setDeleteConfirm(null);
     setSelectedTaskIndex(0);
   }, [deleteConfirm, deleteTask]);
+
+  const handleBatchSelect = useCallback((task: TaskWithAttachments, mode: 'toggle' | 'shift') => {
+    if (mode === 'toggle') {
+      setSelectedBatchIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(task.id)) next.delete(task.id);
+        else next.add(task.id);
+        lastClickedTaskId.current = task.id;
+        return next;
+      });
+    } else if (mode === 'shift' && lastClickedTaskId.current) {
+      // Shift+click: select range within the same column
+      const colTasks = filteredTasks()
+        .filter((t) => t.column_id === task.column_id)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      const lastIdx = colTasks.findIndex((t) => t.id === lastClickedTaskId.current);
+      const curIdx = colTasks.findIndex((t) => t.id === task.id);
+      if (lastIdx === -1 || curIdx === -1) {
+        // fallback: just toggle
+        setSelectedBatchIds((prev) => {
+          const next = new Set(prev);
+          next.add(task.id);
+          return next;
+        });
+      } else {
+        const [from, to] = lastIdx < curIdx ? [lastIdx, curIdx] : [curIdx, lastIdx];
+        const rangeIds = colTasks.slice(from, to + 1).map((t) => t.id);
+        setSelectedBatchIds((prev) => {
+          const next = new Set(prev);
+          rangeIds.forEach((id) => next.add(id));
+          return next;
+        });
+      }
+      lastClickedTaskId.current = task.id;
+    }
+  }, [filteredTasks]);
+
+  const handleBatchDelete = useCallback(async (ids: string[]) => {
+    for (const id of ids) await deleteTask(id);
+  }, [deleteTask]);
+
+  const handleBatchMove = useCallback(async (ids: string[], columnId: string) => {
+    const col = sortedColumns.find((c) => c.id === columnId);
+    if (!col) return;
+    const colTasks = tasks.filter((t) => t.column_id === columnId).sort((a, b) => a.sort_order - b.sort_order);
+    let nextOrder = colTasks.length > 0 ? colTasks[colTasks.length - 1].sort_order + 1 : 0;
+    for (const id of ids) {
+      await moveTask(id, columnId, nextOrder++);
+    }
+  }, [sortedColumns, tasks, moveTask]);
+
+  const handleBatchArchive = useCallback(async (ids: string[]) => {
+    for (const id of ids) {
+      await window.electronAPI!.archiveTask(id);
+      useTaskStore.getState().fetchAll();
+    }
+  }, []);
+
+  // Clear batch selection on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape' && selectedBatchIds.size > 0) {
+        setSelectedBatchIds(new Set());
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedBatchIds]);
 
   useKeyboardNav({
     columns: sortedColumns,
@@ -264,6 +341,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       icon: null,
       sort_order: columns.length,
       is_default: 0,
+      board_id: activeBoardId ?? undefined,
     });
     setAddingColumn(false);
     setNewColName('');
@@ -293,6 +371,8 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 tasks={allFilteredTasks.filter((t) => t.column_id === col.id)}
                 onTaskClick={setSelectedTask}
                 selectedTaskId={selectedColumnIndex === colIdx ? selectedTaskId : null}
+                selectedBatchIds={selectedBatchIds}
+                onBatchSelect={handleBatchSelect}
               />
             ))}
 
@@ -348,6 +428,16 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       </DndContext>
 
       <DropZone />
+
+      <BatchToolbar
+        selectedIds={selectedBatchIds}
+        tasks={tasks}
+        columns={sortedColumns}
+        onClear={() => setSelectedBatchIds(new Set())}
+        onDelete={handleBatchDelete}
+        onMove={handleBatchMove}
+        onArchive={handleBatchArchive}
+      />
 
       <TaskDetail
         task={selectedTask}

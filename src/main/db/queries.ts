@@ -1,6 +1,6 @@
 import { getDb } from './database';
 import { randomUUID as uuidv4 } from 'crypto';
-import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
 
@@ -8,6 +8,42 @@ function safeFilterFields(data: Record<string, unknown>, allowed: string[]): Rec
   return Object.fromEntries(
     Object.entries(data).filter(([k]) => allowed.includes(k) && SAFE_FIELD_RE.test(k))
   );
+}
+
+// ─── Boards ─────────────────────────────────────────────────────────────────
+
+export function getAllBoards(): Board[] {
+  return getDb().prepare('SELECT * FROM boards ORDER BY sort_order').all() as Board[];
+}
+
+export function createBoard(data: { name: string; color: string; icon?: string | null }): Board {
+  const id = uuidv4();
+  const sort_order = (getDb().prepare('SELECT COUNT(*) as n FROM boards').get() as { n: number }).n;
+  getDb()
+    .prepare('INSERT INTO boards (id, name, color, icon, sort_order) VALUES (?, ?, ?, ?, ?)')
+    .run(id, data.name, data.color, data.icon ?? null, sort_order);
+  return getDb().prepare('SELECT * FROM boards WHERE id = ?').get(id) as Board;
+}
+
+export function updateBoard(id: string, data: Partial<Board>): Board {
+  const allowed = ['name', 'color', 'icon', 'sort_order'];
+  const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
+  const fields = Object.keys(filtered).map((k) => `${k} = ?`).join(', ');
+  if (fields) {
+    getDb()
+      .prepare(`UPDATE boards SET ${fields}, updated_at = datetime('now') WHERE id = ?`)
+      .run(...Object.values(filtered), id);
+  }
+  return getDb().prepare('SELECT * FROM boards WHERE id = ?').get(id) as Board;
+}
+
+export function deleteBoard(id: string): void {
+  // Reassign columns to another board before deleting
+  const other = getDb().prepare('SELECT id FROM boards WHERE id != ? ORDER BY sort_order LIMIT 1').get(id) as { id: string } | undefined;
+  if (other) {
+    getDb().prepare('UPDATE columns SET board_id = ? WHERE board_id = ?').run(other.id, id);
+  }
+  getDb().prepare('DELETE FROM boards WHERE id = ?').run(id);
 }
 
 // ─── Columns ────────────────────────────────────────────────────────────────
@@ -20,14 +56,14 @@ export function createColumn(data: Omit<Column, 'id' | 'created_at' | 'updated_a
   const id = uuidv4();
   getDb()
     .prepare(
-      'INSERT INTO columns (id, name, color, icon, sort_order, is_default) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
     )
-    .run(id, data.name, data.color, data.icon, data.sort_order, data.is_default);
+    .run(id, data.name, data.color, data.icon, data.sort_order, data.is_default, data.board_id ?? null);
   return getDb().prepare('SELECT * FROM columns WHERE id = ?').get(id) as Column;
 }
 
 export function updateColumn(id: string, data: Partial<Column>): Column {
-  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default', 'wip_limit'];
+  const allowed = ['name', 'color', 'icon', 'sort_order', 'is_default', 'wip_limit', 'board_id'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -551,4 +587,36 @@ export function importAllData(data: ExportData): void {
       insertSetting.run(setting);
     }
   })();
+}
+
+// ─── Rules ───────────────────────────────────────────────────────────────────
+
+export function getAllRules(): Rule[] {
+  return getDb().prepare('SELECT * FROM rules ORDER BY sort_order, created_at').all() as Rule[];
+}
+
+export function createRule(data: Omit<Rule, 'id' | 'created_at'>): Rule {
+  const id = uuidv4();
+  getDb()
+    .prepare(
+      'INSERT INTO rules (id, name, enabled, trigger_field, trigger_op, trigger_value, action_type, action_value, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    .run(id, data.name, data.enabled, data.trigger_field, data.trigger_op, data.trigger_value, data.action_type, data.action_value, data.sort_order ?? 0);
+  return getDb().prepare('SELECT * FROM rules WHERE id = ?').get(id) as Rule;
+}
+
+export function updateRule(id: string, data: Partial<Omit<Rule, 'id' | 'created_at'>>): Rule {
+  const allowed = ['name', 'enabled', 'trigger_field', 'trigger_op', 'trigger_value', 'action_type', 'action_value', 'sort_order'];
+  const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
+  const fields = Object.keys(filtered).map((k) => `${k} = ?`).join(', ');
+  if (fields) {
+    getDb()
+      .prepare(`UPDATE rules SET ${fields} WHERE id = ?`)
+      .run(...Object.values(filtered), id);
+  }
+  return getDb().prepare('SELECT * FROM rules WHERE id = ?').get(id) as Rule;
+}
+
+export function deleteRule(id: string): void {
+  getDb().prepare('DELETE FROM rules WHERE id = ?').run(id);
 }
