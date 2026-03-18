@@ -8,6 +8,7 @@ import BoardFilesView from './components/Files/BoardFilesView';
 import StatusBar from './components/Layout/StatusBar';
 import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
+import TaskDetail from './components/Task/TaskDetail';
 import QuickNoteDialog from './components/Notes/QuickNoteDialog';
 import SettingsDialog from './components/Settings/SettingsDialog';
 import CommandPalette from './components/CommandPalette/CommandPalette';
@@ -19,6 +20,7 @@ import { useNoteStore } from './stores/noteStore';
 import { useTaskStore } from './stores/taskStore';
 import { useColumnStore } from './stores/columnStore';
 import { useBoardStore } from './stores/boardStore';
+import type { TaskWithAttachments } from '@shared/types';
 // useColumnStore is used via getState() in instant capture callback
 
 type Theme = 'dark' | 'light' | 'system';
@@ -49,6 +51,7 @@ export default function App() {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
+  const [reminderTask, setReminderTask] = useState<TaskWithAttachments | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
@@ -165,6 +168,23 @@ export default function App() {
       setShowGlobalSearch(true);
     });
 
+    // Reminder notification click — open TaskDetail regardless of current view
+    const unsubReminder = window.electronAPI?.onReminderShow?.((taskId) => {
+      const findAndOpen = () => {
+        const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+        if (task) {
+          setReminderTask(task);
+        } else {
+          // Tasks might not be loaded yet — fetch then retry
+          useTaskStore.getState().fetchAll().then(() => {
+            const t = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+            if (t) setReminderTask(t);
+          });
+        }
+      };
+      findAndOpen();
+    });
+
     // Ctrl+K — Command Palette
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -183,6 +203,7 @@ export default function App() {
       unsubScreenshot?.();
       unsubAutomation?.();
       unsubSearch?.();
+      unsubReminder?.();
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [fetchNotes, createTask, addToast]);
@@ -273,6 +294,11 @@ export default function App() {
       <GlobalSearch
         isOpen={showGlobalSearch}
         onClose={() => setShowGlobalSearch(false)}
+      />
+      <TaskDetail
+        task={reminderTask}
+        isOpen={reminderTask !== null}
+        onClose={() => setReminderTask(null)}
       />
       <ToastContainer toasts={toasts} onDismiss={dismiss} onTaskClick={handleToastTaskClick} />
     </div>
