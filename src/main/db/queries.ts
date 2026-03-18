@@ -181,7 +181,7 @@ export function createTask(
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next'];
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next', 'time_spent'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -384,6 +384,12 @@ export function getTotalFocusTime(taskId: string): number {
     .prepare('SELECT COALESCE(SUM(duration), 0) as total FROM focus_sessions WHERE task_id = ? AND duration IS NOT NULL')
     .get(taskId) as { total: number };
   return row.total;
+}
+
+export function addTimeSpent(taskId: string, seconds: number): void {
+  getDb()
+    .prepare("UPDATE tasks SET time_spent = COALESCE(time_spent, 0) + ?, updated_at = datetime('now') WHERE id = ?")
+    .run(seconds, taskId);
 }
 
 // ─── Recurring Tasks ──────────────────────────────────────────────────────────

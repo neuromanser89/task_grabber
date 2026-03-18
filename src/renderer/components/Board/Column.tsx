@@ -18,6 +18,9 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
+  const wipLimit = column.wip_limit ?? 0;
+  const isOverWip = wipLimit > 0 && tasks.length >= wipLimit;
+
   const { setNodeRef: setDropRef, isOver } = useDroppable({ id: column.id });
 
   const {
@@ -60,7 +63,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
             style={{ backgroundColor: column.color }}
           />
           <div
-            className="flex items-center gap-2.5 px-3.5 py-3 border-b border-white/[0.04] cursor-pointer select-none"
+            className="flex items-center gap-2.5 px-3.5 py-3 border-b border-t-04 cursor-pointer select-none"
             onContextMenu={handleContextMenu}
             title="Правый клик для настройки"
             {...(!isDragOverlay ? attributes : {})}
@@ -74,11 +77,15 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
                 '--tw-ring-color': `${column.color}30`,
               } as React.CSSProperties}
             />
-            <span className="font-medium text-[13px] text-white/75 flex-1 tracking-tight truncate">
+            <span className={`font-medium text-[13px] flex-1 tracking-tight truncate ${isOverWip ? 'text-red-400' : 'text-t-75'}`}>
               {column.name}
             </span>
-            <span className="text-[11px] text-white/25 bg-white/[0.04] px-2 py-0.5 rounded-md font-medium tabular-nums flex-shrink-0">
-              {tasks.length}
+            <span className={`text-[11px] px-2 py-0.5 rounded-md font-medium tabular-nums flex-shrink-0 ${
+              isOverWip
+                ? 'text-red-400 bg-red-500/10'
+                : 'text-t-25 bg-t-04'
+            }`}>
+              {wipLimit > 0 ? `${tasks.length}/${wipLimit}` : tasks.length}
             </span>
           </div>
         </div>
@@ -102,7 +109,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
             ))}
             {sorted.length === 0 && (
               <div className="flex-1 flex items-center justify-center py-8">
-                <span className="text-[11px] text-white/15 italic">Пусто</span>
+                <span className="text-[11px] text-t-15 italic">Пусто</span>
               </div>
             )}
           </div>

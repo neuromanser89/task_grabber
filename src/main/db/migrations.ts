@@ -121,6 +121,9 @@ export function runMigrations(db: Database.Database) {
   if (!taskColumns.find((c) => c.name === 'recurrence_next')) {
     db.exec("ALTER TABLE tasks ADD COLUMN recurrence_next TEXT");
   }
+  if (!taskColumns.find((c) => c.name === 'time_spent')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0");
+  }
 
   // Seed default columns if empty
   const count = db.prepare('SELECT COUNT(*) as cnt FROM columns').get() as { cnt: number };
