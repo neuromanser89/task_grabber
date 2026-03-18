@@ -24,6 +24,68 @@ interface SickTask {
   diagnoses: Diagnosis[];
 }
 
+const TAG_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6', '#F97316'];
+
+function TagQuickFix({ taskId, allTags, onDone }: { taskId: string; allTags: Tag[]; onDone: () => void }) {
+  const [newTagName, setNewTagName] = React.useState('');
+  const [adding, setAdding] = React.useState(false);
+
+  const handleAddExisting = async (tag: Tag) => {
+    await window.electronAPI?.addTagToTask?.(taskId, tag.id);
+    onDone();
+  };
+
+  const handleCreateAndAdd = async () => {
+    const name = newTagName.trim();
+    if (!name || adding) return;
+    setAdding(true);
+    try {
+      const color = TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+      const tag = await window.electronAPI?.createTag(name, color);
+      if (tag) {
+        await window.electronAPI?.addTagToTask?.(taskId, tag.id);
+      }
+      onDone();
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <div className="mt-1 space-y-1.5">
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {allTags.map((tag) => (
+            <button
+              key={tag.id}
+              className="px-2 py-0.5 text-xs rounded-full border transition-colors hover:brightness-125"
+              style={{ borderColor: tag.color + '60', color: tag.color, backgroundColor: tag.color + '15' }}
+              onClick={() => handleAddExisting(tag)}
+            >{tag.name}</button>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-1">
+        <input
+          type="text"
+          value={newTagName}
+          onChange={(e) => setNewTagName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleCreateAndAdd(); }}
+          placeholder="Новый тег..."
+          className="flex-1 bg-t-04 border border-t-08 rounded px-2 py-0.5 text-xs text-t-75 placeholder-t-25 outline-none focus:border-accent-blue/50"
+        />
+        {newTagName.trim() && (
+          <button
+            onClick={handleCreateAndAdd}
+            disabled={adding}
+            className="px-2 py-0.5 text-xs bg-accent-blue/20 text-accent-blue rounded border border-accent-blue/30 hover:bg-accent-blue/30 transition-colors"
+          >+</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function diagnoseTask(
   task: TaskWithAttachments,
   columns: Column[],
@@ -132,27 +194,12 @@ function diagnoseTask(
   }
 
   if (task.tags.length === 0) {
-    const existing = allTags.slice(0, 6);
     diags.push({
       id: 'no_tags',
       label: 'Нет тегов',
       severity: 'warning',
       icon: <AlertTriangle size={14} />,
-      quickFix: existing.length > 0 ? (
-        <div className="flex flex-wrap gap-1 mt-1">
-          {existing.map((tag) => (
-            <button
-              key={tag.id}
-              className="px-2 py-0.5 text-xs rounded-full border transition-colors"
-              style={{ borderColor: tag.color + '60', color: tag.color, backgroundColor: tag.color + '15' }}
-              onClick={async () => {
-                await window.electronAPI?.addTagToTask?.(task.id, tag.id);
-                onRemoveDiag('no_tags');
-              }}
-            >{tag.name}</button>
-          ))}
-        </div>
-      ) : <span className="text-xs text-t-30 mt-1">Создай теги в настройках</span>,
+      quickFix: <TagQuickFix taskId={task.id} allTags={allTags} onDone={() => onRemoveDiag('no_tags')} />,
     });
   }
 
