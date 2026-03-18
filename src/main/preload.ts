@@ -136,6 +136,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('focus:end', id, duration, notes),
   focusGetByTask: (taskId: string) => ipcRenderer.invoke('focus:getByTask', taskId),
   focusGetTotalTime: (taskId: string) => ipcRenderer.invoke('focus:getTotalTime', taskId),
+  focusUpdateTime: (taskId: string, seconds: number) => ipcRenderer.invoke('focus:update-time', taskId, seconds),
+  focusComplete: (taskId: string, seconds: number) => ipcRenderer.invoke('focus:complete', taskId, seconds),
 
   // Generic IPC send (for widget → main communication)
   ipcSend: (channel: string, ...args: unknown[]) => {

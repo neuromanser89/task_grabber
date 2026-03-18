@@ -6,6 +6,7 @@ export interface HotkeyConfig {
   GRAB_TEXT: string;
   GRAB_FILES: string;
   QUICK_NOTE: string;
+  SCREENSHOT: string;
 }
 
 function loadHotkeyConfig(): HotkeyConfig {
@@ -17,6 +18,7 @@ function loadHotkeyConfig(): HotkeyConfig {
         GRAB_TEXT: parsed.GRAB_TEXT || HOTKEYS.GRAB_TEXT,
         GRAB_FILES: parsed.GRAB_FILES || HOTKEYS.GRAB_FILES,
         QUICK_NOTE: parsed.QUICK_NOTE || HOTKEYS.QUICK_NOTE,
+        SCREENSHOT: parsed.SCREENSHOT || HOTKEYS.SCREENSHOT,
       };
     }
   } catch {
@@ -26,6 +28,7 @@ function loadHotkeyConfig(): HotkeyConfig {
     GRAB_TEXT: HOTKEYS.GRAB_TEXT,
     GRAB_FILES: HOTKEYS.GRAB_FILES,
     QUICK_NOTE: HOTKEYS.QUICK_NOTE,
+    SCREENSHOT: HOTKEYS.SCREENSHOT,
   };
 }
 
@@ -41,25 +44,32 @@ export function reloadHotkeys(mainWindow: BrowserWindow) {
 }
 
 function registerHotkeys(mainWindow: BrowserWindow, config: HotkeyConfig) {
-  // Grab text
-  globalShortcut.register(config.GRAB_TEXT, async () => {
-    const originalClipboard = clipboard.readText();
+  // Grab text — instant mode vs dialog mode based on hold duration
+  // We use keydown timestamp to detect quick press vs long press
+  let pressStart: number | null = null;
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  globalShortcut.register(config.GRAB_TEXT, () => {
+    const now = Date.now();
+    const elapsed = pressStart !== null ? now - pressStart : null;
+    pressStart = now;
 
-    const capturedText = clipboard.readText();
+    const clipText = clipboard.readText();
 
-    if (originalClipboard !== capturedText) {
-      clipboard.writeText(originalClipboard);
-    }
-
-    if (capturedText) {
+    if (elapsed !== null && elapsed < 500) {
+      // Quick press (<500ms) — instant create via renderer
       showWindow(mainWindow);
-      mainWindow.webContents.send('grab:text', capturedText);
+      mainWindow.webContents.send('grab:instant', clipText || '');
     } else {
+      // Long press or first press — open dialog
       showWindow(mainWindow);
-      mainWindow.webContents.send('dialog:showCreate');
+      if (clipText) {
+        mainWindow.webContents.send('grab:text', clipText);
+      } else {
+        mainWindow.webContents.send('dialog:showCreate');
+      }
     }
+    // Reset after short delay so next press counts fresh
+    setTimeout(() => { pressStart = null; }, 600);
   });
 
   // Grab files
@@ -73,6 +83,14 @@ function registerHotkeys(mainWindow: BrowserWindow, config: HotkeyConfig) {
     showWindow(mainWindow);
     mainWindow.webContents.send('dialog:showQuickNote');
   });
+
+  // Screenshot capture
+  if (config.SCREENSHOT) {
+    globalShortcut.register(config.SCREENSHOT, () => {
+      showWindow(mainWindow);
+      mainWindow.webContents.send('screenshot:capture');
+    });
+  }
 }
 
 export function unregisterHotkeys() {
