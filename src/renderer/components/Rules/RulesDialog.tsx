@@ -16,6 +16,8 @@ const TRIGGER_FIELD_LABELS: Record<RuleTriggerField, string> = {
   tag: 'Тег',
   title: 'Заголовок',
   source_type: 'Источник',
+  in_column_days: 'В колонке (дней)',
+  no_activity_days: 'Без активности (дней)',
 };
 
 const TRIGGER_OP_LABELS: Record<RuleTriggerOp, string> = {
@@ -25,6 +27,7 @@ const TRIGGER_OP_LABELS: Record<RuleTriggerOp, string> = {
   overdue: 'просрочен',
   greater_than: 'больше',
   less_than: 'меньше',
+  more_than_days: 'более N дней',
 };
 
 const ACTION_TYPE_LABELS: Record<RuleActionType, string> = {
@@ -33,6 +36,7 @@ const ACTION_TYPE_LABELS: Record<RuleActionType, string> = {
   add_tag: 'Добавить тег',
   archive: 'Архивировать',
   set_color: 'Установить цвет',
+  notify: 'Уведомить',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -59,13 +63,15 @@ function getOpsForField(field: RuleTriggerField): RuleTriggerOp[] {
     case 'tag': return ['equals', 'not_equals'];
     case 'title': return ['contains', 'equals', 'not_equals'];
     case 'source_type': return ['equals', 'not_equals'];
+    case 'in_column_days': return ['more_than_days'];
+    case 'no_activity_days': return ['more_than_days'];
     default: return ['equals'];
   }
 }
 
 // ── Available actions (some fields constrain certain actions) ────────────────
 
-const ALL_ACTIONS: RuleActionType[] = ['move_to_column', 'set_priority', 'add_tag', 'archive', 'set_color'];
+const ALL_ACTIONS: RuleActionType[] = ['move_to_column', 'set_priority', 'add_tag', 'archive', 'set_color', 'notify'];
 
 // ── Color options for set_color ──────────────────────────────────────────────
 
@@ -104,6 +110,19 @@ function TriggerValueEditor({
   tags: Tag[];
 }) {
   if (op === 'overdue') return <span className="text-[11px] text-t-30 italic">автоматически</span>;
+  if (field === 'in_column_days' || field === 'no_activity_days') return (
+    <div className="flex items-center gap-1.5">
+      <input
+        type="number"
+        min="1"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="N"
+        className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors w-20"
+      />
+      <span className="text-[11px] text-t-30">дней</span>
+    </div>
+  );
 
   switch (field) {
     case 'priority':
@@ -111,7 +130,7 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -123,7 +142,7 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           <option value="">— выбрать —</option>
           {columns.map((c) => (
@@ -136,7 +155,7 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           <option value="">— выбрать —</option>
           {tags.map((t) => (
@@ -149,7 +168,7 @@ function TriggerValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           {Object.entries(SOURCE_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -162,7 +181,7 @@ function TriggerValueEditor({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="значение"
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 w-32"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors w-32"
         />
       );
   }
@@ -186,12 +205,21 @@ function ActionValueEditor({
   switch (actionType) {
     case 'archive':
       return <span className="text-[11px] text-t-30 italic">задача будет архивирована</span>;
+    case 'notify':
+      return (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Текст уведомления (необязательно)"
+          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-amber/50 w-64"
+        />
+      );
     case 'move_to_column':
       return (
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           <option value="">— выбрать —</option>
           {columns.map((c) => (
@@ -204,7 +232,7 @@ function ActionValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           {Object.entries(PRIORITY_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -216,7 +244,7 @@ function ActionValueEditor({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
         >
           <option value="">— выбрать —</option>
           {tags.map((t) => (
@@ -243,7 +271,7 @@ function ActionValueEditor({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="значение"
-          className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 w-32"
+          className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors w-32"
         />
       );
   }
@@ -358,7 +386,13 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="glass-heavy border border-t-08 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col mx-4 shadow-2xl animate-fade-in-scale">
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[300px] bg-accent-amber/[0.04] rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="relative glass-heavy border border-t-08 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col mx-4 shadow-2xl animate-fade-in-scale">
+        {/* Top gradient line */}
+        <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-amber/30 to-transparent rounded-full" />
+
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-t-06">
           <div className="flex items-center gap-2.5">
@@ -417,7 +451,8 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                   <select
                     value={draft.trigger_field}
                     onChange={(e) => updateDraftField('trigger_field', e.target.value as RuleTriggerField)}
-                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+                    style={{ colorScheme: 'dark' }}
                   >
                     {(Object.keys(TRIGGER_FIELD_LABELS) as RuleTriggerField[]).map((f) => (
                       <option key={f} value={f}>{TRIGGER_FIELD_LABELS[f]}</option>
@@ -428,7 +463,8 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                   <select
                     value={draft.trigger_op}
                     onChange={(e) => updateDraftField('trigger_op', e.target.value as RuleTriggerOp)}
-                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50"
+                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-colors"
+                    style={{ colorScheme: 'dark' }}
                   >
                     {getOpsForField(draft.trigger_field).map((op) => (
                       <option key={op} value={op}>{TRIGGER_OP_LABELS[op]}</option>
@@ -458,7 +494,7 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                       updateDraftField('action_type', e.target.value as RuleActionType);
                       updateDraftField('action_value', '');
                     }}
-                    className="bg-t-04 border border-t-06 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-amber/50"
+                    className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2 py-1 text-[12px] text-t-80 outline-none focus:border-accent-amber/50 transition-colors"
                   >
                     {ALL_ACTIONS.map((a) => (
                       <option key={a} value={a}>{ACTION_TYPE_LABELS[a]}</option>
@@ -530,13 +566,13 @@ export default function RulesDialog({ isOpen, onClose }: Props) {
                   <span className="text-accent-blue/70">ЕСЛИ</span>{' '}
                   {TRIGGER_FIELD_LABELS[rule.trigger_field]}{' '}
                   {TRIGGER_OP_LABELS[rule.trigger_op]}
-                  {rule.trigger_op !== 'overdue' && (
+                  {rule.trigger_op !== 'overdue' && rule.trigger_value && (
                     <> {getRuleValueLabel(rule.trigger_field, rule.trigger_value, columns, tags)}</>
                   )}
                   {' '}→{' '}
                   <span className="text-accent-amber/70">ТО</span>{' '}
                   {ACTION_TYPE_LABELS[rule.action_type]}
-                  {rule.action_type !== 'archive' && (
+                  {rule.action_type !== 'archive' && rule.action_type !== 'notify' && rule.action_value && (
                     <> {getActionValueLabel(rule.action_type, rule.action_value, columns, tags)}</>
                   )}
                 </p>

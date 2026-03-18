@@ -7,6 +7,7 @@ import { setupWidgetHotkey, setupWidgetIpc } from './widget';
 import { setupFocusHotkey, setupFocusIpc } from './focus-window';
 import { createBackup } from './backup';
 import { runAutomation } from './automation';
+import { runSmartRules } from './smart-rules';
 import * as queries from './db/queries';
 
 let mainWindow: BrowserWindow | null = null;
@@ -115,12 +116,14 @@ app.whenReady().then(() => {
     try { createBackup(); } catch { /* ignore if DB not ready */ }
   }, 2000);
 
-  // Run automation on startup + every 5 minutes
+  // Run automation + smart rules on startup + every 5 minutes
   setTimeout(() => {
     runAutomation(mainWindow);
+    runSmartRules(mainWindow);
   }, 5000);
   setInterval(() => {
     runAutomation(mainWindow);
+    runSmartRules(mainWindow);
   }, 5 * 60_000);
 
   // IPC: manual automation trigger
