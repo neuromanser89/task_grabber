@@ -11,6 +11,7 @@ import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
   Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
+  ChevronDown, ChevronUp,
 } from 'lucide-react';
 import RelatedTasks from './RelatedTasks';
 
@@ -152,6 +153,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [recurrenceRule, setRecurrenceRule] = useState<string>('');
   const [recurrenceNext, setRecurrenceNext] = useState<string>('');
   const [isConfidential, setIsConfidential] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -271,7 +273,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
         {/* Title */}
         <input
           ref={titleRef}
@@ -432,127 +434,153 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           </div>
         </div>
 
-        {/* Due date */}
-        <div>
-          <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
-            Дедлайн
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => handleDueDateChange(e.target.value)}
-              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
-            />
-            {dueDate && (
-              <button
-                onClick={() => handleDueDateChange('')}
-                className="text-t-25 hover:text-t-50 transition-colors text-[11px]"
-              >
-                Очистить
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
-            Теги
-          </label>
-          <TagInput
-            taskId={task.id}
-            initialTags={taskTags}
-            onChange={(tags) => {
-              setTaskTags(tags);
-              updateTaskTags(task.id, tags);
-            }}
-          />
-        </div>
-
-        {/* Reminder */}
-        <div>
-          <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-            <Bell size={10} />
-            Напоминание
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="datetime-local"
-              value={reminderAt}
-              onChange={(e) => handleReminderChange(e.target.value)}
-              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
-            />
-            {reminderAt && (
-              <button
-                onClick={() => handleReminderChange('')}
-                className="text-t-25 hover:text-t-50 transition-colors"
-                title="Убрать напоминание"
-              >
-                <BellOff size={13} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Recurrence */}
-        <div>
-          <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-            <Timer size={10} />
-            Повторение
-          </div>
-          <div className="flex flex-col gap-2">
-            <select
-              value={recurrenceRule}
-              onChange={(e) => handleRecurrenceChange(e.target.value, recurrenceNext)}
-              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
-            >
-              <option value="">Не повторять</option>
-              <option value="daily">Каждый день</option>
-              <option value="weekdays">По будням (Пн–Пт)</option>
-              <option value="weekly">Каждую неделю</option>
-              <option value="monthly">Каждый месяц</option>
-              <option value="custom:2:day">Каждые 2 дня</option>
-              <option value="custom:2:week">Каждые 2 недели</option>
-              <option value="custom:3:month">Каждые 3 месяца</option>
-            </select>
-            {recurrenceRule && (
-              <div className="flex items-center gap-2">
-                <label className="text-[11px] text-t-40 flex-shrink-0">Следующее:</label>
-                <input
-                  type="date"
-                  value={recurrenceNext}
-                  onChange={(e) => handleRecurrenceChange(recurrenceRule, e.target.value)}
-                  className="flex-1 bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
-                />
-              </div>
-            )}
-            {task.recurrence_rule && (
-              <p className="text-[10px] text-t-25 italic">
-                Новая задача создаётся автоматически когда наступает дата.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Related tasks */}
-        <RelatedTasks taskId={task.id} />
-
-        {/* Attachments */}
+        {/* Attachments — always visible if present, compact */}
         {task.attachments && task.attachments.length > 0 && (
           <div>
-            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
+            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-1.5">
               Вложения ({task.attachments.length})
             </label>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap gap-1">
               {task.attachments.map((att) => (
-                <AttachmentItem
+                <div
                   key={att.id}
-                  att={att}
-                  onDelete={handleDeleteAttachment}
-                />
+                  className="flex items-center gap-1.5 px-2 py-1 bg-t-03 border border-t-06 rounded-md group hover:border-t-12 transition-all text-[11px] text-t-60 cursor-pointer"
+                  onClick={() => window.electronAPI?.openFile(att.filepath)}
+                  title={att.filename}
+                >
+                  {isImage(att.filename) ? <Image size={10} className="text-t-30 flex-shrink-0" /> : <Paperclip size={10} className="text-t-30 flex-shrink-0" />}
+                  <span className="truncate max-w-[140px]">{att.filename}</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att.id); }}
+                    className="opacity-0 group-hover:opacity-100 text-t-25 hover:text-red-400/70 transition-all flex-shrink-0"
+                  >
+                    <X size={9} />
+                  </button>
+                </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Collapsible "More" section */}
+        <button
+          onClick={() => setShowMore((v) => !v)}
+          className="flex items-center gap-1.5 text-[11px] text-t-30 hover:text-t-50 transition-colors self-start"
+        >
+          {showMore ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          {showMore ? 'Свернуть' : 'Ещё...'}
+          {(dueDate || taskTags.length > 0 || reminderAt || recurrenceRule) && !showMore && (
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-blue/50" />
+          )}
+        </button>
+
+        {showMore && (
+          <div className="flex flex-col gap-4 pl-1 border-l-2 border-t-06 ml-1">
+            {/* Due date */}
+            <div>
+              <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
+                Дедлайн
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => handleDueDateChange(e.target.value)}
+                  className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
+                />
+                {dueDate && (
+                  <button
+                    onClick={() => handleDueDateChange('')}
+                    className="text-t-25 hover:text-t-50 transition-colors text-[11px]"
+                  >
+                    Очистить
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
+                Теги
+              </label>
+              <TagInput
+                taskId={task.id}
+                initialTags={taskTags}
+                onChange={(tags) => {
+                  setTaskTags(tags);
+                  updateTaskTags(task.id, tags);
+                }}
+              />
+            </div>
+
+            {/* Reminder */}
+            <div>
+              <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Bell size={10} />
+                Напоминание
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="datetime-local"
+                  value={reminderAt}
+                  onChange={(e) => handleReminderChange(e.target.value)}
+                  className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
+                />
+                {reminderAt && (
+                  <button
+                    onClick={() => handleReminderChange('')}
+                    className="text-t-25 hover:text-t-50 transition-colors"
+                    title="Убрать напоминание"
+                  >
+                    <BellOff size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Recurrence */}
+            <div>
+              <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Timer size={10} />
+                Повторение
+              </div>
+              <div className="flex flex-col gap-2">
+                <select
+                  value={recurrenceRule}
+                  onChange={(e) => handleRecurrenceChange(e.target.value, recurrenceNext)}
+                  className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
+                >
+                  <option value="">Не повторять</option>
+                  <option value="daily">Каждый день</option>
+                  <option value="weekdays">По будням (Пн–Пт)</option>
+                  <option value="weekly">Каждую неделю</option>
+                  <option value="monthly">Каждый месяц</option>
+                  <option value="custom:2:day">Каждые 2 дня</option>
+                  <option value="custom:2:week">Каждые 2 недели</option>
+                  <option value="custom:3:month">Каждые 3 месяца</option>
+                </select>
+                {recurrenceRule && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] text-t-40 flex-shrink-0">Следующее:</label>
+                    <input
+                      type="date"
+                      value={recurrenceNext}
+                      onChange={(e) => handleRecurrenceChange(recurrenceRule, e.target.value)}
+                      className="flex-1 bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
+                    />
+                  </div>
+                )}
+                {task.recurrence_rule && (
+                  <p className="text-[10px] text-t-25 italic">
+                    Новая задача создаётся автоматически когда наступает дата.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Related tasks */}
+            <RelatedTasks taskId={task.id} />
           </div>
         )}
 
@@ -586,17 +614,18 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           })()}
         </div>
 
-        {/* Footer */}
+        {/* Footer — compact icon buttons */}
         <div className="flex justify-between items-center pt-1">
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button
               variant="danger"
               size="sm"
               icon={<Trash2 size={12} />}
               onClick={handleDelete}
               onBlur={() => setConfirmDelete(false)}
+              title={confirmDelete ? 'Точно удалить?' : 'Удалить'}
             >
-              {confirmDelete ? 'Точно удалить?' : 'Удалить'}
+              {confirmDelete ? 'Точно?' : undefined}
             </Button>
             <Button
               variant="ghost"
@@ -604,36 +633,30 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               icon={savedTemplate ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
               onClick={handleSaveAsTemplate}
               title="Сохранить как шаблон"
-            >
-              {savedTemplate ? 'Сохранено!' : 'Шаблон'}
-            </Button>
+            />
             <Button
               variant="ghost"
               size="sm"
               icon={<Timer size={12} />}
               onClick={() => window.electronAPI?.ipcSend('focus:openTask', task!.id)}
               title="Открыть в Focus Mode"
-            >
-              Фокус
-            </Button>
+            />
             <Button
               variant="ghost"
               size="sm"
               icon={isConfidential ? <Lock size={12} className="text-amber-400" /> : <Unlock size={12} />}
               onClick={handleConfidentialToggle}
-              title={isConfidential ? 'Конфиденциально — данные обфусцируются при отправке AI' : 'Пометить как конфиденциальное'}
-            >
-              {isConfidential ? <span className="text-amber-400">Конф.</span> : 'Конф.'}
-            </Button>
+              title={isConfidential ? 'Конфиденциально' : 'Пометить как конфиденциальное'}
+            />
             <Button
               variant="ghost"
               size="sm"
               icon={<Archive size={12} />}
               onClick={handleArchive}
               onBlur={() => setConfirmArchive(false)}
-              title="Архивировать задачу"
+              title={confirmArchive ? 'Архивировать?' : 'Архивировать задачу'}
             >
-              {confirmArchive ? 'Архивировать?' : 'Архив'}
+              {confirmArchive ? 'Точно?' : undefined}
             </Button>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
