@@ -12,15 +12,7 @@ interface Props {
   defaultMode?: 'edit' | 'preview';
 }
 
-function toggleCheckbox(text: string, lineIndex: number): string {
-  const lines = text.split('\n');
-  const match = lines[lineIndex]?.match(/^([\s]*[-*]\s+)\[([ xX])\](.*)$/);
-  if (match) {
-    const newState = match[2].trim() === '' ? 'x' : ' ';
-    lines[lineIndex] = `${match[1]}[${newState}]${match[3]}`;
-  }
-  return lines.join('\n');
-}
+import { toggleChecklistItem as toggleCheckbox } from '../../utils/checklist';
 
 
 export default function MarkdownEditor({
@@ -170,9 +162,7 @@ export default function MarkdownEditor({
                   remarkPlugins={[remarkGfm]}
                   components={{
                     li({ children, node, className: liClass, ...props }) {
-                      const isTask = typeof liClass === 'string'
-                        ? liClass.includes('task-list-item')
-                        : Array.isArray(liClass) && (liClass as string[]).includes('task-list-item');
+                      const isTask = typeof liClass === 'string' && liClass.includes('task-list-item');
                       if (isTask) {
                         const lineIndex = (node as any)?.position?.start?.line;
                         const childArr = React.Children.toArray(children);

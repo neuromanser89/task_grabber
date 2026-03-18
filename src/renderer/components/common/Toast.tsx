@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { randomUUID as uuidv4 } from 'crypto';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
@@ -104,7 +105,7 @@ export function useToast() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const addToast = useCallback((message: string, type: ToastType = 'info', taskId?: string, duration?: number) => {
-    const id = Math.random().toString(36).slice(2);
+    const id = uuidv4();
     setToasts((prev) => [...prev, { id, message, type, taskId, duration }]);
   }, []);
 

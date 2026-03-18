@@ -25,11 +25,7 @@ const SOURCE_EMOJI: Record<string, string> = {
   email: '✉️',
 };
 
-function countChecklist(text: string): [number, number] {
-  const matches = text.match(/^[-*]\s+\[([ xX])\]/gm) ?? [];
-  const done = matches.filter((m) => /\[([xX])\]/.test(m)).length;
-  return [done, matches.length];
-}
+import { countChecklist } from '../../utils/checklist';
 
 function formatDueDate(dateStr: string): { label: string; isOverdue: boolean; isToday: boolean } {
   const due = new Date(dateStr);
@@ -100,13 +96,6 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     setCtxMenu({ x: e.clientX, y: e.clientY });
   }
 
-  // Fallback: mouseup with button=2 shows context menu even if onContextMenu is blocked
-  function handleMouseUp(e: React.MouseEvent) {
-    if (e.button === 2) {
-      e.stopPropagation();
-      setCtxMenu({ x: e.clientX, y: e.clientY });
-    }
-  }
 
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
@@ -147,7 +136,6 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       {...listeners}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      onMouseUp={handleMouseUp}
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-t-15'
