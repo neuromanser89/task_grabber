@@ -86,6 +86,7 @@ function startReminderPoller() {
           title: 'Task Grabber — Напоминание',
           body: task.title,
           silent: false,
+          icon: path.join(__dirname, '../../../assets/icons/icon.png'),
         });
         notif.on('click', () => {
           mainWindow?.show();
