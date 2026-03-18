@@ -56,7 +56,7 @@ function runAutoArchive(mainWindow: BrowserWindow | null) {
   }
 }
 
-/** Rule 2: Set reminder for overdue tasks that don't have one */
+/** Rule 2: Notify about overdue tasks (toast only, no recurring reminders) */
 function runOverdueReminders(mainWindow: BrowserWindow | null) {
   const enabled = queries.getSetting('automation_overdueReminders') ?? 'true';
   if (enabled !== 'true') return;
@@ -68,17 +68,12 @@ function runOverdueReminders(mainWindow: BrowserWindow | null) {
   for (const task of tasks) {
     if (!task.due_date) continue;
     if (task.due_date >= now) continue; // not overdue
-    if (task.reminder_at) continue;   // already has reminder
     if (task.archived_at) continue;
-
-    // Set a reminder for 1 minute from now (triggers the native reminder popup)
-    const reminderAt = new Date(Date.now() + 60_000).toISOString();
-    queries.updateTask(task.id, { reminder_at: reminderAt });
     count++;
   }
 
   if (count > 0) {
-    sendToast(mainWindow, `Просрочено ${count} задач — напоминания установлены`);
+    sendToast(mainWindow, `Просрочено задач: ${count}`);
   }
 }
 
