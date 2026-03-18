@@ -297,6 +297,26 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('focus:getTotalTime', (_e, taskId: string) => queries.getTotalFocusTime(taskId));
 
+  ipcMain.handle('focus:update-time', (_e, taskId: string, seconds: number) => {
+    queries.addTimeSpent(taskId, seconds);
+    return true;
+  });
+
+  ipcMain.handle('focus:complete', (_e, taskId: string, seconds: number) => {
+    // Add time, then move to done column
+    queries.addTimeSpent(taskId, seconds);
+    const columns = queries.getAllColumns();
+    const doneCol = columns.find((c) => /готово|done|complete/i.test(c.name)) ?? columns[columns.length - 1];
+    if (doneCol) {
+      const tasksInDone = queries.getTasksByColumnId(doneCol.id);
+      const maxOrder = tasksInDone.length > 0
+        ? Math.max(...tasksInDone.map((t) => t.sort_order)) + 1
+        : 0;
+      queries.moveTask(taskId, doneCol.id, maxOrder);
+    }
+    return true;
+  });
+
   // ─── Backup ───────────────────────────────────────────────────────────────
   ipcMain.handle('backup:list', () => listBackups());
 

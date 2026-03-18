@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Search, Plus, Settings, FileText, Hash, ArrowRight } from 'lucide-react';
+import { Search, Plus, Settings, FileText, Hash, ArrowRight, Bot } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import type { TaskWithAttachments } from '@shared/types';
@@ -14,6 +14,7 @@ interface CommandPaletteProps {
   onClose: () => void;
   onNewTask: () => void;
   onSettings: () => void;
+  onAI?: () => void;
 }
 
 function scoreMatch(text: string, query: string): number {
@@ -42,7 +43,7 @@ const SOURCE_ICONS: Record<string, React.ReactNode> = {
   email: <FileText size={11} />,
 };
 
-export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings }: CommandPaletteProps) {
+export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings, onAI }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +68,14 @@ export default function CommandPalette({ isOpen, onClose, onNewTask, onSettings 
       icon: <Settings size={14} />,
       action: () => { onClose(); onSettings(); },
     },
-  ], [onClose, onNewTask, onSettings]);
+    ...(onAI ? [{
+      type: 'command' as const,
+      id: 'ai',
+      label: 'AI Помощник',
+      icon: <Bot size={14} />,
+      action: () => { onClose(); onAI(); },
+    }] : []),
+  ], [onClose, onNewTask, onSettings, onAI]);
 
   const items = useMemo<CommandAction[]>(() => {
     const q = query.trim().toLowerCase();

@@ -10,7 +10,7 @@ import Button from '../common/Button';
 import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
-  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer,
+  Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
 } from 'lucide-react';
 import RelatedTasks from './RelatedTasks';
 
@@ -151,6 +151,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState<string>('');
   const [recurrenceNext, setRecurrenceNext] = useState<string>('');
+  const [isConfidential, setIsConfidential] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -170,6 +171,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setConfirmArchive(false);
       setRecurrenceRule(task.recurrence_rule ?? '');
       setRecurrenceNext(task.recurrence_next ? task.recurrence_next.slice(0, 10) : '');
+      setIsConfidential(!!task.is_confidential);
     }
   }, [task]);
 
@@ -246,6 +248,12 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     setRecurrenceRule(rule);
     setRecurrenceNext(next);
     await window.electronAPI?.recurringSetRule?.(task.id, rule || null, next || null);
+  };
+
+  const handleConfidentialToggle = () => {
+    const next = !isConfidential;
+    setIsConfidential(next);
+    updateTask(task.id, { is_confidential: next ? 1 : 0 });
   };
 
   const handleArchive = async () => {
@@ -595,6 +603,15 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               title="Открыть в Focus Mode"
             >
               Фокус
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={isConfidential ? <Lock size={12} className="text-amber-400" /> : <Unlock size={12} />}
+              onClick={handleConfidentialToggle}
+              title={isConfidential ? 'Конфиденциально — данные обфусцируются при отправке AI' : 'Пометить как конфиденциальное'}
+            >
+              {isConfidential ? <span className="text-amber-400">Конф.</span> : 'Конф.'}
             </Button>
             <Button
               variant="ghost"
