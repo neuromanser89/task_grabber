@@ -375,7 +375,7 @@ export default function FocusWindow() {
             <Maximize2 size={11} />
           </button>
           <button
-            onClick={() => window.electronAPI?.closeWindow()}
+            onClick={() => window.electronAPI?.ipcSend('focus:close')}
             className="w-6 h-6 flex items-center justify-center rounded-lg text-t-20 hover:text-t-60 transition-all"
           >
             <X size={11} />
@@ -424,7 +424,7 @@ export default function FocusWindow() {
             <Minimize2 size={10} />
           </button>
           <button
-            onClick={() => window.electronAPI?.closeWindow()}
+            onClick={() => window.electronAPI?.ipcSend('focus:close')}
             className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60 hover:bg-t-06 transition-all"
           >
             <X size={10} />
