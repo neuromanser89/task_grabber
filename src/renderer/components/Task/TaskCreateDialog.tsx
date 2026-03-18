@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Upload, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Upload, ChevronDown, Bot, Loader2 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
+import { useBoardStore } from '../../stores/boardStore';
 import MarkdownEditor from '../common/MarkdownEditor';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
 import type { Priority, TaskTemplate } from '@shared/types';
@@ -24,15 +25,25 @@ export default function TaskCreateDialog({
 }: TaskCreateDialogProps) {
   const { tasks, createTask } = useTaskStore();
   const { columns } = useColumnStore();
-
-  const defaultColumn = columns.find(c => c.is_default === 1) ?? columns[0];
+  const { boards, activeBoardId } = useBoardStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [boardId, setBoardId] = useState<string | null>(null);
   const [columnId, setColumnId] = useState('');
   const [priority, setPriority] = useState<Priority>(0);
+
+  // Columns filtered by selected board
+  const boardColumns = boardId
+    ? columns.filter(c => c.board_id === boardId)
+    : columns.filter(c => !c.board_id || c.board_id === null);
+
+  const defaultColumn = boardColumns.find(c => c.is_default === 1) ?? boardColumns[0];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
+  const aiCheckedRef = useRef(false);
 
   // Templates
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -44,13 +55,42 @@ export default function TaskCreateDialog({
     const firstLine = initialText ? initialText.split('\n')[0].trim() : '';
     setTitle(firstLine.slice(0, 120));
     setDescription(initialText);
-    setColumnId(defaultColumn?.id ?? '');
+    // Init board to current active board
+    const initBoardId = activeBoardId ?? (boards.length > 0 ? boards[0].id : null);
+    setBoardId(initBoardId);
+    const initCols = initBoardId
+      ? columns.filter(c => c.board_id === initBoardId)
+      : columns.filter(c => !c.board_id || c.board_id === null);
+    const initDefaultCol = initCols.find(c => c.is_default === 1) ?? initCols[0];
+    setColumnId(initDefaultCol?.id ?? '');
     setPriority(0);
     setError('');
     setShowTemplates(false);
 
     window.electronAPI?.getTemplates().then(setTemplates).catch(() => setTemplates([]));
-  }, [isOpen, initialText, defaultColumn?.id]);
+
+    // Check AI config once
+    if (!aiCheckedRef.current) {
+      aiCheckedRef.current = true;
+      Promise.all([
+        window.electronAPI?.getSetting('ai_model'),
+        window.electronAPI?.getSetting('ai_provider'),
+        window.electronAPI?.getSetting('ai_api_key'),
+      ]).then(([model, provider, apiKey]) => {
+        const configured = !!model && (provider === 'ollama' || !!apiKey);
+        setAiConfigured(configured);
+      }).catch(() => setAiConfigured(false));
+    }
+  }, [isOpen, initialText, activeBoardId]);
+
+  const handleBoardChange = (newBoardId: string) => {
+    setBoardId(newBoardId);
+    const newCols = newBoardId
+      ? columns.filter(c => c.board_id === newBoardId)
+      : columns.filter(c => !c.board_id || c.board_id === null);
+    const newDefault = newCols.find(c => c.is_default === 1) ?? newCols[0];
+    setColumnId(newDefault?.id ?? '');
+  };
 
   const applyTemplate = (tpl: TaskTemplate) => {
     setTitle(tpl.title);
@@ -98,6 +138,38 @@ export default function TaskCreateDialog({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleCreate();
+    }
+  };
+
+  const handleAIDescription = async () => {
+    if (!aiConfigured) return;
+    if (title.trim().length < 10) {
+      setError('Добавьте больше контекста в заголовок');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const [provider, model, apiKey, baseUrl] = await Promise.all([
+        window.electronAPI?.getSetting('ai_provider'),
+        window.electronAPI?.getSetting('ai_model'),
+        window.electronAPI?.getSetting('ai_api_key'),
+        window.electronAPI?.getSetting('ai_base_url'),
+      ]);
+      const prompt = `На основе заголовка задачи '${title.trim()}' и описания '${description.trim()}', создай подробное описание задачи с конкретными шагами выполнения в формате markdown checklist. Кратко, по делу, без воды.`;
+      const result = await window.electronAPI?.aiQuery?.({
+        provider: (provider as 'openrouter' | 'ollama') || 'openrouter',
+        model: (model as string) || 'openai/gpt-4o-mini',
+        apiKey: (apiKey as string) || null,
+        baseUrl: (baseUrl as string) || 'http://localhost:11434',
+        messages: [{ role: 'user', content: prompt }],
+      });
+      if (result?.content) {
+        setDescription((prev) => prev ? `${prev}\n\n${result.content}` : result.content);
+      }
+    } catch {
+      setError('Ошибка AI запроса');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -155,9 +227,25 @@ export default function TaskCreateDialog({
         />
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
-            Описание
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
+              Описание
+            </label>
+            <button
+              type="button"
+              onClick={handleAIDescription}
+              disabled={!aiConfigured || aiLoading}
+              title={aiConfigured ? 'AI описание по заголовку' : 'Настройте AI в ⚙'}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] transition-all duration-150 ${
+                aiConfigured
+                  ? 'text-accent-purple/80 hover:text-accent-purple hover:bg-accent-purple/10 cursor-pointer'
+                  : 'text-t-20 cursor-not-allowed'
+              }`}
+            >
+              {aiLoading ? <Loader2 size={11} className="animate-spin" /> : <Bot size={11} />}
+              AI описание
+            </button>
+          </div>
           <MarkdownEditor
             value={description}
             onChange={setDescription}
@@ -167,22 +255,42 @@ export default function TaskCreateDialog({
           />
         </div>
 
-        {/* Column selector */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
-            Колонка
-          </label>
-          <select
-            value={columnId}
-            onChange={e => setColumnId(e.target.value)}
-            className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-3 py-2 text-[13px] text-t-85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
-          >
-            {columns.map(col => (
-              <option key={col.id} value={col.id} className="bg-[#1A1A2E]">
-                {col.name}
-              </option>
-            ))}
-          </select>
+        {/* Board + Column selectors */}
+        <div className="flex gap-2">
+          {boards.length > 0 && (
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
+                Доска
+              </label>
+              <select
+                value={boardId ?? ''}
+                onChange={e => handleBoardChange(e.target.value)}
+                className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-3 py-2 text-[13px] text-t-85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+              >
+                {boards.map(b => (
+                  <option key={b.id} value={b.id} className="bg-[#1A1A2E]">
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
+              Колонка
+            </label>
+            <select
+              value={columnId}
+              onChange={e => setColumnId(e.target.value)}
+              className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-3 py-2 text-[13px] text-t-85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+            >
+              {boardColumns.map(col => (
+                <option key={col.id} value={col.id} className="bg-[#1A1A2E]">
+                  {col.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Priority selector */}

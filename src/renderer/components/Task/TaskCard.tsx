@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer, Repeat, CheckSquare, Square } from 'lucide-react';
+import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft } from 'lucide-react';
+import { useBoardStore } from '../../stores/boardStore';
+import { useColumnStore } from '../../stores/columnStore';
+import { useTaskStore } from '../../stores/taskStore';
 
 interface Props {
   task: TaskWithAttachments;
@@ -56,6 +59,24 @@ function relativeTime(dateStr: string): string {
 export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = task.attachments && task.attachments.length > 0;
+  const { boards } = useBoardStore();
+  const { columns } = useColumnStore();
+  const { moveTask, tasks } = useTaskStore();
+
+  // Context menu state
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const ctxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = (e: MouseEvent) => {
+      if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) {
+        setCtxMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [ctxMenu]);
 
   const {
     attributes,
@@ -72,6 +93,24 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     opacity: isDragging && !isDragOverlay ? 0.25 : 1,
   };
 
+  function handleContextMenu(e: React.MouseEvent) {
+    if (boards.length === 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY });
+  }
+
+  async function handleMoveToBoard(targetBoardId: string) {
+    setCtxMenu(null);
+    // Find default column of target board
+    const boardCols = columns.filter(c => c.board_id === targetBoardId);
+    const targetCol = boardCols.find(c => c.is_default === 1) ?? boardCols[0];
+    if (!targetCol) return;
+    const tasksInCol = tasks.filter(t => t.column_id === targetCol.id);
+    const maxOrder = tasksInCol.reduce((m, t) => Math.max(m, t.sort_order), -1) + 1;
+    await moveTask(task.id, targetCol.id, maxOrder);
+  }
+
   function handleClick(e: React.MouseEvent) {
     if (isDragging) return;
     if (onBatchSelect && (e.ctrlKey || e.metaKey)) {
@@ -87,6 +126,10 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     if (onClick) { e.stopPropagation(); onClick(task); }
   }
 
+  // Current board of this task's column
+  const taskBoardId = columns.find(c => c.id === task.column_id)?.board_id ?? null;
+  const otherBoards = boards.filter(b => b.id !== taskBoardId);
+
   return (
     <div
       ref={setNodeRef}
@@ -94,6 +137,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       {...attributes}
       {...listeners}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-t-15'
@@ -234,6 +278,34 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           {hasAttachments && <span className="text-t-25">📎</span>}
         </div>
       </div>
+
+      {/* Context menu: Move to board */}
+      {ctxMenu && otherBoards.length > 0 && (
+        <div
+          ref={ctxRef}
+          className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden py-1"
+          style={{ top: ctxMenu.y, left: ctxMenu.x, minWidth: 180 }}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <div className="px-3 py-1.5 text-[10px] font-semibold text-t-30 uppercase tracking-wider flex items-center gap-1.5">
+            <ArrowRightLeft size={10} />
+            Перенести на доску
+          </div>
+          {otherBoards.map(b => (
+            <button
+              key={b.id}
+              onClick={() => handleMoveToBoard(b.id)}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[12px] text-t-70 hover:bg-t-06 hover:text-t-90 transition-colors text-left"
+            >
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: b.color ?? '#6B7280' }}
+              />
+              {b.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
