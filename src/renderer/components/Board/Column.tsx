@@ -53,7 +53,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
   return (
     <>
       <div
-        ref={setSortRef}
+        ref={(node) => { setSortRef(node); setDropRef(node); }}
         style={isDragOverlay ? {} : style}
         className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
           isOverWip ? 'ring-1 ring-red-500/15' : ''
@@ -101,7 +101,6 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
         {/* Tasks area */}
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           <div
-            ref={setDropRef}
             className={`flex-1 overflow-y-auto p-2 flex flex-col gap-1.5 min-h-[80px] transition-all duration-300 ${
               isOver ? 'bg-accent-blue/[0.04] column-drop-active' : ''
             }`}
