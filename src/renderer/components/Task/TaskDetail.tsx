@@ -11,7 +11,7 @@ import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
   Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Bot, Loader2,
 } from 'lucide-react';
 import RelatedTasks from './RelatedTasks';
 
@@ -154,6 +154,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [recurrenceNext, setRecurrenceNext] = useState<string>('');
   const [isConfidential, setIsConfidential] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const checkboxIndexRef = useRef(0);
@@ -176,6 +178,17 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
       setIsConfidential(!!task.is_confidential);
     }
   }, [task]);
+
+  useEffect(() => {
+    if (aiConfigured !== null) return;
+    Promise.all([
+      window.electronAPI?.getSetting('ai_model'),
+      window.electronAPI?.getSetting('ai_provider'),
+      window.electronAPI?.getSetting('ai_api_key'),
+    ]).then(([model, provider, apiKey]) => {
+      setAiConfigured(!!model && (provider === 'ollama' || !!apiKey));
+    }).catch(() => setAiConfigured(false));
+  }, [aiConfigured]);
 
   if (!task) return null;
 
@@ -269,6 +282,37 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
     onClose();
   };
 
+  const handleAIDescription = async () => {
+    if (!aiConfigured) return;
+    if (title.trim().length < 10) return;
+    setAiLoading(true);
+    try {
+      const [provider, model, apiKey, baseUrl] = await Promise.all([
+        window.electronAPI?.getSetting('ai_provider'),
+        window.electronAPI?.getSetting('ai_model'),
+        window.electronAPI?.getSetting('ai_api_key'),
+        window.electronAPI?.getSetting('ai_base_url'),
+      ]);
+      const prompt = `На основе заголовка задачи '${title.trim()}' и описания '${description.trim()}', создай подробное описание задачи с конкретными шагами выполнения в формате markdown checklist. Кратко, по делу, без воды.`;
+      const result = await window.electronAPI?.aiQuery?.({
+        provider: (provider as 'openrouter' | 'ollama') || 'openrouter',
+        model: (model as string) || 'openai/gpt-4o-mini',
+        apiKey: (apiKey as string) || null,
+        baseUrl: (baseUrl as string) || 'http://localhost:11434',
+        messages: [{ role: 'user', content: prompt }],
+      });
+      if (result?.content) {
+        const newDesc = description ? `${description}\n\n${result.content}` : result.content;
+        setDescription(newDesc);
+        saveDescription(newDesc);
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const [doneCount, totalCount] = countChecklist(description);
 
   return (
@@ -296,20 +340,35 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                 </span>
               )}
             </label>
-            <button
-              onClick={() => {
-                if (descPreview) {
-                  setDescPreview(false);
-                } else {
-                  saveDescription();
-                  setDescPreview(true);
-                }
-              }}
-              className="flex items-center gap-1 text-[11px] text-t-25 hover:text-t-50 transition-colors"
-            >
-              {descPreview ? <Edit3 size={11} /> : <Eye size={11} />}
-              {descPreview ? 'Редактировать' : 'Предпросмотр'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAIDescription}
+                disabled={!aiConfigured || aiLoading || title.trim().length < 10}
+                title={!aiConfigured ? 'Настройте AI в ⚙' : title.trim().length < 10 ? 'Добавьте больше контекста в заголовок' : 'AI описание по заголовку'}
+                className={`flex items-center gap-1 text-[11px] transition-colors ${
+                  aiConfigured && title.trim().length >= 10
+                    ? 'text-accent-purple/70 hover:text-accent-purple cursor-pointer'
+                    : 'text-t-15 cursor-not-allowed'
+                }`}
+              >
+                {aiLoading ? <Loader2 size={11} className="animate-spin" /> : <Bot size={11} />}
+                AI
+              </button>
+              <button
+                onClick={() => {
+                  if (descPreview) {
+                    setDescPreview(false);
+                  } else {
+                    saveDescription();
+                    setDescPreview(true);
+                  }
+                }}
+                className="flex items-center gap-1 text-[11px] text-t-25 hover:text-t-50 transition-colors"
+              >
+                {descPreview ? <Edit3 size={11} /> : <Eye size={11} />}
+                {descPreview ? 'Редактировать' : 'Предпросмотр'}
+              </button>
+            </div>
           </div>
 
           {descPreview ? (
