@@ -77,4 +77,17 @@ export function setupFocusIpc(_getMainWindow: () => BrowserWindow | null) {
       focusWindow.close();
     }
   });
+
+  ipcMain.on('focus:set-mini', (_event, isMini: boolean) => {
+    if (!focusWindow || focusWindow.isDestroyed()) return;
+    if (isMini) {
+      focusWindow.setMinimumSize(280, 50);
+      focusWindow.setSize(350, 50, true);
+      focusWindow.setResizable(false);
+    } else {
+      focusWindow.setMinimumSize(300, 400);
+      focusWindow.setSize(360, 520, true);
+      focusWindow.setResizable(true);
+    }
+  });
 }

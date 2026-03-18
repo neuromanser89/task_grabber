@@ -345,41 +345,50 @@ export default function FocusWindow() {
 
   // ─── Mini mode ─────────────────────────────────────────────────────────────
 
+  function enterMini() {
+    setIsMini(true);
+    window.electronAPI?.ipcSend('focus:set-mini', true);
+  }
+
+  function exitMini() {
+    setIsMini(false);
+    window.electronAPI?.ipcSend('focus:set-mini', false);
+  }
+
   if (isMini) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl select-none cursor-move transition-all duration-300"
+        className="flex flex-col bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl select-none transition-all duration-300 overflow-hidden"
         style={{
-          WebkitAppRegion: 'drag',
           border: `1px solid ${isRunning ? phaseColor + '40' : 'rgba(255,255,255,0.08)'}`,
           boxShadow: isRunning ? `0 0 20px ${phaseColor}15, 0 0 4px ${phaseColor}10` : 'none',
         } as React.CSSProperties}
       >
+        {/* Header row — draggable */}
         <div
-          className="text-xl font-mono font-bold tabular-nums"
-          style={{ color: phaseColor }}
+          className="flex items-center gap-2 px-3 py-1.5 cursor-move"
+          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
-          {pad(mins)}:{pad(secs)}
-        </div>
-        <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-          <button
-            onClick={toggleTimer}
-            className="w-6 h-6 flex items-center justify-center rounded-lg transition-all text-t-50 hover:text-t-90"
+          <div
+            className="text-lg font-mono font-bold tabular-nums"
+            style={{ color: phaseColor }}
           >
-            {isRunning ? <Pause size={13} /> : <Play size={13} />}
-          </button>
-          <button
-            onClick={() => setIsMini(false)}
-            className="w-6 h-6 flex items-center justify-center rounded-lg text-t-25 hover:text-t-60 transition-all"
-          >
-            <Maximize2 size={11} />
-          </button>
-          <button
-            onClick={() => window.electronAPI?.ipcSend('focus:close')}
-            className="w-6 h-6 flex items-center justify-center rounded-lg text-t-20 hover:text-t-60 transition-all"
-          >
-            <X size={11} />
-          </button>
+            {pad(mins)}:{pad(secs)}
+          </div>
+          <span className="text-[10px] text-t-40 truncate flex-1">
+            {selectedTask?.title ?? 'Focus'}
+          </span>
+          <div className="flex items-center gap-0.5" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+            <button onClick={toggleTimer} className="w-5 h-5 flex items-center justify-center rounded text-t-50 hover:text-t-90">
+              {isRunning ? <Pause size={11} /> : <Play size={11} />}
+            </button>
+            <button onClick={exitMini} className="w-5 h-5 flex items-center justify-center rounded text-t-25 hover:text-t-60">
+              <Maximize2 size={10} />
+            </button>
+            <button onClick={() => window.electronAPI?.ipcSend('focus:close')} className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60">
+              <X size={10} />
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -417,7 +426,7 @@ export default function FocusWindow() {
         </div>
         <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
-            onClick={() => setIsMini(true)}
+            onClick={enterMini}
             className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60 hover:bg-t-06 transition-all"
             title="Свернуть"
           >
