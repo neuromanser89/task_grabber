@@ -3,7 +3,7 @@ import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer } from 'lucide-react';
+import { CalendarDays, Timer, Repeat } from 'lucide-react';
 
 interface Props {
   task: TaskWithAttachments;
@@ -168,10 +168,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       <div className="flex items-center justify-between mt-2.5 text-[10px] text-t-20">
         <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
         <div className="flex items-center gap-1.5">
-          {(task as unknown as { time_spent?: number }).time_spent && (task as unknown as { time_spent?: number }).time_spent! > 0 && (
+          {task.recurrence_rule && (
+            <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-violet-500/10 text-violet-400/70" title="Повторяющаяся задача">
+              <Repeat size={8} />
+            </span>
+          )}
+          {task.time_spent > 0 && (
             <span className="flex items-center gap-0.5 text-[10px] text-t-20">
               <Timer size={9} />
-              {Math.round(((task as unknown as { time_spent: number }).time_spent) / 60)}м
+              {Math.round(task.time_spent / 60)}м
             </span>
           )}
           {task.due_date && (() => {

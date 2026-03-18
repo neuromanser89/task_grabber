@@ -348,8 +348,12 @@ export default function FocusWindow() {
   if (isMini) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl border border-t-08 select-none cursor-move"
-        style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+        className="flex items-center gap-2 px-3 py-2 bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl select-none cursor-move transition-all duration-300"
+        style={{
+          WebkitAppRegion: 'drag',
+          border: `1px solid ${isRunning ? phaseColor + '40' : 'rgba(255,255,255,0.08)'}`,
+          boxShadow: isRunning ? `0 0 20px ${phaseColor}15, 0 0 4px ${phaseColor}10` : 'none',
+        } as React.CSSProperties}
       >
         <div
           className="text-xl font-mono font-bold tabular-nums"
@@ -386,11 +390,21 @@ export default function FocusWindow() {
   return (
     <div className="relative flex flex-col h-screen bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl overflow-hidden border border-t-08 select-none">
 
+      {/* Ambient glow */}
+      {phase !== 'idle' && (
+        <div
+          className="pointer-events-none absolute top-[60px] left-1/2 -translate-x-1/2 w-[200px] h-[200px] rounded-full blur-[80px] opacity-[0.08] transition-colors duration-500"
+          style={{ backgroundColor: phaseColor }}
+        />
+      )}
+
       {/* Title bar */}
       <div
-        className="flex items-center justify-between px-3 py-2 border-b border-t-06 flex-shrink-0"
+        className="relative flex items-center justify-between px-3 py-2 border-b border-t-06 flex-shrink-0"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
+        {/* Top gradient accent */}
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-accent-blue/25 to-transparent" />
         <div className="flex items-center gap-2">
           <GripHorizontal size={12} className="text-t-25" />
           <Timer size={12} className="text-t-40" />
@@ -456,7 +470,14 @@ export default function FocusWindow() {
       {/* Pomodoro timer */}
       <div className="flex-shrink-0 px-4 pt-3 pb-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <div className="relative mx-auto" style={{ width: 110, height: 110 }}>
-          <svg width="110" height="110" className="rotate-[-90deg]">
+          {/* Glow ring behind timer when active */}
+          {isRunning && (
+            <div
+              className="absolute inset-0 rounded-full blur-[20px] opacity-20 animate-glow-pulse"
+              style={{ backgroundColor: phaseColor }}
+            />
+          )}
+          <svg width="110" height="110" className="rotate-[-90deg] relative z-10">
             <circle cx="55" cy="55" r="48" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="5" />
             <circle
               cx="55" cy="55" r="48" fill="none"
@@ -468,7 +489,7 @@ export default function FocusWindow() {
               style={{ transition: 'stroke-dashoffset 0.5s linear, stroke 0.3s' }}
             />
           </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
             <span className="text-[22px] font-mono font-bold text-white tabular-nums">
               {pad(mins)}:{pad(secs)}
             </span>
