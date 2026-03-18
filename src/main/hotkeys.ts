@@ -72,10 +72,49 @@ function registerHotkeys(mainWindow: BrowserWindow, config: HotkeyConfig) {
     setTimeout(() => { pressStart = null; }, 600);
   });
 
-  // Grab files
+  // Grab files — read Windows clipboard FileNameW (files copied in Explorer via Ctrl+C)
   globalShortcut.register(config.GRAB_FILES, () => {
     showWindow(mainWindow);
-    mainWindow.webContents.send('dialog:showCreate');
+
+    let filePaths: string[] = [];
+
+    try {
+      // Windows stores copied file paths in 'FileNameW' clipboard format (UCS-2LE null-terminated list)
+      const buf = clipboard.readBuffer('FileNameW');
+      if (buf && buf.length > 2) {
+        // Decode as UCS-2LE (UTF-16LE), strip trailing nulls, split by null chars
+        const raw = buf.toString('utf16le');
+        filePaths = raw
+          .split('\0')
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0);
+      }
+    } catch {
+      // ignore — format not available
+    }
+
+    // Fallback: try CF_HDROP text list (some apps put plain paths in text)
+    if (filePaths.length === 0) {
+      try {
+        const txt = clipboard.readText();
+        if (txt) {
+          const lines = txt.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+          // Heuristic: treat as file paths if all lines look like absolute Windows paths
+          const looksLikePaths = lines.every((l) => /^[A-Za-z]:[\\\/]/.test(l) || l.startsWith('\\\\'));
+          if (looksLikePaths) {
+            filePaths = lines;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (filePaths.length > 0) {
+      mainWindow.webContents.send('grab:files', filePaths);
+    } else {
+      mainWindow.webContents.send('dialog:showCreate');
+    }
   });
 
   // Quick note
