@@ -101,7 +101,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
     <div
       ref={containerRef}
       style={style}
-      className="relative rounded-xl glass-heavy shadow-2xl p-3 flex flex-col gap-2.5 overflow-hidden"
+      className="relative rounded-xl glass-heavy shadow-2xl p-3 flex flex-col gap-2.5"
       onMouseDown={(e) => e.stopPropagation()}
     >
       {/* Top gradient line */}
