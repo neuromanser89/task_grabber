@@ -11,7 +11,7 @@ interface Props {
   onClose: () => void;
 }
 
-type DiagId = 'overdue' | 'no_deadline' | 'empty_description' | 'stale_task' | 'no_tags' | 'no_priority' | 'abandoned_checklist';
+type DiagId = 'overdue' | 'deadline_soon' | 'no_deadline' | 'empty_description' | 'stale_task' | 'no_tags' | 'no_priority' | 'abandoned_checklist';
 
 interface DiagInfo {
   id: DiagId;
@@ -34,7 +34,12 @@ function diagnoseTask(task: TaskWithAttachments, columns: Column[]): DiagInfo[] 
 
   if (task.due_date && !task.archived_at) {
     const due = new Date(task.due_date); due.setHours(0, 0, 0, 0);
-    if (due < today) diags.push({ id: 'overdue', label: 'Просрочена', severity: 'error' });
+    const daysUntilDue = Math.floor((due.getTime() - today.getTime()) / 86400000);
+    if (daysUntilDue < 0) {
+      diags.push({ id: 'overdue', label: `Просрочена на ${Math.abs(daysUntilDue)} дн.`, severity: 'error' });
+    } else if (daysUntilDue <= 3 && !task.reminder_at) {
+      diags.push({ id: 'deadline_soon', label: `Дедлайн через ${daysUntilDue === 0 ? 'сегодня' : daysUntilDue + ' дн.'} — нет напоминания`, severity: 'warning' });
+    }
   }
   if (task.priority >= 2 && !task.due_date && !task.archived_at)
     diags.push({ id: 'no_deadline', label: 'Нет дедлайна у важной задачи', severity: 'warning' });
@@ -121,13 +126,37 @@ function QuickFixWidget({ diagId, task, columns, allTags, onFix, onMove, onRemov
     </div>
   );
 
+  const [descDraft, setDescDraft] = useState(task.description || '');
+
+  const reminderBtns = () => (
+    <div className="flex flex-wrap gap-1 mt-1">
+      {[{ label: 'Через 1ч', hours: 1 }, { label: 'Через 3ч', hours: 3 }, { label: 'Завтра 9:00', hours: -1 }].map(({ label, hours }) => {
+        return <button key={label} className="px-2 py-0.5 text-xs bg-t-04 border border-t-08 hover:bg-t-08 rounded transition-colors"
+          onClick={() => {
+            const d = new Date();
+            if (hours === -1) { d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); }
+            else d.setTime(d.getTime() + hours * 3600000);
+            fix({ reminder_at: d.toISOString() });
+          }}>{label}</button>;
+      })}
+    </div>
+  );
+
   switch (diagId) {
     case 'overdue': return dateBtns('overdue');
+    case 'deadline_soon': return reminderBtns();
     case 'no_deadline': return dateBtns('no_deadline');
     case 'empty_description': return (
-      <textarea rows={2} placeholder="Добавь описание..."
-        className="mt-1 w-full px-2 py-1 text-xs bg-t-04 border border-t-08 rounded resize-none text-t-80 placeholder:text-t-30"
-        onBlur={(e) => { if (e.target.value.trim().length >= 10) fix({ description: e.target.value.trim() }); }} />
+      <div className="mt-1 flex flex-col gap-1">
+        <textarea rows={2} placeholder="Добавь описание..." value={descDraft}
+          onChange={(e) => setDescDraft(e.target.value)}
+          className="w-full px-2 py-1 text-xs bg-t-04 border border-t-08 rounded resize-none text-t-80 placeholder:text-t-30 focus:border-accent-blue/50 outline-none" />
+        {descDraft.trim().length > 0 && (
+          <button onClick={() => fix({ description: descDraft.trim() })}
+            className="self-end px-2 py-0.5 text-xs bg-accent-blue/20 text-accent-blue rounded border border-accent-blue/30 hover:bg-accent-blue/30 transition-colors"
+          >Сохранить</button>
+        )}
+      </div>
     );
     case 'stale_task': return (
       <select className="mt-1 px-2 py-0.5 text-xs bg-t-04 border border-t-08 rounded text-t-60 appearance-none cursor-pointer"
