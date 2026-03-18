@@ -124,22 +124,22 @@ export default function Widget() {
   }
 
   return (
-    <div className="relative flex flex-col h-screen bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl overflow-hidden border border-white/[0.08] select-none">
+    <div className="relative flex flex-col h-screen bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl overflow-hidden border border-t-08 select-none">
       {/* Title bar (draggable) */}
       <div
-        className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] flex-shrink-0"
+        className="flex items-center justify-between px-3 py-2 border-b border-t-06 flex-shrink-0"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div className="flex items-center gap-2">
-          <GripHorizontal size={12} className="text-white/25" />
-          <span className="text-[11px] font-medium text-white/50">В работе</span>
-          <span className="text-[10px] text-white/25 bg-white/[0.05] px-1.5 py-0.5 rounded-md tabular-nums">
+          <GripHorizontal size={12} className="text-t-25" />
+          <span className="text-[11px] font-medium text-t-50">В работе</span>
+          <span className="text-[10px] text-t-25 bg-t-05 px-1.5 py-0.5 rounded-md tabular-nums">
             {widgetTasks.length}
           </span>
         </div>
         <button
           onClick={closeWidget}
-          className="w-5 h-5 flex items-center justify-center rounded text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all"
+          className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60 hover:bg-t-06 transition-all"
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
         >
           <X size={10} />
@@ -150,14 +150,14 @@ export default function Widget() {
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1.5">
         {widgetTasks.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-8">
-            <span className="text-[11px] text-white/15 italic">Нет задач в работе</span>
+            <span className="text-[11px] text-t-15 italic">Нет задач в работе</span>
           </div>
         ) : (
           widgetTasks.map((task) => (
             <button
               key={task.id}
               onClick={() => handleTaskClick(task)}
-              className="w-full text-left rounded-lg px-3 py-2 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.05] hover:border-white/[0.1] transition-all duration-150 group"
+              className="w-full text-left rounded-lg px-3 py-2 bg-t-03 hover:bg-t-08 border border-t-06 hover:border-t-10 transition-all duration-150 group"
             >
               <div className="flex items-start gap-2">
                 {task.priority > 0 && (
@@ -166,10 +166,10 @@ export default function Widget() {
                     style={{ backgroundColor: PRIORITY_COLORS[task.priority] }}
                   />
                 )}
-                <p className="text-[12px] font-medium text-white/75 leading-snug line-clamp-2 flex-1 group-hover:text-white/90 transition-colors">
+                <p className="text-[12px] font-medium text-t-75 leading-snug line-clamp-2 flex-1 group-hover:text-t-90 transition-colors">
                   {task.title}
                 </p>
-                <span className="text-[9px] text-white/20 flex-shrink-0 mt-0.5">
+                <span className="text-[9px] text-t-20 flex-shrink-0 mt-0.5">
                   {relativeTime(task.created_at)}
                 </span>
               </div>
