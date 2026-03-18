@@ -348,7 +348,7 @@ export default function FocusWindow() {
   if (isMini) {
     return (
       <div
-        className="flex items-center gap-2 px-3 py-2 bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl border border-white/[0.08] select-none cursor-move"
+        className="flex items-center gap-2 px-3 py-2 bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl border border-t-08 select-none cursor-move"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div
@@ -360,19 +360,19 @@ export default function FocusWindow() {
         <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
             onClick={toggleTimer}
-            className="w-6 h-6 flex items-center justify-center rounded-lg transition-all text-white/50 hover:text-white/90"
+            className="w-6 h-6 flex items-center justify-center rounded-lg transition-all text-t-50 hover:text-t-90"
           >
             {isRunning ? <Pause size={13} /> : <Play size={13} />}
           </button>
           <button
             onClick={() => setIsMini(false)}
-            className="w-6 h-6 flex items-center justify-center rounded-lg text-white/25 hover:text-white/60 transition-all"
+            className="w-6 h-6 flex items-center justify-center rounded-lg text-t-25 hover:text-t-60 transition-all"
           >
             <Maximize2 size={11} />
           </button>
           <button
             onClick={() => window.electronAPI?.closeWindow()}
-            className="w-6 h-6 flex items-center justify-center rounded-lg text-white/20 hover:text-white/60 transition-all"
+            className="w-6 h-6 flex items-center justify-center rounded-lg text-t-20 hover:text-t-60 transition-all"
           >
             <X size={11} />
           </button>
@@ -384,19 +384,19 @@ export default function FocusWindow() {
   // ─── Full mode ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="relative flex flex-col h-screen bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl overflow-hidden border border-white/[0.08] select-none">
+    <div className="relative flex flex-col h-screen bg-[#0F0F14]/95 backdrop-blur-xl text-white rounded-xl overflow-hidden border border-t-08 select-none">
 
       {/* Title bar */}
       <div
-        className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06] flex-shrink-0"
+        className="flex items-center justify-between px-3 py-2 border-b border-t-06 flex-shrink-0"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
         <div className="flex items-center gap-2">
-          <GripHorizontal size={12} className="text-white/25" />
-          <Timer size={12} className="text-white/40" />
-          <span className="text-[11px] font-medium text-white/50">Focus Mode</span>
+          <GripHorizontal size={12} className="text-t-25" />
+          <Timer size={12} className="text-t-40" />
+          <span className="text-[11px] font-medium text-t-50">Focus Mode</span>
           {pomodoroCount > 0 && (
-            <span className="text-[10px] text-white/25 bg-white/[0.05] px-1.5 py-0.5 rounded-md">
+            <span className="text-[10px] text-t-25 bg-t-05 px-1.5 py-0.5 rounded-md">
               {pomodoroCount} 🍅
             </span>
           )}
@@ -404,14 +404,14 @@ export default function FocusWindow() {
         <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
             onClick={() => setIsMini(true)}
-            className="w-5 h-5 flex items-center justify-center rounded text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all"
+            className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60 hover:bg-t-06 transition-all"
             title="Свернуть"
           >
             <Minimize2 size={10} />
           </button>
           <button
             onClick={() => window.electronAPI?.closeWindow()}
-            className="w-5 h-5 flex items-center justify-center rounded text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all"
+            className="w-5 h-5 flex items-center justify-center rounded text-t-20 hover:text-t-60 hover:bg-t-06 transition-all"
           >
             <X size={10} />
           </button>
@@ -422,19 +422,19 @@ export default function FocusWindow() {
       <div className="px-3 pt-3 flex-shrink-0" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <button
           onClick={() => setShowTaskPicker((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] transition-all text-left"
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-t-04 hover:bg-t-08 border border-t-06 transition-all text-left"
         >
-          <span className="text-[11px] text-white/60 truncate flex-1">
+          <span className="text-[11px] text-t-60 truncate flex-1">
             {selectedTask ? selectedTask.title : 'Выбрать задачу...'}
           </span>
-          <ChevronDown size={11} className={`text-white/30 flex-shrink-0 ml-1 transition-transform ${showTaskPicker ? 'rotate-180' : ''}`} />
+          <ChevronDown size={11} className={`text-t-30 flex-shrink-0 ml-1 transition-transform ${showTaskPicker ? 'rotate-180' : ''}`} />
         </button>
 
         {showTaskPicker && (
-          <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-white/[0.08] bg-[#1A1A22] z-10">
+          <div className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-t-08 bg-[#1A1A22] z-10">
             <button
               onClick={() => { setSelectedTaskId(null); setShowTaskPicker(false); }}
-              className="w-full text-left px-3 py-2 text-[11px] text-white/40 hover:bg-white/[0.05] transition-colors border-b border-white/[0.05]"
+              className="w-full text-left px-3 py-2 text-[11px] text-t-40 hover:bg-t-05 transition-colors border-b border-t-06"
             >
               Без задачи
             </button>
@@ -442,8 +442,8 @@ export default function FocusWindow() {
               <button
                 key={t.id}
                 onClick={() => { setSelectedTaskId(t.id); setShowTaskPicker(false); }}
-                className={`w-full text-left px-3 py-2 text-[11px] hover:bg-white/[0.05] transition-colors truncate ${
-                  t.id === selectedTaskId ? 'text-blue-400' : 'text-white/60'
+                className={`w-full text-left px-3 py-2 text-[11px] hover:bg-t-05 transition-colors truncate ${
+                  t.id === selectedTaskId ? 'text-blue-400' : 'text-t-60'
                 }`}
               >
                 {t.title}
@@ -483,7 +483,7 @@ export default function FocusWindow() {
           <button
             onClick={resetTimer}
             disabled={phase === 'idle'}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-t-30 hover:text-t-60 hover:bg-t-06 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <RotateCcw size={12} />
           </button>
@@ -499,7 +499,7 @@ export default function FocusWindow() {
           <button
             onClick={stopSession}
             disabled={phase === 'idle'}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/[0.08] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-t-30 hover:text-red-400 hover:bg-red-500/[0.08] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             title="Остановить сессию"
           >
             <X size={12} />
@@ -509,13 +509,13 @@ export default function FocusWindow() {
         {/* Time info row */}
         <div className="flex items-center justify-center gap-3 mt-1.5">
           {elapsedDisplay > 0 && (
-            <div className="flex items-center gap-1 text-[10px] text-white/40">
+            <div className="flex items-center gap-1 text-[10px] text-t-40">
               <Clock size={9} />
               <span className="tabular-nums">{formatDuration(elapsedDisplay)}</span>
             </div>
           )}
           {totalDisplayTime > 0 && (
-            <div className="text-[10px] text-white/25 tabular-nums">
+            <div className="text-[10px] text-t-25 tabular-nums">
               итого: {formatDuration(totalDisplayTime)}
             </div>
           )}
@@ -534,48 +534,48 @@ export default function FocusWindow() {
       </div>
 
       <div className="flex-shrink-0 px-3 pb-1">
-        <div className="h-px bg-white/[0.05]" />
+        <div className="h-px bg-t-05" />
       </div>
 
       {/* Checklist */}
       <div className="flex-1 flex flex-col overflow-hidden px-3 pb-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <div className="flex items-center justify-between mb-1.5 flex-shrink-0">
-          <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">
+          <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">
             Чеклист
           </span>
           {checklist.length > 0 && (
-            <span className="text-[10px] text-white/25 tabular-nums">
+            <span className="text-[10px] text-t-25 tabular-nums">
               {doneCount}/{checklist.length}
             </span>
           )}
         </div>
 
         {!selectedTaskId ? (
-          <p className="text-[11px] text-white/15 italic text-center py-3">Выберите задачу</p>
+          <p className="text-[11px] text-t-15 italic text-center py-3">Выберите задачу</p>
         ) : (
           <>
             <div className="flex-1 overflow-y-auto flex flex-col gap-0.5 mb-2 min-h-0">
               {checklist.length === 0 && (
-                <p className="text-[11px] text-white/15 italic text-center py-3">Нет пунктов</p>
+                <p className="text-[11px] text-t-15 italic text-center py-3">Нет пунктов</p>
               )}
               {checklist.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start gap-2 group px-1.5 py-1 rounded-lg hover:bg-white/[0.03] transition-colors"
+                  className="flex items-start gap-2 group px-1.5 py-1 rounded-lg hover:bg-t-03 transition-colors"
                 >
                   <button
                     onClick={() => toggleItem(item.id)}
                     className={`w-4 h-4 flex-shrink-0 rounded border mt-px transition-all flex items-center justify-center ${
                       item.done
                         ? 'bg-emerald-500 border-emerald-500'
-                        : 'border-white/20 hover:border-white/40'
+                        : 'border-t-06 hover:border-t-10'
                     }`}
                   >
                     {item.done && <Check size={9} className="text-white" strokeWidth={3} />}
                   </button>
                   <span
                     className={`text-[11px] leading-snug flex-1 ${
-                      item.done ? 'line-through text-white/25' : 'text-white/70'
+                      item.done ? 'line-through text-t-25' : 'text-t-70'
                     }`}
                   >
                     {item.text}
@@ -583,7 +583,7 @@ export default function FocusWindow() {
                   {!item.fromMarkdown && (
                     <button
                       onClick={() => deleteItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-red-400 transition-all flex-shrink-0"
+                      className="opacity-0 group-hover:opacity-100 text-t-20 hover:text-red-400 transition-all flex-shrink-0"
                     >
                       <Trash2 size={10} />
                     </button>
@@ -601,12 +601,12 @@ export default function FocusWindow() {
                 onChange={(e) => setNewItemText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
                 placeholder="Добавить пункт..."
-                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-[11px] text-white/70 placeholder-white/20 outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
+                className="flex-1 bg-t-04 border border-t-08 rounded-lg px-2.5 py-1.5 text-[11px] text-t-70 placeholder-t-20 outline-none focus:border-t-20 focus:bg-t-06 transition-all"
               />
               <button
                 onClick={addItem}
                 disabled={!newItemText.trim()}
-                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-white/40 hover:text-white/70 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-t-04 hover:bg-t-08 border border-t-06 text-t-40 hover:text-t-70 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 <Plus size={12} />
               </button>
