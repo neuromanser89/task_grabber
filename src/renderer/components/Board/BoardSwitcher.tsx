@@ -191,7 +191,7 @@ export default function BoardSwitcher() {
                   <button
                     key={c}
                     onClick={() => setNewColor(c)}
-                    className={`w-5 h-5 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-1 ring-white/30' : 'hover:scale-110'}`}
+                    className={`w-5 h-5 rounded-full transition-transform ${newColor === c ? 'scale-125 ring-2 ring-accent-blue/50 ring-offset-1 ring-offset-transparent' : 'hover:scale-110'}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}

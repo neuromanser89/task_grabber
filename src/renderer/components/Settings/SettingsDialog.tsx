@@ -375,7 +375,7 @@ export default function SettingsDialog({
                     opt.value === 'dark' ? 'bg-[#0F0F0F]' :
                     opt.value === 'light' ? 'bg-[#F8F9FA]' :
                     'bg-gradient-to-br from-[#0F0F0F] to-[#F8F9FA]'
-                  } border border-white/10`}>
+                  } border border-t-10`}>
                     <span className={opt.value === 'light' ? 'text-gray-700' : 'text-t-70'}>
                       {opt.icon}
                     </span>

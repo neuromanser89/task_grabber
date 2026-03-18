@@ -134,7 +134,7 @@ export default function MarkdownEditor({
       {mode === 'edit' ? (
         <div className="flex flex-col">
           {/* Toolbar */}
-          <div className="flex items-center gap-0.5 px-1.5 py-1 bg-white/[0.04] border border-white/[0.06] rounded-t-lg border-b-0">
+          <div className="flex items-center gap-0.5 px-1.5 py-1 bg-t-04 border border-t-06 rounded-t-lg border-b-0">
             {([
               { type: 'bold' as const, icon: <Bold size={13} />, title: 'Жирный' },
               { type: 'italic' as const, icon: <Italic size={13} />, title: 'Курсив' },
@@ -148,7 +148,7 @@ export default function MarkdownEditor({
                 type="button"
                 onClick={() => applyFormat(btn.type)}
                 title={btn.title}
-                className="w-6 h-6 flex items-center justify-center rounded text-t-35 hover:text-t-70 hover:bg-white/[0.06] transition-all"
+                className="w-6 h-6 flex items-center justify-center rounded text-t-35 hover:text-t-70 hover:bg-t-06 transition-all"
               >
                 {btn.icon}
               </button>

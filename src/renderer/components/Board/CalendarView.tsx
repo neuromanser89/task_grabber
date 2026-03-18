@@ -146,7 +146,8 @@ export default function CalendarView() {
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Header controls */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-t-06 flex-shrink-0">
+      <div className="relative flex items-center gap-2 px-4 py-2 border-b border-t-06 flex-shrink-0">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-blue/15 to-transparent pointer-events-none" />
         <button
           onClick={prevMonth}
           className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-t-08 text-t-40 hover:text-t-70 transition-colors"
@@ -240,9 +241,12 @@ export default function CalendarView() {
                       onDragEnd={handleDragEnd}
                       onClick={(e) => { e.stopPropagation(); setSelectedTask(task); }}
                       className={`text-[10px] px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing truncate text-white leading-tight
-                        hover:brightness-110 transition-all select-none
+                        hover:brightness-110 hover:shadow-sm transition-all duration-150 select-none
                         ${drag?.taskId === task.id ? 'opacity-50' : ''}`}
-                      style={{ backgroundColor: PRIORITY_COLORS[task.priority ?? 0] }}
+                      style={{
+                        backgroundColor: PRIORITY_COLORS[task.priority ?? 0],
+                        boxShadow: `0 1px 3px ${PRIORITY_COLORS[task.priority ?? 0]}30`,
+                      }}
                       title={`${task.title} [${colMap[task.column_id] ?? ''}]`}
                     >
                       {task.title}

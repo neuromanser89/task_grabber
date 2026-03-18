@@ -22,7 +22,7 @@ export default function StatusBar() {
   return (
     <div className="relative flex items-center gap-4 h-7 backdrop-blur-sm px-4 text-[11px] flex-shrink-0" style={{ background: 'var(--glass-heavy)', color: 'var(--text-muted)' }}>
       {/* Gradient top border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-blue/10 to-transparent" />
 
       <span className="flex items-center gap-1.5">
         <LayoutGrid size={10} className="opacity-50" />
