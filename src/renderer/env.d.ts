@@ -25,8 +25,8 @@ interface ElectronAPI {
   openFile: (filePath: string) => Promise<boolean>;
 
   getNotes: () => Promise<Note[]>;
-  createNote: (content: string) => Promise<Note>;
-  updateNote: (id: string, content: string) => Promise<Note>;
+  createNote: (content: string, title?: string | null) => Promise<Note>;
+  updateNote: (id: string, content: string, title?: string | null) => Promise<Note>;
   deleteNote: (id: string) => Promise<boolean>;
 
   // MSG

@@ -16,8 +16,14 @@ export function runSmartRules(mainWindow: BrowserWindow | null): number {
     const columns = queries.getAllColumns();
     const tags = queries.getAllTags();
 
+    // Batch load all task-tag relations to avoid N+1 queries
+    const tagsByTask = new Map<string, { id: string; name: string; color: string }[]>();
     for (const task of tasks) {
-      const taskTags = queries.getTagsByTaskId(task.id);
+      tagsByTask.set(task.id, queries.getTagsByTaskId(task.id));
+    }
+
+    for (const task of tasks) {
+      const taskTags = tagsByTask.get(task.id) ?? [];
 
       for (const rule of rules) {
         if (!matchesRule(task, rule, taskTags, columns)) continue;

@@ -24,9 +24,9 @@ export default function Widget() {
       window.electronAPI?.getTasks() ?? [],
       window.electronAPI?.getColumns() ?? [],
     ]);
-    const inWork = (columns as Column[]).find(
-      (c) => c.name === 'В работе' || c.sort_order === 1
-    );
+    const sortedCols = [...(columns as Column[])].sort((a, b) => a.sort_order - b.sort_order);
+    // Second column (index 1) is typically "В работе", fallback to first non-default
+    const inWork = sortedCols[1] ?? sortedCols.find((c) => !c.is_default) ?? sortedCols[0];
     setInWorkColumnId(inWork?.id ?? null);
     setTasks(allTasks as TaskWithAttachments[]);
   }
