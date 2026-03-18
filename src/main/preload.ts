@@ -178,6 +178,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   recurringSetRule: (taskId: string, rule: string | null, startDate: string | null) =>
     ipcRenderer.invoke('recurring:setRule', taskId, rule, startDate),
 
+  // Board Files
+  boardFilesGetAll: (boardId: string) => ipcRenderer.invoke('boardFiles:getAll', boardId),
+  boardFilesAdd: (boardId: string, filePath: string, taskId: string | null) =>
+    ipcRenderer.invoke('boardFiles:add', boardId, filePath, taskId),
+  boardFilesDelete: (id: string) => ipcRenderer.invoke('boardFiles:delete', id),
+  boardFilesAttachToTask: (fileId: string, taskId: string | null) =>
+    ipcRenderer.invoke('boardFiles:attachToTask', fileId, taskId),
+  boardFilesOpenDialog: () => ipcRenderer.invoke('boardFiles:openDialog'),
+
   // Smart Rules
   getRules: () => ipcRenderer.invoke('rules:getAll'),
   createRule: (data: unknown) => ipcRenderer.invoke('rules:create', data),

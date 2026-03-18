@@ -3,6 +3,8 @@ import TitleBar, { type ViewMode } from './components/Layout/TitleBar';
 import KanbanBoard from './components/Board/KanbanBoard';
 import TimelineView from './components/Board/TimelineView';
 import CalendarView from './components/Board/CalendarView';
+import NotesCanvasView from './components/Notes/NotesCanvasView';
+import BoardFilesView from './components/Files/BoardFilesView';
 import StatusBar from './components/Layout/StatusBar';
 import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
@@ -227,6 +229,8 @@ export default function App() {
         {viewMode === 'kanban' && <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} />}
         {viewMode === 'timeline' && <TimelineView />}
         {viewMode === 'calendar' && <CalendarView />}
+        {viewMode === 'notes' && <NotesCanvasView />}
+        {viewMode === 'files' && <BoardFilesView />}
       </main>
       <StatusBar />
       <TaskCreateDialog

@@ -132,10 +132,10 @@ export function setupIpcHandlers() {
       ? Math.max(...tasksInCol.map((t) => t.sort_order)) + 1
       : 0;
 
-    // Create task automatically
+    // Create task automatically — description stays null, body is NOT inserted
     const task = queries.createTask({
       title: parsed.subject,
-      description: parsed.body || null,
+      description: null,
       column_id: defaultCol.id,
       sort_order: maxOrder,
       priority: 0,
@@ -152,19 +152,29 @@ export function setupIpcHandlers() {
       reminder_at: null,
     });
 
-    // Save msg attachments to storage
+    // Attach the original .msg file itself
     const savedAttachments = [];
+    const msgDest = copyToStorage(resolved);
+    const msgStats = fs.statSync(msgDest);
+    savedAttachments.push(queries.createAttachment({
+      task_id: task.id,
+      filename: path.basename(resolved),
+      filepath: msgDest,
+      filesize: msgStats.size,
+      mime_type: 'application/vnd.ms-outlook',
+    }));
+
+    // Also save embedded attachments from the msg
     for (const att of parsed.attachments) {
       const dest = saveBufferToStorage(att.filename, att.content);
       const stats = fs.statSync(dest);
-      const attachment = queries.createAttachment({
+      savedAttachments.push(queries.createAttachment({
         task_id: task.id,
         filename: att.filename,
         filepath: dest,
         filesize: stats.size,
         mime_type: null,
-      });
-      savedAttachments.push(attachment);
+      }));
     }
 
     return {
@@ -428,6 +438,47 @@ export function setupIpcHandlers() {
       recurrence_next: startDate,
     });
     return true;
+  });
+
+  // ─── Board Files ──────────────────────────────────────────────────────────
+  ipcMain.handle('boardFiles:getAll', (_e, boardId: string) => queries.getBoardFiles(boardId));
+
+  ipcMain.handle('boardFiles:add', (_e, boardId: string, filePath: string, taskId: string | null) => {
+    const resolved = path.resolve(filePath);
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      throw new Error('Invalid file path');
+    }
+    const stats = fs.statSync(resolved);
+    const MAX_FILE_SIZE = 100 * 1024 * 1024;
+    if (stats.size > MAX_FILE_SIZE) throw new Error('File too large: maximum 100MB');
+    const dest = copyToStorage(resolved);
+    return queries.createBoardFile({
+      board_id: boardId,
+      task_id: taskId ?? null,
+      filename: path.basename(resolved),
+      filepath: dest,
+      filesize: stats.size,
+      mime_type: null,
+    });
+  });
+
+  ipcMain.handle('boardFiles:delete', (_e, id: string) => {
+    queries.deleteBoardFile(id);
+    return true;
+  });
+
+  ipcMain.handle('boardFiles:attachToTask', (_e, fileId: string, taskId: string | null) => {
+    queries.attachBoardFileToTask(fileId, taskId);
+    return true;
+  });
+
+  ipcMain.handle('boardFiles:openDialog', async () => {
+    const { filePaths, canceled } = await dialog.showOpenDialog({
+      title: 'Выбрать файлы',
+      properties: ['openFile', 'multiSelections'],
+    });
+    if (canceled) return [];
+    return filePaths;
   });
 
   // ─── Smart Rules ────────────────────────────────────────────────────────────
