@@ -59,10 +59,10 @@ function Toast({ toast, onDismiss, onTaskClick }: ToastProps) {
       onClick={handleClick}
     >
       {icon}
-      <span className="text-[12px] text-white/85 flex-1 leading-tight">{toast.message}</span>
+      <span className="text-[12px] text-t-85 flex-1 leading-tight">{toast.message}</span>
       <button
         onClick={(e) => { e.stopPropagation(); setVisible(false); setTimeout(() => onDismiss(toast.id), 300); }}
-        className="text-white/25 hover:text-white/60 transition-colors flex-shrink-0"
+        className="text-t-25 hover:text-t-60 transition-colors flex-shrink-0"
       >
         <X size={12} />
       </button>

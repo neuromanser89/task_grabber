@@ -63,15 +63,15 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
       }`}
     >
       {/* Header row */}
-      <div className="flex items-center justify-between px-2 py-2.5 border-b border-white/[0.04]">
+      <div className="flex items-center justify-between px-2 py-2.5 border-b border-t-04">
         {!collapsed && (
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('filters')}
               className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
                 activeTab === 'filters'
-                  ? 'bg-white/[0.07] text-white/70'
-                  : 'text-white/30 hover:text-white/55'
+                  ? 'bg-t-07 text-t-70'
+                  : 'text-t-30 hover:text-t-55'
               }`}
             >
               Фильтры
@@ -81,19 +81,19 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               onClick={() => setActiveTab('notes')}
               className={`text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
                 activeTab === 'notes'
-                  ? 'bg-white/[0.07] text-white/70'
-                  : 'text-white/30 hover:text-white/55'
+                  ? 'bg-t-07 text-t-70'
+                  : 'text-t-30 hover:text-t-55'
               }`}
             >
               <StickyNote size={10} />
-              {notes.length > 0 && <span className="text-white/25">{notes.length}</span>}
+              {notes.length > 0 && <span className="text-t-25">{notes.length}</span>}
             </button>
             <button
               onClick={() => setActiveTab('stats')}
               className={`text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
                 activeTab === 'stats'
-                  ? 'bg-white/[0.07] text-white/70'
-                  : 'text-white/30 hover:text-white/55'
+                  ? 'bg-t-07 text-t-70'
+                  : 'text-t-30 hover:text-t-55'
               }`}
               title="Статистика"
             >
@@ -103,7 +103,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
         )}
         <button
           onClick={onToggle}
-          className="w-6 h-6 flex items-center justify-center rounded-md text-white/30 hover:text-white/60 hover:bg-white/[0.06] transition-all ml-auto"
+          className="w-6 h-6 flex items-center justify-center rounded-md text-t-30 hover:text-t-60 hover:bg-t-06 transition-all ml-auto"
           title={collapsed ? 'Развернуть панель' : 'Свернуть панель'}
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
@@ -117,13 +117,13 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               {/* Search */}
               <div>
                 <div className="relative">
-                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
+                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-t-25 pointer-events-none" />
                   <input
                     ref={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Поиск..."
-                    className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/40 outline-none rounded-lg pl-7 pr-2.5 py-1.5 text-[12px] text-white/75 placeholder-white/20 transition-all"
+                    className="w-full bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/40 outline-none rounded-lg pl-7 pr-2.5 py-1.5 text-[12px] text-t-75 placeholder-t-20 transition-all"
                   />
                 </div>
               </div>
@@ -132,8 +132,8 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               {allTags.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Tag size={10} className="text-white/25" />
-                    <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Теги</span>
+                    <Tag size={10} className="text-t-25" />
+                    <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Теги</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     {allTags.map((tag) => {
@@ -144,8 +144,8 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                           onClick={() => toggleTagFilter(tag.id)}
                           className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                             active
-                              ? 'bg-white/[0.08] text-white/85'
-                              : 'text-white/45 hover:text-white/65 hover:bg-white/[0.04]'
+                              ? 'bg-t-08 text-t-85'
+                              : 'text-t-45 hover:text-t-60 hover:bg-t-04'
                           }`}
                         >
                           <span
@@ -154,7 +154,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                           />
                           <span className="flex-1 truncate">{tag.name}</span>
                           {tagCounts[tag.id] && (
-                            <span className="text-[10px] text-white/20 tabular-nums">{tagCounts[tag.id]}</span>
+                            <span className="text-[10px] text-t-20 tabular-nums">{tagCounts[tag.id]}</span>
                           )}
                         </button>
                       );
@@ -166,7 +166,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               {/* Priority */}
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Приоритет</span>
+                  <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Приоритет</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   {([1, 2, 3, 0] as Priority[]).map((p) => {
@@ -178,8 +178,8 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                         onClick={() => togglePriorityFilter(p)}
                         className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                           active
-                            ? 'bg-white/[0.08] text-white/85'
-                            : 'text-white/45 hover:text-white/65 hover:bg-white/[0.04]'
+                            ? 'bg-t-08 text-t-85'
+                            : 'text-t-45 hover:text-t-60 hover:bg-t-04'
                         }`}
                       >
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -193,7 +193,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               {/* Source */}
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-[10px] font-medium text-white/30 uppercase tracking-wider">Источник</span>
+                  <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Источник</span>
                 </div>
                 <div className="flex flex-col gap-1">
                   {SOURCES.map(({ value, label, icon }) => {
@@ -204,11 +204,11 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                         onClick={() => toggleSourceFilter(value)}
                         className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                           active
-                            ? 'bg-white/[0.08] text-white/85'
-                            : 'text-white/45 hover:text-white/65 hover:bg-white/[0.04]'
+                            ? 'bg-t-08 text-t-85'
+                            : 'text-t-45 hover:text-t-60 hover:bg-t-04'
                         }`}
                       >
-                        <span className="flex-shrink-0 text-white/35">{icon}</span>
+                        <span className="flex-shrink-0 text-t-35">{icon}</span>
                         {label}
                       </button>
                     );
@@ -220,7 +220,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
               {hasFilters && (
                 <button
                   onClick={resetFilters}
-                  className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/55 transition-colors mt-auto pt-2 border-t border-white/[0.04]"
+                  className="flex items-center gap-1.5 text-[11px] text-t-30 hover:text-t-55 transition-colors mt-auto pt-2 border-t border-t-04"
                 >
                   <RotateCcw size={10} />
                   Сбросить фильтры

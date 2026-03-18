@@ -163,13 +163,13 @@ export default function DropZone({ onTaskCreated }: Props) {
           <Paperclip size={24} />
           <Plus size={24} />
         </div>
-        <p className="text-lg font-medium text-white/80">
+        <p className="text-lg font-medium text-t-80">
           {isProcessing
             ? 'Создаём задачу...'
             : 'Отпустите файлы для создания задачи'
           }
         </p>
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-t-40">
           .msg письма • документы • файлы • текст • URL
         </p>
       </div>

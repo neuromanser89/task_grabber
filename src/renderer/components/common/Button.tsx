@@ -13,8 +13,8 @@ const VARIANT_CLASSES = {
   primary:
     'bg-gradient-to-r from-accent-blue to-accent-purple hover:from-blue-400 hover:to-purple-400 text-white shadow-lg hover:shadow-glow-blue active:shadow-none',
   secondary:
-    'bg-white/[0.06] hover:bg-white/[0.1] text-white/70 hover:text-white/90 border border-white/[0.08] hover:border-white/[0.12]',
-  ghost: 'bg-transparent hover:bg-white/[0.05] text-white/50 hover:text-white/70',
+    'bg-t-06 hover:bg-t-10 text-t-70 hover:text-t-90 border border-t-08 hover:border-t-12',
+  ghost: 'bg-transparent hover:bg-t-05 text-t-50 hover:text-t-70',
   danger: 'bg-red-500/10 hover:bg-red-500/20 text-red-400/80 hover:text-red-400 border border-red-500/15 hover:border-red-500/25',
 };
 

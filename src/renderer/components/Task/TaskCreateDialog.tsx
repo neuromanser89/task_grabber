@@ -110,24 +110,24 @@ export default function TaskCreateDialog({
           <div className="relative">
             <button
               onClick={() => setShowTemplates((v) => !v)}
-              className="flex items-center gap-2 w-full px-3 py-2 bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] rounded-lg text-[12px] text-white/40 hover:text-white/60 transition-all duration-150"
+              className="flex items-center gap-2 w-full px-3 py-2 bg-t-03 border border-t-06 hover:border-t-12 rounded-lg text-[12px] text-t-40 hover:text-t-60 transition-all duration-150"
             >
               <span className="flex-1 text-left">Из шаблона...</span>
               <ChevronDown size={12} className={`transition-transform duration-150 ${showTemplates ? 'rotate-180' : ''}`} />
             </button>
 
             {showTemplates && (
-              <div className="absolute top-full left-0 right-0 mt-1 z-50 glass-heavy border border-white/[0.1] rounded-lg shadow-2xl overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 z-50 glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden">
                 {templates.map((tpl) => (
                   <button
                     key={tpl.id}
                     onClick={() => applyTemplate(tpl)}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-white/[0.06] transition-colors text-left border-b border-white/[0.04] last:border-0"
+                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-t-06 transition-colors text-left border-b border-t-04 last:border-0"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="text-[12px] text-white/75 font-medium truncate">{tpl.title}</div>
+                      <div className="text-[12px] text-t-75 font-medium truncate">{tpl.title}</div>
                       {tpl.description && (
-                        <div className="text-[10px] text-white/30 truncate mt-0.5">{tpl.description.slice(0, 60)}</div>
+                        <div className="text-[10px] text-t-30 truncate mt-0.5">{tpl.description.slice(0, 60)}</div>
                       )}
                     </div>
                     {tpl.priority > 0 && (
@@ -155,7 +155,7 @@ export default function TaskCreateDialog({
         />
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+          <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
             Описание
           </label>
           <MarkdownEditor
@@ -169,13 +169,13 @@ export default function TaskCreateDialog({
 
         {/* Column selector */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+          <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
             Колонка
           </label>
           <select
             value={columnId}
             onChange={e => setColumnId(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-3 py-2 text-[13px] text-white/85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+            className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-3 py-2 text-[13px] text-t-85 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
           >
             {columns.map(col => (
               <option key={col.id} value={col.id} className="bg-[#1A1A2E]">
@@ -187,7 +187,7 @@ export default function TaskCreateDialog({
 
         {/* Priority selector */}
         <div className="flex flex-col gap-2">
-          <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+          <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
             Приоритет
           </label>
           <div className="flex gap-1.5">
@@ -198,7 +198,7 @@ export default function TaskCreateDialog({
                 className={`flex-1 py-2 rounded-lg text-[11px] font-semibold border transition-all duration-200 ${
                   priority === p
                     ? 'border-transparent scale-[1.02]'
-                    : 'border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/[0.1] hover:bg-white/[0.02]'
+                    : 'border-t-06 text-t-30 hover:text-t-50 hover:border-t-10 hover:bg-t-02'
                 }`}
                 style={
                   priority === p
@@ -219,9 +219,9 @@ export default function TaskCreateDialog({
 
         {/* Files hint */}
         {initialFiles.length > 0 && (
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-lg">
-            <Upload size={13} className="text-white/30 flex-shrink-0" />
-            <span className="text-[11px] text-white/40">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-t-03 border border-t-06 rounded-lg">
+            <Upload size={13} className="text-t-30 flex-shrink-0" />
+            <span className="text-[11px] text-t-40">
               {initialFiles.length} файл{initialFiles.length > 1 ? 'а' : ''} будет прикреплено
             </span>
           </div>
@@ -232,9 +232,9 @@ export default function TaskCreateDialog({
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-          <span className="text-[10px] text-white/15">
-            <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-[9px] font-mono">Ctrl+Enter</kbd> создать
+        <div className="flex items-center justify-between pt-2 border-t border-t-04">
+          <span className="text-[10px] text-t-15">
+            <kbd className="px-1 py-0.5 bg-t-04 rounded text-[9px] font-mono">Ctrl+Enter</kbd> создать
           </span>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose} disabled={loading}>

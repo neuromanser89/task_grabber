@@ -24,11 +24,11 @@ export default function Input({
   className = '',
 }: InputProps) {
   const baseClass = `
-    w-full bg-white/[0.04] border rounded-lg px-3 py-2 text-[13px] text-white/85 placeholder-white/20
+    w-full bg-t-04 border rounded-lg px-3 py-2 text-[13px] text-t-85 placeholder-t-20
     transition-all duration-200 outline-none
     ${error
       ? 'border-red-500/40 focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 focus:bg-red-500/[0.02]'
-      : 'border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 focus:bg-white/[0.05]'
+      : 'border-t-06 hover:border-t-10 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 focus:bg-t-05'
     }
     ${className}
   `;
@@ -36,7 +36,7 @@ export default function Input({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+        <label className="text-[11px] font-medium text-t-40 uppercase tracking-wider">
           {label}
         </label>
       )}

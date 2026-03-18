@@ -108,13 +108,13 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
-        className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+        className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
         placeholder="Название колонки"
       />
 
       {/* Color palette */}
       <div>
-        <p className="text-[10px] text-white/30 mb-1.5 uppercase tracking-wider">Цвет</p>
+        <p className="text-[10px] text-t-30 mb-1.5 uppercase tracking-wider">Цвет</p>
         <div className="grid grid-cols-6 gap-1.5">
           {PRESET_COLORS.map((c) => (
             <button
@@ -134,14 +134,14 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
 
       {/* WIP limit */}
       <div>
-        <p className="text-[10px] text-white/30 mb-1.5 uppercase tracking-wider">Лимит задач (WIP)</p>
+        <p className="text-[10px] text-t-30 mb-1.5 uppercase tracking-wider">Лимит задач (WIP)</p>
         <input
           type="number"
           min="0"
           value={wipLimit}
           onChange={(e) => setWipLimit(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
-          className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+          className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
           placeholder="0 = без лимита"
         />
       </div>
@@ -159,7 +159,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
       {!confirmDelete ? (
         <button
           onClick={handleDelete}
-          className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-[11px] text-white/35 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-[11px] text-t-35 hover:text-red-400 hover:bg-red-500/10 transition-colors"
         >
           <Trash2 size={11} />
           Удалить колонку
@@ -174,7 +174,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
               <select
                 value={moveToId}
                 onChange={(e) => setMoveToId(e.target.value)}
-                className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-2 py-1 text-[11px] text-white/80 transition-all duration-200"
+                className="w-full bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-2 py-1 text-[11px] text-t-80 transition-all duration-200"
               >
                 <option value="">— выберите колонку —</option>
                 {otherColumns.map((c) => (
@@ -192,7 +192,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
           </button>
           <button
             onClick={() => setConfirmDelete(false)}
-            className="w-full py-1 text-[10px] text-white/30 hover:text-white/50 transition-colors"
+            className="w-full py-1 text-[10px] text-t-30 hover:text-t-50 transition-colors"
           >
             Отмена
           </button>

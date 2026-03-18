@@ -47,11 +47,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
 
         {title && (
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-            <h2 className="text-[15px] font-semibold text-white/90 tracking-tight">{title}</h2>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-t-06">
+            <h2 className="text-[15px] font-semibold text-t-90 tracking-tight">{title}</h2>
             <button
               onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/8 transition-all duration-150 text-white/30 hover:text-white/60"
+              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-t-08 transition-all duration-150 text-t-30 hover:text-t-60"
             >
               <X size={13} />
             </button>

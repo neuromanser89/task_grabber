@@ -256,18 +256,18 @@ export default function CommandPalette({
   function renderItem(item: CommandAction, idx: number) {
     const isSelected = idx === selectedIndex;
     const base = `flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-100 ${
-      isSelected ? 'bg-accent-blue/20 border border-accent-blue/30' : 'hover:bg-white/[0.04] border border-transparent'
+      isSelected ? 'bg-accent-blue/20 border border-accent-blue/30' : 'hover:bg-t-04 border border-transparent'
     }`;
 
     if (item.type === 'command') {
       return (
         <div key={item.id} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-blue/30 text-accent-blue' : 'bg-white/[0.06] text-white/50'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-blue/30 text-accent-blue' : 'bg-t-06 text-t-50'}`}>
             {item.icon}
           </div>
-          <span className="text-sm text-white/85 flex-1">{item.label}</span>
-          {item.hint && <span className="text-[10px] text-white/25 font-mono flex-shrink-0">{item.hint}</span>}
-          <ChevronRight size={11} className={`flex-shrink-0 ml-1 ${isSelected ? 'text-accent-blue/50' : 'text-white/10'}`} />
+          <span className="text-sm text-t-85 flex-1">{item.label}</span>
+          {item.hint && <span className="text-[10px] text-t-25 font-mono flex-shrink-0">{item.hint}</span>}
+          <ChevronRight size={11} className={`flex-shrink-0 ml-1 ${isSelected ? 'text-accent-blue/50' : 'text-t-10'}`} />
         </div>
       );
     }
@@ -277,14 +277,14 @@ export default function CommandPalette({
       const prio = item.task.priority ?? 0;
       return (
         <div key={item.task.id} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-white/10 text-white/60' : 'bg-white/[0.04] text-white/30'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-t-10 text-t-60' : 'bg-t-04 text-t-30'}`}>
             <FileText size={12} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm text-white/85 truncate">{item.task.title}</div>
+            <div className="text-sm text-t-85 truncate">{item.task.title}</div>
             <div className="flex items-center gap-2 mt-0.5">
               {col && (
-                <span className="text-[10px] text-white/35 flex items-center gap-1">
+                <span className="text-[10px] text-t-35 flex items-center gap-1">
                   <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: col.color }} />
                   {col.name}
                 </span>
@@ -295,14 +295,14 @@ export default function CommandPalette({
                 </span>
               )}
               {item.task.tags.length > 0 && (
-                <span className="text-[10px] text-white/30 flex items-center gap-0.5">
+                <span className="text-[10px] text-t-30 flex items-center gap-0.5">
                   <Hash size={9} />
                   {item.task.tags.map((t) => t.name).join(', ')}
                 </span>
               )}
             </div>
           </div>
-          <ArrowRight size={12} className={`flex-shrink-0 ${isSelected ? 'text-accent-blue/60' : 'text-white/15'}`} />
+          <ArrowRight size={12} className={`flex-shrink-0 ${isSelected ? 'text-accent-blue/60' : 'text-t-15'}`} />
         </div>
       );
     }
@@ -310,13 +310,13 @@ export default function CommandPalette({
     if (item.type === 'note') {
       return (
         <div key={item.id} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-green/30 text-accent-green' : 'bg-white/[0.04] text-white/30'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-green/30 text-accent-green' : 'bg-t-04 text-t-30'}`}>
             <StickyNote size={12} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm text-white/75 truncate">{item.snippet}</div>
+            <div className="text-sm text-t-75 truncate">{item.snippet}</div>
           </div>
-          <span className="text-[10px] text-white/25 flex-shrink-0">заметка</span>
+          <span className="text-[10px] text-t-25 flex-shrink-0">заметка</span>
         </div>
       );
     }
@@ -324,14 +324,14 @@ export default function CommandPalette({
     if (item.type === 'move') {
       return (
         <div key={`${item.task.id}::${item.columnId}`} data-idx={idx} className={base} onMouseDown={() => runItem(item)}>
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-purple/30 text-accent-purple' : 'bg-white/[0.04] text-white/30'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-accent-purple/30 text-accent-purple' : 'bg-t-04 text-t-30'}`}>
             <ArrowRight size={12} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm text-white/85 truncate">{item.task.title}</div>
+            <div className="text-sm text-t-85 truncate">{item.task.title}</div>
             <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-[10px] text-white/30">→</span>
-              <span className="text-[10px] text-white/50 flex items-center gap-1">
+              <span className="text-[10px] text-t-30">→</span>
+              <span className="text-[10px] text-t-50 flex items-center gap-1">
                 <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colMap[item.columnId]?.color ?? '#888' }} />
                 {item.columnName}
               </span>
@@ -355,22 +355,22 @@ export default function CommandPalette({
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-[580px] mx-4 glass-heavy rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[580px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.06]">
-          <Search size={16} className="text-white/40 flex-shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-t-06">
+          <Search size={16} className="text-t-40 flex-shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Поиск задач и команд...  >перемещение  :заметки"
-            className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25 outline-none"
+            className="flex-1 bg-transparent text-sm text-t-90 placeholder:text-t-25 outline-none"
             autoComplete="off"
             spellCheck={false}
           />
           {modeBadge}
-          <kbd className="hidden sm:flex items-center h-5 px-1.5 rounded bg-white/[0.06] border border-white/[0.08] text-[10px] text-white/30 font-mono flex-shrink-0">
+          <kbd className="hidden sm:flex items-center h-5 px-1.5 rounded bg-t-06 border border-t-08 text-[10px] text-t-30 font-mono flex-shrink-0">
             Esc
           </kbd>
         </div>
@@ -378,16 +378,16 @@ export default function CommandPalette({
         {/* Results */}
         <div ref={listRef} className="max-h-[380px] overflow-y-auto p-2 space-y-0.5 scrollbar-thin">
           {hint ? (
-            <div className="py-6 text-center text-sm text-white/30">{hint}</div>
+            <div className="py-6 text-center text-sm text-t-30">{hint}</div>
           ) : items.length === 0 ? (
-            <div className="py-8 text-center text-sm text-white/30">Ничего не найдено</div>
+            <div className="py-8 text-center text-sm text-t-30">Ничего не найдено</div>
           ) : (
             items.map((item, idx) => renderItem(item, idx))
           )}
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-white/[0.04] text-[10px] text-white/20">
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-t-04 text-[10px] text-t-20">
           <span><kbd className="font-mono">↑↓</kbd> навигация</span>
           <span><kbd className="font-mono">Enter</kbd> выбрать</span>
           <span><kbd className="font-mono">&gt;</kbd> переместить задачу</span>

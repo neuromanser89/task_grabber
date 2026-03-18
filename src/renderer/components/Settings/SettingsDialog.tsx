@@ -260,7 +260,7 @@ export default function SettingsDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Настройки" size="md">
       {/* Tabs */}
-      <div className="flex gap-1 mb-5 p-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+      <div className="flex gap-1 mb-5 p-1 rounded-lg bg-t-04 border border-t-06">
         {([
           { id: 'general', label: 'Общие', icon: <Settings size={13} /> },
           { id: 'hotkeys', label: 'Хоткеи', icon: <Keyboard size={13} /> },
@@ -274,8 +274,8 @@ export default function SettingsDialog({
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 flex-1 justify-center h-7 text-xs font-medium rounded-md transition-all duration-150 ${
               activeTab === tab.id
-                ? 'bg-white/[0.1] text-white/90'
-                : 'text-white/40 hover:text-white/60 hover:bg-white/[0.05]'
+                ? 'bg-t-10 text-t-90'
+                : 'text-t-40 hover:text-t-60 hover:bg-t-05'
             }`}
           >
             {tab.icon}
@@ -287,20 +287,20 @@ export default function SettingsDialog({
       {/* General tab */}
       {activeTab === 'general' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-t-03 border border-t-06 hover:border-t-10 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-accent-blue/15 flex items-center justify-center">
                 <Power size={14} className="text-accent-blue" />
               </div>
               <div>
-                <div className="text-sm font-medium text-white/85">Автозапуск</div>
-                <div className="text-xs text-white/40">Запускать при старте Windows</div>
+                <div className="text-sm font-medium text-t-85">Автозапуск</div>
+                <div className="text-xs text-t-40">Запускать при старте Windows</div>
               </div>
             </div>
             <button
               onClick={handleAutoLaunchToggle}
               className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
-                autoLaunch ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                autoLaunch ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-t-12'
               }`}
             >
               <div
@@ -319,15 +319,15 @@ export default function SettingsDialog({
           {(Object.keys(hotkeys) as (keyof HotkeyConfig)[]).map((key) => (
             <div
               key={key}
-              className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+              className="flex items-center justify-between p-3 rounded-lg bg-t-03 border border-t-06"
             >
-              <span className="text-sm text-white/70">{HOTKEY_LABELS[key]}</span>
+              <span className="text-sm text-t-70">{HOTKEY_LABELS[key]}</span>
               <button
                 onClick={() => handleStartRecording(key)}
                 className={`px-3 py-1.5 rounded-md text-xs font-mono transition-all duration-150 ${
                   recordingKey === key
                     ? 'bg-accent-blue/20 border border-accent-blue/50 text-accent-blue animate-pulse'
-                    : 'bg-white/[0.07] border border-white/[0.1] text-white/70 hover:bg-white/[0.1] hover:text-white/90'
+                    : 'bg-t-07 border border-t-10 text-t-70 hover:bg-t-10 hover:text-t-90'
                 }`}
               >
                 {recordingKey === key ? 'Нажмите комбинацию...' : formatHotkey(hotkeys[key])}
@@ -338,7 +338,7 @@ export default function SettingsDialog({
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleResetHotkeys}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-white/50 hover:text-white/70 rounded-md hover:bg-white/[0.05] transition-all duration-150"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-t-50 hover:text-t-70 rounded-md hover:bg-t-05 transition-all duration-150"
             >
               <RotateCcw size={12} />
               Сбросить
@@ -359,7 +359,7 @@ export default function SettingsDialog({
       {activeTab === 'appearance' && (
         <div className="space-y-4">
           <div>
-            <div className="text-xs font-medium text-white/40 mb-3 uppercase tracking-wider">Тема</div>
+            <div className="text-xs font-medium text-t-40 mb-3 uppercase tracking-wider">Тема</div>
             <div className="grid grid-cols-3 gap-2">
               {THEME_OPTIONS.map((opt) => (
                 <button
@@ -367,8 +367,8 @@ export default function SettingsDialog({
                   onClick={() => onThemeChange(opt.value)}
                   className={`relative flex flex-col items-center gap-2 p-3 rounded-lg border transition-all duration-200 ${
                     currentTheme === opt.value
-                      ? 'bg-accent-blue/10 border-accent-blue/40 text-white/90 shadow-[0_0_12px_rgba(59,130,246,0.1)]'
-                      : 'bg-white/[0.03] border-white/[0.06] text-white/50 hover:border-white/[0.12] hover:text-white/70'
+                      ? 'bg-accent-blue/10 border-accent-blue/40 text-t-90 shadow-[0_0_12px_rgba(59,130,246,0.1)]'
+                      : 'bg-t-03 border-t-06 text-t-50 hover:border-t-12 hover:text-t-70'
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -376,7 +376,7 @@ export default function SettingsDialog({
                     opt.value === 'light' ? 'bg-[#F8F9FA]' :
                     'bg-gradient-to-br from-[#0F0F0F] to-[#F8F9FA]'
                   } border border-white/10`}>
-                    <span className={opt.value === 'light' ? 'text-gray-700' : 'text-white/70'}>
+                    <span className={opt.value === 'light' ? 'text-gray-700' : 'text-t-70'}>
                       {opt.icon}
                     </span>
                   </div>
@@ -409,12 +409,12 @@ export default function SettingsDialog({
 
           {/* Export / Import */}
           <div>
-            <div className="text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Экспорт / Импорт</div>
+            <div className="text-xs font-medium text-t-40 mb-2 uppercase tracking-wider">Экспорт / Импорт</div>
             <div className="flex gap-2">
               <button
                 onClick={handleExport}
                 disabled={dataLoading}
-                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-white/70 hover:text-white/90 rounded-lg transition-all duration-150 disabled:opacity-50"
+                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-t-05 hover:bg-t-10 border border-t-08 text-t-70 hover:text-t-90 rounded-lg transition-all duration-150 disabled:opacity-50"
               >
                 <Download size={12} />
                 Экспорт JSON
@@ -422,7 +422,7 @@ export default function SettingsDialog({
               <button
                 onClick={handleImport}
                 disabled={dataLoading}
-                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-white/70 hover:text-white/90 rounded-lg transition-all duration-150 disabled:opacity-50"
+                className="flex items-center gap-1.5 flex-1 justify-center h-8 px-3 text-xs font-medium bg-t-05 hover:bg-t-10 border border-t-08 text-t-70 hover:text-t-90 rounded-lg transition-all duration-150 disabled:opacity-50"
               >
                 <Upload size={12} />
                 Импорт JSON
@@ -433,7 +433,7 @@ export default function SettingsDialog({
           {/* Backups */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-medium text-white/40 uppercase tracking-wider">Бэкапы (последние 5)</div>
+              <div className="text-xs font-medium text-t-40 uppercase tracking-wider">Бэкапы (последние 5)</div>
               <button
                 onClick={handleCreateBackup}
                 disabled={dataLoading}
@@ -444,25 +444,25 @@ export default function SettingsDialog({
               </button>
             </div>
             {backups.length === 0 ? (
-              <div className="text-xs text-white/30 py-2 text-center">Бэкапов нет</div>
+              <div className="text-xs text-t-30 py-2 text-center">Бэкапов нет</div>
             ) : (
               <div className="space-y-1.5 max-h-40 overflow-y-auto scrollbar-thin">
                 {backups.map((b) => (
                   <div
                     key={b.name}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-t-03 border border-t-06"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <Clock size={11} className="text-white/30 flex-shrink-0" />
+                      <Clock size={11} className="text-t-30 flex-shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-xs text-white/70 truncate">{formatDate(b.date)}</div>
-                        <div className="text-[10px] text-white/30">{formatSize(b.size)}</div>
+                        <div className="text-xs text-t-70 truncate">{formatDate(b.date)}</div>
+                        <div className="text-[10px] text-t-30">{formatSize(b.size)}</div>
                       </div>
                     </div>
                     <button
                       onClick={() => handleRestoreBackup(b.path)}
                       disabled={dataLoading}
-                      className="flex-shrink-0 px-2 py-1 text-[10px] text-white/50 hover:text-white/80 bg-white/[0.05] hover:bg-white/[0.09] rounded-md transition-all duration-150 disabled:opacity-50"
+                      className="flex-shrink-0 px-2 py-1 text-[10px] text-t-50 hover:text-t-80 bg-t-05 hover:bg-t-10 rounded-md transition-all duration-150 disabled:opacity-50"
                     >
                       Восстановить
                     </button>
@@ -488,7 +488,7 @@ export default function SettingsDialog({
 
           {/* Provider */}
           <div>
-            <div className="text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Провайдер</div>
+            <div className="text-xs font-medium text-t-40 mb-2 uppercase tracking-wider">Провайдер</div>
             <div className="grid grid-cols-2 gap-2">
               {(['openrouter', 'ollama'] as const).map((p) => (
                 <button
@@ -496,8 +496,8 @@ export default function SettingsDialog({
                   onClick={() => setAiProvider(p)}
                   className={`py-2 rounded-lg text-xs font-medium border transition-all duration-150 ${
                     aiProvider === p
-                      ? 'bg-accent-blue/15 border-accent-blue/40 text-white/90'
-                      : 'bg-white/[0.03] border-white/[0.06] text-white/50 hover:border-white/[0.12]'
+                      ? 'bg-accent-blue/15 border-accent-blue/40 text-t-90'
+                      : 'bg-t-03 border-t-06 text-t-50 hover:border-t-12'
                   }`}
                 >
                   {p === 'openrouter' ? 'OpenRouter (облако)' : 'Ollama (локально)'}
@@ -508,25 +508,25 @@ export default function SettingsDialog({
 
           {/* Model */}
           <div>
-            <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Модель</div>
+            <div className="text-xs font-medium text-t-40 mb-1.5 uppercase tracking-wider">Модель</div>
             <input
               value={aiModel}
               onChange={(e) => setAiModel(e.target.value)}
               placeholder={aiProvider === 'ollama' ? 'llama3.2' : 'openai/gpt-4o-mini'}
-              className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+              className="w-full bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-t-85 placeholder:text-t-25 outline-none transition-colors"
             />
           </div>
 
           {/* API Key (OpenRouter only) */}
           {aiProvider === 'openrouter' && (
             <div>
-              <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">API Ключ</div>
+              <div className="text-xs font-medium text-t-40 mb-1.5 uppercase tracking-wider">API Ключ</div>
               <input
                 value={aiApiKey}
                 onChange={(e) => setAiApiKey(e.target.value)}
                 type="password"
                 placeholder="sk-or-..."
-                className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+                className="w-full bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-t-85 placeholder:text-t-25 outline-none transition-colors"
               />
             </div>
           )}
@@ -534,26 +534,26 @@ export default function SettingsDialog({
           {/* Base URL (Ollama only) */}
           {aiProvider === 'ollama' && (
             <div>
-              <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Ollama URL</div>
+              <div className="text-xs font-medium text-t-40 mb-1.5 uppercase tracking-wider">Ollama URL</div>
               <input
                 value={aiBaseUrl}
                 onChange={(e) => setAiBaseUrl(e.target.value)}
                 placeholder="http://localhost:11434"
-                className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+                className="w-full bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-t-85 placeholder:text-t-25 outline-none transition-colors"
               />
             </div>
           )}
 
           {/* Exclude confidential */}
-          <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-t-03 border border-t-06">
             <div>
-              <div className="text-sm text-white/80">Полностью исключать конфиденциальные</div>
-              <div className="text-xs text-white/40 mt-0.5">Задачи с пометкой "конфиденциально" не попадут в контекст</div>
+              <div className="text-sm text-t-80">Полностью исключать конфиденциальные</div>
+              <div className="text-xs text-t-40 mt-0.5">Задачи с пометкой "конфиденциально" не попадут в контекст</div>
             </div>
             <button
               onClick={() => setAiExcludeConf((v) => !v)}
               className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ml-3 ${
-                aiExcludeConf ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                aiExcludeConf ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-t-12'
               }`}
             >
               <div
@@ -579,11 +579,11 @@ export default function SettingsDialog({
       {activeTab === 'automation' && (
         <div className="space-y-4">
           {/* Auto-archive */}
-          <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06] space-y-3">
+          <div className="p-3.5 rounded-lg bg-t-03 border border-t-06 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-white/85">Автоархивация готовых задач</div>
-                <div className="text-xs text-white/40">Задачи в "Готово"/"Забито" старше N дней</div>
+                <div className="text-sm font-medium text-t-85">Автоархивация готовых задач</div>
+                <div className="text-xs text-t-40">Задачи в "Готово"/"Забито" старше N дней</div>
               </div>
               <button
                 onClick={() => {
@@ -592,7 +592,7 @@ export default function SettingsDialog({
                   window.electronAPI?.setSetting('automation_autoArchive', String(next));
                 }}
                 className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
-                  autoArchive ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                  autoArchive ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-t-12'
                 }`}
               >
                 <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${autoArchive ? 'left-[21px]' : 'left-[3px]'}`} />
@@ -600,7 +600,7 @@ export default function SettingsDialog({
             </div>
             {autoArchive && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white/50">Через</span>
+                <span className="text-xs text-t-50">Через</span>
                 <input
                   type="number"
                   min="1"
@@ -609,18 +609,18 @@ export default function SettingsDialog({
                     setAutoArchiveDays(e.target.value);
                     window.electronAPI?.setSetting('automation_autoArchiveDays', e.target.value);
                   }}
-                  className="w-16 bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-2.5 py-1 text-xs text-white/85 outline-none transition-colors"
+                  className="w-16 bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-lg px-2.5 py-1 text-xs text-t-85 outline-none transition-colors"
                 />
-                <span className="text-xs text-white/50">дней</span>
+                <span className="text-xs text-t-50">дней</span>
               </div>
             )}
           </div>
 
           {/* Overdue reminders */}
-          <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-t-03 border border-t-06">
             <div>
-              <div className="text-sm font-medium text-white/85">Напоминания о просроченных</div>
-              <div className="text-xs text-white/40">Автоматически ставить reminder для overdue задач</div>
+              <div className="text-sm font-medium text-t-85">Напоминания о просроченных</div>
+              <div className="text-xs text-t-40">Автоматически ставить reminder для overdue задач</div>
             </div>
             <button
               onClick={() => {
@@ -629,7 +629,7 @@ export default function SettingsDialog({
                 window.electronAPI?.setSetting('automation_overdueReminders', String(next));
               }}
               className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
-                overdueReminders ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                overdueReminders ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-t-12'
               }`}
             >
               <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${overdueReminders ? 'left-[21px]' : 'left-[3px]'}`} />
@@ -637,10 +637,10 @@ export default function SettingsDialog({
           </div>
 
           {/* Stale high-priority */}
-          <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-t-03 border border-t-06">
             <div>
-              <div className="text-sm font-medium text-white/85">Залежавшиеся важные задачи</div>
-              <div className="text-xs text-white/40">Напоминать если высокий приоритет в "Новые" 3+ дней</div>
+              <div className="text-sm font-medium text-t-85">Залежавшиеся важные задачи</div>
+              <div className="text-xs text-t-40">Напоминать если высокий приоритет в "Новые" 3+ дней</div>
             </div>
             <button
               onClick={() => {
@@ -649,7 +649,7 @@ export default function SettingsDialog({
                 window.electronAPI?.setSetting('automation_staleHighPriority', String(next));
               }}
               className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
-                staleHighPriority ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                staleHighPriority ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-t-12'
               }`}
             >
               <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${staleHighPriority ? 'left-[21px]' : 'left-[3px]'}`} />
@@ -659,7 +659,7 @@ export default function SettingsDialog({
           {/* Manual trigger */}
           <button
             onClick={() => window.electronAPI?.runAutomation()}
-            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs text-white/60 hover:text-white/90 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] rounded-lg transition-all duration-150"
+            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs text-t-60 hover:text-t-90 bg-t-04 hover:bg-t-08 border border-t-06 rounded-lg transition-all duration-150"
           >
             <Clock size={12} />
             Запустить проверку сейчас

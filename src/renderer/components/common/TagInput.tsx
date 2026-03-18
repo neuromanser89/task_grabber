@@ -166,14 +166,14 @@ export default function TagInput({ taskId, initialTags, onChange }: Props) {
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
           placeholder="+ добавить тег"
-          className="w-full bg-transparent text-[12px] text-white/60 placeholder-white/20 outline-none border-b border-white/[0.06] focus:border-white/20 pb-1 transition-colors"
+          className="w-full bg-transparent text-[12px] text-t-60 placeholder-t-20 outline-none border-b border-t-06 focus:border-t-20 pb-1 transition-colors"
         />
 
         {/* Dropdown */}
         {showDropdown && dropdownItems.length > 0 && (
           <div
             ref={dropdownRef}
-            className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg overflow-hidden border border-white/[0.08] shadow-xl glass-heavy"
+            className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg overflow-hidden border border-t-08 shadow-xl glass-heavy"
           >
             {dropdownItems.map((item, idx) =>
               item === null ? (
@@ -181,26 +181,26 @@ export default function TagInput({ taskId, initialTags, onChange }: Props) {
                   key="create"
                   onMouseDown={(e) => { e.preventDefault(); createAndAdd(); }}
                   className={`w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 transition-colors ${
-                    highlightIndex === idx ? 'bg-white/[0.08]' : 'hover:bg-white/[0.05]'
+                    highlightIndex === idx ? 'bg-t-08' : 'hover:bg-t-05'
                   }`}
                 >
-                  <span className="text-white/35">+</span>
-                  <span className="text-white/70">Создать</span>
-                  <span className="text-white/50 font-medium">"{input.trim()}"</span>
+                  <span className="text-t-35">+</span>
+                  <span className="text-t-70">Создать</span>
+                  <span className="text-t-50 font-medium">"{input.trim()}"</span>
                 </button>
               ) : (
                 <button
                   key={(item as Tag).id}
                   onMouseDown={(e) => { e.preventDefault(); addTag(item as Tag); }}
                   className={`w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 transition-colors ${
-                    highlightIndex === idx ? 'bg-white/[0.08]' : 'hover:bg-white/[0.05]'
+                    highlightIndex === idx ? 'bg-t-08' : 'hover:bg-t-05'
                   }`}
                 >
                   <span
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{ backgroundColor: (item as Tag).color }}
                   />
-                  <span className="text-white/75">{(item as Tag).name}</span>
+                  <span className="text-t-75">{(item as Tag).name}</span>
                 </button>
               )
             )}

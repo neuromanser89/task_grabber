@@ -109,7 +109,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               e.stopPropagation();
               window.electronAPI?.ipcSend('focus:openTask', task.id);
             }}
-            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity duration-200 text-white/40 hover:text-blue-400 p-0.5 rounded"
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity duration-200 text-t-40 hover:text-blue-400 p-0.5 rounded"
             title="Начать фокус-сессию"
           >
             <Timer size={11} />
@@ -169,7 +169,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
         <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
         <div className="flex items-center gap-1.5">
           {(task as unknown as { time_spent?: number }).time_spent && (task as unknown as { time_spent?: number }).time_spent! > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-white/20">
+            <span className="flex items-center gap-0.5 text-[10px] text-t-20">
               <Timer size={9} />
               {Math.round(((task as unknown as { time_spent: number }).time_spent) / 60)}м
             </span>

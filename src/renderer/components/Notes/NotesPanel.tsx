@@ -44,7 +44,7 @@ function NoteItem({ note }: { note: Note }) {
   };
 
   return (
-    <div className="group glass-card rounded-lg p-3 transition-all duration-200 hover:border-white/[0.08]">
+    <div className="group glass-card rounded-lg p-3 transition-all duration-200 hover:border-t-08">
       {editing ? (
         <div className="flex flex-col gap-2">
           <textarea
@@ -53,18 +53,18 @@ function NoteItem({ note }: { note: Note }) {
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={3}
-            className="w-full bg-transparent text-[13px] text-white/85 outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed"
           />
           <div className="flex gap-1 justify-end">
             <button
               onClick={save}
-              className="p-1 rounded text-green-400/70 hover:text-green-400 hover:bg-white/[0.05] transition-colors"
+              className="p-1 rounded text-green-400/70 hover:text-green-400 hover:bg-t-05 transition-colors"
             >
               <Check size={12} />
             </button>
             <button
               onClick={cancel}
-              className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+              className="p-1 rounded text-t-30 hover:text-t-60 hover:bg-t-05 transition-colors"
             >
               <X size={12} />
             </button>
@@ -72,21 +72,21 @@ function NoteItem({ note }: { note: Note }) {
         </div>
       ) : (
         <>
-          <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-[13px] text-t-75 leading-relaxed whitespace-pre-wrap break-words">
             {note.content}
           </p>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-[10px] text-white/20">{relativeTime(note.created_at)}</span>
+            <span className="text-[10px] text-t-20">{relativeTime(note.created_at)}</span>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={startEdit}
-                className="p-1 rounded text-white/30 hover:text-white/60 hover:bg-white/[0.05] transition-colors"
+                className="p-1 rounded text-t-30 hover:text-t-60 hover:bg-t-05 transition-colors"
               >
                 <Edit3 size={11} />
               </button>
               <button
                 onClick={() => deleteNote(note.id)}
-                className="p-1 rounded text-white/30 hover:text-red-400/80 hover:bg-white/[0.05] transition-colors"
+                className="p-1 rounded text-t-30 hover:text-red-400/80 hover:bg-t-05 transition-colors"
               >
                 <Trash2 size={11} />
               </button>
@@ -103,7 +103,7 @@ export default function NotesPanel() {
 
   if (notes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-32 text-white/20 text-[12px]">
+      <div className="flex flex-col items-center justify-center h-32 text-t-20 text-[12px]">
         <p>Нет заметок</p>
         <p className="mt-1 text-[11px]">Ctrl+Shift+N — быстрая заметка</p>
       </div>

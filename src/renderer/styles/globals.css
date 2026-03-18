@@ -2,6 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Theme-aware utility classes === */
+@layer utilities {
+  /* Text colors */
+  .text-t-primary { color: var(--text-primary); }
+  .text-t-secondary { color: var(--text-secondary); }
+  .text-t-muted { color: var(--text-muted); }
+  .text-t-05 { color: rgba(255,255,255,0.05); }
+  .light .text-t-05 { color: rgba(0,0,0,0.05); }
+  .text-t-10 { color: rgba(255,255,255,0.10); }
+  .light .text-t-10 { color: rgba(0,0,0,0.10); }
+  .text-t-15 { color: rgba(255,255,255,0.15); }
+  .light .text-t-15 { color: rgba(0,0,0,0.12); }
+  .text-t-20 { color: rgba(255,255,255,0.20); }
+  .light .text-t-20 { color: rgba(0,0,0,0.18); }
+  .text-t-25 { color: rgba(255,255,255,0.25); }
+  .light .text-t-25 { color: rgba(0,0,0,0.22); }
+  .text-t-30 { color: rgba(255,255,255,0.30); }
+  .light .text-t-30 { color: rgba(0,0,0,0.28); }
+  .text-t-35 { color: rgba(255,255,255,0.35); }
+  .light .text-t-35 { color: rgba(0,0,0,0.35); }
+  .text-t-40 { color: rgba(255,255,255,0.40); }
+  .light .text-t-40 { color: rgba(0,0,0,0.40); }
+  .text-t-45 { color: rgba(255,255,255,0.45); }
+  .light .text-t-45 { color: rgba(0,0,0,0.45); }
+  .text-t-50 { color: rgba(255,255,255,0.50); }
+  .light .text-t-50 { color: rgba(0,0,0,0.50); }
+  .text-t-55 { color: rgba(255,255,255,0.55); }
+  .light .text-t-55 { color: rgba(0,0,0,0.55); }
+  .text-t-60 { color: rgba(255,255,255,0.60); }
+  .light .text-t-60 { color: rgba(0,0,0,0.55); }
+  .text-t-70 { color: rgba(255,255,255,0.70); }
+  .light .text-t-70 { color: rgba(0,0,0,0.65); }
+  .text-t-75 { color: rgba(255,255,255,0.75); }
+  .light .text-t-75 { color: rgba(0,0,0,0.70); }
+  .text-t-80 { color: rgba(255,255,255,0.80); }
+  .light .text-t-80 { color: rgba(0,0,0,0.75); }
+  .text-t-85 { color: rgba(255,255,255,0.85); }
+  .light .text-t-85 { color: rgba(0,0,0,0.80); }
+  .text-t-90 { color: rgba(255,255,255,0.90); }
+  .light .text-t-90 { color: rgba(0,0,0,0.87); }
+
+  /* Background colors (subtle overlays) */
+  .bg-t-02 { background-color: rgba(255,255,255,0.02); }
+  .light .bg-t-02 { background-color: rgba(0,0,0,0.02); }
+  .bg-t-03 { background-color: rgba(255,255,255,0.03); }
+  .light .bg-t-03 { background-color: rgba(0,0,0,0.02); }
+  .bg-t-04 { background-color: rgba(255,255,255,0.04); }
+  .light .bg-t-04 { background-color: rgba(0,0,0,0.03); }
+  .bg-t-05 { background-color: rgba(255,255,255,0.05); }
+  .light .bg-t-05 { background-color: rgba(0,0,0,0.04); }
+  .bg-t-06 { background-color: rgba(255,255,255,0.06); }
+  .light .bg-t-06 { background-color: rgba(0,0,0,0.05); }
+  .bg-t-07 { background-color: rgba(255,255,255,0.07); }
+  .light .bg-t-07 { background-color: rgba(0,0,0,0.05); }
+  .bg-t-08 { background-color: rgba(255,255,255,0.08); }
+  .light .bg-t-08 { background-color: rgba(0,0,0,0.06); }
+  .bg-t-10 { background-color: rgba(255,255,255,0.10); }
+  .light .bg-t-10 { background-color: rgba(0,0,0,0.07); }
+  .bg-t-12 { background-color: rgba(255,255,255,0.12); }
+  .light .bg-t-12 { background-color: rgba(0,0,0,0.08); }
+
+  /* Border colors */
+  .border-t { border-color: var(--border-color); }
+  .border-t-hover { border-color: var(--border-hover); }
+  .border-t-04 { border-color: rgba(255,255,255,0.04); }
+  .light .border-t-04 { border-color: rgba(0,0,0,0.04); }
+  .border-t-06 { border-color: rgba(255,255,255,0.06); }
+  .light .border-t-06 { border-color: rgba(0,0,0,0.06); }
+  .border-t-08 { border-color: rgba(255,255,255,0.08); }
+  .light .border-t-08 { border-color: rgba(0,0,0,0.08); }
+  .border-t-10 { border-color: rgba(255,255,255,0.10); }
+  .light .border-t-10 { border-color: rgba(0,0,0,0.10); }
+  .border-t-12 { border-color: rgba(255,255,255,0.12); }
+  .light .border-t-12 { border-color: rgba(0,0,0,0.10); }
+  .border-t-15 { border-color: rgba(255,255,255,0.15); }
+  .light .border-t-15 { border-color: rgba(0,0,0,0.12); }
+
+  /* Hover variants */
+  .hover\:text-t-50:hover { color: rgba(255,255,255,0.50); }
+  .light .hover\:text-t-50:hover { color: rgba(0,0,0,0.50); }
+  .hover\:text-t-55:hover { color: rgba(255,255,255,0.55); }
+  .light .hover\:text-t-55:hover { color: rgba(0,0,0,0.55); }
+  .hover\:text-t-60:hover { color: rgba(255,255,255,0.60); }
+  .light .hover\:text-t-60:hover { color: rgba(0,0,0,0.55); }
+  .hover\:text-t-70:hover { color: rgba(255,255,255,0.70); }
+  .light .hover\:text-t-70:hover { color: rgba(0,0,0,0.65); }
+  .hover\:text-t-80:hover { color: rgba(255,255,255,0.80); }
+  .light .hover\:text-t-80:hover { color: rgba(0,0,0,0.75); }
+  .hover\:text-t-85:hover { color: rgba(255,255,255,0.85); }
+  .light .hover\:text-t-85:hover { color: rgba(0,0,0,0.80); }
+  .hover\:text-t-90:hover { color: rgba(255,255,255,0.90); }
+  .light .hover\:text-t-90:hover { color: rgba(0,0,0,0.87); }
+  .hover\:bg-t-04:hover { background-color: rgba(255,255,255,0.04); }
+  .light .hover\:bg-t-04:hover { background-color: rgba(0,0,0,0.03); }
+  .hover\:bg-t-05:hover { background-color: rgba(255,255,255,0.05); }
+  .light .hover\:bg-t-05:hover { background-color: rgba(0,0,0,0.04); }
+  .hover\:bg-t-06:hover { background-color: rgba(255,255,255,0.06); }
+  .light .hover\:bg-t-06:hover { background-color: rgba(0,0,0,0.05); }
+  .hover\:bg-t-08:hover { background-color: rgba(255,255,255,0.08); }
+  .light .hover\:bg-t-08:hover { background-color: rgba(0,0,0,0.06); }
+  .hover\:bg-t-10:hover { background-color: rgba(255,255,255,0.10); }
+  .light .hover\:bg-t-10:hover { background-color: rgba(0,0,0,0.07); }
+  .hover\:border-t-08:hover { border-color: rgba(255,255,255,0.08); }
+  .light .hover\:border-t-08:hover { border-color: rgba(0,0,0,0.08); }
+  .hover\:border-t-10:hover { border-color: rgba(255,255,255,0.10); }
+  .light .hover\:border-t-10:hover { border-color: rgba(0,0,0,0.10); }
+  .hover\:border-t-12:hover { border-color: rgba(255,255,255,0.12); }
+  .light .hover\:border-t-12:hover { border-color: rgba(0,0,0,0.10); }
+  .hover\:border-t-15:hover { border-color: rgba(255,255,255,0.15); }
+  .light .hover\:border-t-15:hover { border-color: rgba(0,0,0,0.12); }
+
+  /* Placeholder colors */
+  .placeholder-t-20::placeholder { color: rgba(255,255,255,0.20); }
+  .light .placeholder-t-20::placeholder { color: rgba(0,0,0,0.25); }
+  .placeholder-t-15::placeholder { color: rgba(255,255,255,0.15); }
+  .light .placeholder-t-15::placeholder { color: rgba(0,0,0,0.20); }
+
+  /* Group-hover text */
+  .group-hover\:text-t-30:is(:where(.group):hover *) { color: rgba(255,255,255,0.30); }
+  .light .group-hover\:text-t-30:is(:where(.group):hover *) { color: rgba(0,0,0,0.28); }
+  .group-hover\:text-t-90:is(:where(.group):hover *) { color: rgba(255,255,255,0.90); }
+  .light .group-hover\:text-t-90:is(:where(.group):hover *) { color: rgba(0,0,0,0.87); }
+
+  /* Opacity hover for group */
+  .group-hover\:opacity-t-100:is(:where(.group):hover *) { opacity: 1; }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
