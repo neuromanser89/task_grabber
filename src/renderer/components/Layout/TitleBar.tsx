@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap } from 'lucide-react';
 import BoardSwitcher from '../Board/BoardSwitcher';
 
 export type ViewMode = 'kanban' | 'timeline' | 'calendar';
@@ -8,6 +8,7 @@ interface TitleBarProps {
   onNewTask?: () => void;
   onSettings?: () => void;
   onAI?: () => void;
+  onRules?: () => void;
   viewMode?: ViewMode;
   onViewChange?: (mode: ViewMode) => void;
 }
@@ -18,7 +19,7 @@ const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[]
   { mode: 'calendar', label: 'Календарь', Icon: Calendar },
 ];
 
-export default function TitleBar({ onNewTask, onSettings, onAI, viewMode = 'kanban', onViewChange }: TitleBarProps) {
+export default function TitleBar({ onNewTask, onSettings, onAI, onRules, viewMode = 'kanban', onViewChange }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -66,6 +67,15 @@ export default function TitleBar({ onNewTask, onSettings, onAI, viewMode = 'kanb
           >
             <Plus size={12} strokeWidth={2.5} />
             Задача
+          </button>
+        )}
+        {onRules && (
+          <button
+            onClick={onRules}
+            className="w-7 h-7 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-accent-amber"
+            title="Умные правила"
+          >
+            <Zap size={14} />
           </button>
         )}
         {onAI && (
