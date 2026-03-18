@@ -10,6 +10,7 @@ interface TaskState {
   filterTags: string[];        // tag IDs
   filterPriority: Priority[];
   filterSource: SourceType[];
+  filterBoards: string[];      // board IDs (empty = no filter)
 
   // Actions
   fetchAll: () => Promise<void>;
@@ -26,9 +27,13 @@ interface TaskState {
   toggleTagFilter: (tagId: string) => void;
   togglePriorityFilter: (p: Priority) => void;
   toggleSourceFilter: (s: SourceType) => void;
+  toggleBoardFilter: (boardId: string) => void;
   resetFilters: () => void;
 
   // Computed (function, not getter — zustand doesn't support getters)
+  // columnBoardMap: map of column_id -> board_id (must be set externally)
+  columnBoardMap: Record<string, string>;
+  setColumnBoardMap: (map: Record<string, string>) => void;
   filteredTasks: () => TaskWithAttachments[];
 }
 
@@ -37,7 +42,9 @@ function applyFilters(
   searchQuery: string,
   filterTags: string[],
   filterPriority: Priority[],
-  filterSource: SourceType[]
+  filterSource: SourceType[],
+  filterBoards: string[],
+  columnBoardMap: Record<string, string>
 ): TaskWithAttachments[] {
   let result = tasks;
 
@@ -64,6 +71,13 @@ function applyFilters(
     result = result.filter((t) => filterSource.includes(t.source_type ?? 'manual'));
   }
 
+  if (filterBoards.length > 0) {
+    result = result.filter((t) => {
+      const boardId = columnBoardMap[t.column_id];
+      return boardId ? filterBoards.includes(boardId) : false;
+    });
+  }
+
   return result;
 }
 
@@ -74,6 +88,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   filterTags: [],
   filterPriority: [],
   filterSource: [],
+  filterBoards: [],
+  columnBoardMap: {},
 
   fetchAll: async () => {
     set({ loading: true });
@@ -154,11 +170,20 @@ export const useTaskStore = create<TaskState>((set, get) => ({
         : [...s.filterSource, src],
     })),
 
+  toggleBoardFilter: (boardId) =>
+    set((s) => ({
+      filterBoards: s.filterBoards.includes(boardId)
+        ? s.filterBoards.filter((id) => id !== boardId)
+        : [...s.filterBoards, boardId],
+    })),
+
   resetFilters: () =>
-    set({ searchQuery: '', filterTags: [], filterPriority: [], filterSource: [] }),
+    set({ searchQuery: '', filterTags: [], filterPriority: [], filterSource: [], filterBoards: [] }),
+
+  setColumnBoardMap: (map) => set({ columnBoardMap: map }),
 
   filteredTasks: () => {
-    const { tasks, searchQuery, filterTags, filterPriority, filterSource } = get();
-    return applyFilters(tasks, searchQuery, filterTags, filterPriority, filterSource);
+    const { tasks, searchQuery, filterTags, filterPriority, filterSource, filterBoards, columnBoardMap } = get();
+    return applyFilters(tasks, searchQuery, filterTags, filterPriority, filterSource, filterBoards, columnBoardMap);
   },
 }));
