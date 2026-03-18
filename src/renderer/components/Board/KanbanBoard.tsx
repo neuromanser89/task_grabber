@@ -48,6 +48,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
   const [selectedTask, setSelectedTask] = useState<TaskWithAttachments | null>(null);
+  const [overColumnId, setOverColumnId] = useState<string | null>(null);
 
   // Keyboard nav state
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
@@ -247,17 +248,27 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
 
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      setOverColumnId(null);
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    if (isDndColumnId(activeId)) return;
+    if (isDndColumnId(activeId)) {
+      setOverColumnId(null);
+      return;
+    }
 
     const draggedTask = tasks.find((t) => t.id === activeId);
     if (!draggedTask) return;
 
+    // Track which column is being hovered for highlight
     const overColumn = columns.find((c) => c.id === overId);
+    const overTask = tasks.find((t) => t.id === overId);
+    setOverColumnId(overColumn?.id ?? overTask?.column_id ?? null);
+
     if (overColumn && draggedTask.column_id !== overColumn.id) {
       const tasksInTarget = tasks.filter((t) => t.column_id === overColumn.id);
       const wip = overColumn.wip_limit ?? 0;
@@ -271,7 +282,6 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       return;
     }
 
-    const overTask = tasks.find((t) => t.id === overId);
     if (overTask && draggedTask.column_id !== overTask.column_id) {
       const targetCol = columns.find((c) => c.id === overTask.column_id);
       const wip = targetCol?.wip_limit ?? 0;
@@ -289,6 +299,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveTask(null);
+    setOverColumnId(null);
     setActiveColumn(null);
     if (!over) return;
 
@@ -375,6 +386,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 selectedTaskId={selectedColumnIndex === colIdx ? selectedTaskId : null}
                 selectedBatchIds={selectedBatchIds}
                 onBatchSelect={handleBatchSelect}
+                isDropTarget={overColumnId === col.id}
               />
             ))}
 
