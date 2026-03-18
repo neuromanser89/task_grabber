@@ -11,6 +11,7 @@ import SettingsDialog from './components/Settings/SettingsDialog';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import AIAssistantDialog from './components/AI/AIAssistantDialog';
 import GlobalSearch from './components/GlobalSearch/GlobalSearch';
+import RulesDialog from './components/Rules/RulesDialog';
 import { ToastContainer, useToast } from './components/common/Toast';
 import { useNoteStore } from './stores/noteStore';
 import { useTaskStore } from './stores/taskStore';
@@ -42,6 +43,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
@@ -216,6 +218,7 @@ export default function App() {
         onNewTask={openCreateDialog}
         onSettings={() => setShowSettings(true)}
         onAI={() => setShowAI(true)}
+        onRules={() => setShowRules(true)}
         viewMode={viewMode}
         onViewChange={setViewMode}
       />
@@ -258,6 +261,10 @@ export default function App() {
       <AIAssistantDialog
         isOpen={showAI}
         onClose={() => setShowAI(false)}
+      />
+      <RulesDialog
+        isOpen={showRules}
+        onClose={() => setShowRules(false)}
       />
       <GlobalSearch
         isOpen={showGlobalSearch}

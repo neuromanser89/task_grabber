@@ -12,9 +12,11 @@ interface Props {
   onTaskClick?: (task: TaskWithAttachments) => void;
   isDragOverlay?: boolean;
   selectedTaskId?: string | null;
+  selectedBatchIds?: Set<string>;
+  onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
 }
 
-export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId }: Props) {
+export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -110,6 +112,8 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
                   task={task}
                   onClick={onTaskClick}
                   isSelected={selectedTaskId === task.id}
+                  isBatchSelected={selectedBatchIds?.has(task.id)}
+                  onBatchSelect={onBatchSelect}
                 />
               </div>
             ))}

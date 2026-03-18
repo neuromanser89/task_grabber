@@ -3,12 +3,14 @@ import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer, Repeat } from 'lucide-react';
+import { CalendarDays, Timer, Repeat, CheckSquare, Square } from 'lucide-react';
 
 interface Props {
   task: TaskWithAttachments;
   isDragOverlay?: boolean;
   isSelected?: boolean;
+  isBatchSelected?: boolean;
+  onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
   onClick?: (task: TaskWithAttachments) => void;
 }
 
@@ -51,7 +53,7 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}д назад`;
 }
 
-export default function TaskCard({ task, isDragOverlay = false, isSelected = false, onClick }: Props) {
+export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = task.attachments && task.attachments.length > 0;
 
@@ -70,21 +72,54 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     opacity: isDragging && !isDragOverlay ? 0.25 : 1,
   };
 
+  function handleClick(e: React.MouseEvent) {
+    if (isDragging) return;
+    if (onBatchSelect && (e.ctrlKey || e.metaKey)) {
+      e.stopPropagation();
+      onBatchSelect(task, 'toggle');
+      return;
+    }
+    if (onBatchSelect && e.shiftKey) {
+      e.stopPropagation();
+      onBatchSelect(task, 'shift');
+      return;
+    }
+    if (onClick) { e.stopPropagation(); onClick(task); }
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      onClick={(e) => { if (onClick && !isDragging) { e.stopPropagation(); onClick(task); } }}
+      onClick={handleClick}
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-t-15'
+          : isBatchSelected
+          ? 'glass-card bg-accent-purple/[0.08] border border-accent-purple/40 shadow-[0_0_12px_rgba(139,92,246,0.15),0_0_0_1px_rgba(139,92,246,0.25)] -translate-y-[1px]'
           : isSelected
           ? 'glass-card bg-accent-blue/[0.06] border border-accent-blue/40 shadow-[0_0_12px_rgba(59,130,246,0.15),0_0_0_1px_rgba(59,130,246,0.25)] -translate-y-[1px]'
           : 'glass-card hover:border-t-08 hover:shadow-card-hover hover:-translate-y-[2px] hover:brightness-110'
       }`}
     >
+      {/* Batch select checkbox — shown on hover or when selected */}
+      {onBatchSelect && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onBatchSelect(task, 'toggle'); }}
+          className={`absolute top-2 right-2 z-10 transition-opacity duration-150 ${
+            isBatchSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+          }`}
+          title="Выбрать задачу (Ctrl+клик или Shift+клик)"
+        >
+          {isBatchSelected
+            ? <CheckSquare size={13} className="text-accent-purple" />
+            : <Square size={13} className="text-t-40" />
+          }
+        </button>
+      )}
+
       {/* Priority stripe with glow */}
       {task.priority > 0 && (
         <>
