@@ -116,7 +116,18 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     }
 
     const allColumns = (await window.electronAPI?.getColumns() ?? []) as typeof columns;
-    const boardCols = allColumns.filter(c => c.board_id === targetBoardId);
+    let boardCols = allColumns.filter(c => c.board_id === targetBoardId);
+
+    // If target board has no columns, create a default one
+    if (boardCols.length === 0) {
+      const newCol = await window.electronAPI!.createColumn({
+        name: 'Новые', color: '#3B82F6', icon: null,
+        sort_order: 0, is_default: 1, board_id: targetBoardId,
+      });
+      boardCols = [newCol];
+      useColumnStore.getState().fetchColumns();
+    }
+
     const targetCol = boardCols.find(c => c.is_default === 1) ?? boardCols[0];
     if (!targetCol) return;
     const tasksInCol = tasks.filter(t => t.column_id === targetCol.id);
