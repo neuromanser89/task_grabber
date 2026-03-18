@@ -53,18 +53,18 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] bg-accent-blue/5 rounded-full blur-[80px] pointer-events-none" />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md mx-4 glass-heavy rounded-xl border border-white/[0.08] shadow-2xl overflow-hidden animate-fade-in-scale">
+      <div className="relative w-full max-w-md mx-4 glass-heavy rounded-xl border border-t-08 shadow-2xl overflow-hidden animate-fade-in-scale">
         {/* Top gradient line */}
         <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-          <span className="text-[11px] font-medium text-white/50 uppercase tracking-wider">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-t-06">
+          <span className="text-[11px] font-medium text-t-50 uppercase tracking-wider">
             Быстрая заметка
           </span>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/8 transition-all duration-150 text-white/30 hover:text-white/60"
+            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-t-08 transition-all duration-150 text-t-30 hover:text-t-60"
           >
             <X size={13} />
           </button>
@@ -79,12 +79,12 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
             onKeyDown={handleKeyDown}
             placeholder="Пишешь и Enter — готово..."
             rows={4}
-            className="w-full bg-transparent text-[14px] text-white/85 placeholder-white/20 outline-none resize-none leading-relaxed"
+            className="w-full bg-transparent text-[14px] text-t-85 placeholder-t-20 outline-none resize-none leading-relaxed"
           />
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 pb-3 flex items-center justify-between text-[11px] text-white/20">
+        <div className="px-4 pb-3 flex items-center justify-between text-[11px] text-t-20">
           <span>Enter — сохранить · Shift+Enter — новая строка · Esc — отмена</span>
         </div>
       </div>

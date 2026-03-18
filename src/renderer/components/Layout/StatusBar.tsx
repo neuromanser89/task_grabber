@@ -29,18 +29,18 @@ export default function StatusBar() {
         {hasFilters ? (
           <span>
             <span className="text-accent-blue/70">{visible.length}</span>
-            <span className="text-white/15"> / </span>
+            <span className="text-t-15"> / </span>
             {tasks.length} задач
           </span>
         ) : (
           `${tasks.length} задач`
         )}
       </span>
-      <span className="text-white/15">|</span>
+      <span className="text-t-15">|</span>
       <span>+{todayCount} сегодня</span>
-      <span className="ml-auto flex items-center gap-1.5 text-white/20">
+      <span className="ml-auto flex items-center gap-1.5 text-t-20">
         <Keyboard size={10} />
-        <kbd className="px-1 py-0.5 bg-white/5 rounded text-[10px] font-mono">Ctrl+Shift+T</kbd>
+        <kbd className="px-1 py-0.5 bg-t-05 rounded text-[10px] font-mono">Ctrl+Shift+T</kbd>
         захватить текст
       </span>
     </div>

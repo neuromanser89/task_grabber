@@ -46,14 +46,14 @@ export default function MarkdownEditor({
     <div className="flex flex-col gap-1.5">
       {/* Mode toggle */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-1 bg-white/[0.04] rounded-lg p-0.5">
+        <div className="flex gap-1 bg-t-04 rounded-lg p-0.5">
           <button
             type="button"
             onClick={() => setMode('edit')}
             className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all duration-150 ${
               mode === 'edit'
-                ? 'bg-white/[0.10] text-white/80'
-                : 'text-white/30 hover:text-white/50'
+                ? 'bg-t-10 text-t-80'
+                : 'text-t-30 hover:text-t-50'
             }`}
           >
             Редактор
@@ -63,15 +63,15 @@ export default function MarkdownEditor({
             onClick={() => setMode('preview')}
             className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all duration-150 ${
               mode === 'preview'
-                ? 'bg-white/[0.10] text-white/80'
-                : 'text-white/30 hover:text-white/50'
+                ? 'bg-t-10 text-t-80'
+                : 'text-t-30 hover:text-t-50'
             }`}
           >
             Просмотр
           </button>
         </div>
         {mode === 'edit' && (
-          <span className="text-[10px] text-white/20">Markdown</span>
+          <span className="text-[10px] text-t-20">Markdown</span>
         )}
       </div>
 
@@ -83,11 +83,11 @@ export default function MarkdownEditor({
           onBlur={onBlur}
           rows={rows}
           placeholder={placeholder}
-          className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.08] focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-white/75 placeholder-white/15 outline-none resize-none transition-all duration-200 font-mono"
+          className="w-full bg-t-03 border border-t-06 hover:border-t-08 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-t-75 placeholder-t-15 outline-none resize-none transition-all duration-200 font-mono"
         />
       ) : (
         <div
-          className="markdown-body rounded-lg px-3 py-2.5 border border-white/[0.06] bg-white/[0.02] cursor-text"
+          className="markdown-body rounded-lg px-3 py-2.5 border border-t-06 bg-t-02 cursor-text"
           style={{ minHeight: `${rows * 24}px` }}
           onClick={() => setMode('edit')}
           title="Нажмите для редактирования"
@@ -118,7 +118,7 @@ export default function MarkdownEditor({
               {value}
             </ReactMarkdown>
           ) : (
-            <span className="text-[13px] text-white/15 italic">{placeholder}</span>
+            <span className="text-[13px] text-t-15 italic">{placeholder}</span>
           )}
         </div>
       )}

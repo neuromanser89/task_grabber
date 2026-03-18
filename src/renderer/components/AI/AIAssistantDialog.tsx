@@ -61,13 +61,13 @@ function DaySummaryPreview({
 }) {
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-[500px] mx-4 glass-heavy rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+      <div className="w-full max-w-[500px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-t-06">
           <div className="flex items-center gap-2">
             <Eye size={14} className="text-accent-blue" />
-            <span className="text-sm font-medium text-white/85">Предпросмотр — что уйдёт на сервер</span>
+            <span className="text-sm font-medium text-t-85">Предпросмотр — что уйдёт на сервер</span>
           </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white/70 transition-colors">
+          <button onClick={onClose} className="text-t-40 hover:text-t-70 transition-colors">
             <X size={14} />
           </button>
         </div>
@@ -78,26 +78,26 @@ function DaySummaryPreview({
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
                 item.confidential
                   ? 'bg-amber-500/10 border border-amber-500/20'
-                  : 'bg-white/[0.03] border border-white/[0.05]'
+                  : 'bg-t-03 border border-t-06'
               }`}
             >
               {item.confidential ? (
                 <Lock size={10} className="text-amber-400 flex-shrink-0" />
               ) : (
-                <Unlock size={10} className="text-white/30 flex-shrink-0" />
+                <Unlock size={10} className="text-t-30 flex-shrink-0" />
               )}
-              <span className={item.confidential ? 'text-amber-300/80' : 'text-white/70'}>{item.title}</span>
-              <span className="ml-auto text-white/30 flex-shrink-0">{item.column}</span>
+              <span className={item.confidential ? 'text-amber-300/80' : 'text-t-70'}>{item.title}</span>
+              <span className="ml-auto text-t-30 flex-shrink-0">{item.column}</span>
             </div>
           ))}
           {preview.length === 0 && (
-            <div className="text-center text-sm text-white/30 py-4">Нет задач для отправки</div>
+            <div className="text-center text-sm text-t-30 py-4">Нет задач для отправки</div>
           )}
         </div>
-        <div className="flex gap-2 px-4 py-3 border-t border-white/[0.06]">
+        <div className="flex gap-2 px-4 py-3 border-t border-t-06">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-lg text-xs text-white/50 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+            className="flex-1 py-2 rounded-lg text-xs text-t-50 hover:text-t-70 bg-t-04 hover:bg-t-08 transition-colors"
           >
             Отмена
           </button>
@@ -241,23 +241,23 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
       <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm"
         onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="w-full max-w-[620px] mx-4 glass-heavy rounded-2xl border border-white/[0.08] shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
+        <div className="w-full max-w-[620px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl flex flex-col" style={{ maxHeight: '80vh' }}>
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.06] flex-shrink-0">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-t-06 flex-shrink-0">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
-            <span className="text-sm font-medium text-white/85">AI Помощник</span>
+            <span className="text-sm font-medium text-t-85">AI Помощник</span>
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={handleDaySummary}
                 disabled={!isConfigured || loading}
-                className="flex items-center gap-1.5 h-7 px-3 text-xs text-white/60 hover:text-white/85 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] rounded-lg transition-all duration-150 disabled:opacity-40"
+                className="flex items-center gap-1.5 h-7 px-3 text-xs text-t-60 hover:text-t-85 bg-t-05 hover:bg-t-10 border border-t-08 rounded-lg transition-all duration-150 disabled:opacity-40"
               >
                 <RefreshCw size={11} />
                 Итог дня
               </button>
-              <button onClick={onClose} className="text-white/40 hover:text-white/70 transition-colors">
+              <button onClick={onClose} className="text-t-40 hover:text-t-70 transition-colors">
                 <X size={14} />
               </button>
             </div>
@@ -274,7 +274,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
 
           {/* No config warning */}
           {!isConfigured && (
-            <div className="px-4 py-3 text-xs text-white/50 flex-shrink-0">
+            <div className="px-4 py-3 text-xs text-t-50 flex-shrink-0">
               Настройте AI в Настройки → вкладка AI (укажите API ключ или Ollama URL).
             </div>
           )}
@@ -282,7 +282,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin min-h-0">
             {messages.length === 0 && (
-              <div className="text-center text-sm text-white/25 py-8">
+              <div className="text-center text-sm text-t-25 py-8">
                 Задайте вопрос или нажмите «Итог дня»
               </div>
             )}
@@ -291,8 +291,8 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
                 <div
                   className={`max-w-[80%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'bg-accent-blue/25 border border-accent-blue/30 text-white/85'
-                      : 'bg-white/[0.04] border border-white/[0.06] text-white/75'
+                      ? 'bg-accent-blue/25 border border-accent-blue/30 text-t-85'
+                      : 'bg-t-04 border border-t-06 text-t-75'
                   }`}
                 >
                   {msg.content}
@@ -301,7 +301,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-3 py-2">
+                <div className="bg-t-04 border border-t-06 rounded-xl px-3 py-2">
                   <div className="flex gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -314,7 +314,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
           </div>
 
           {/* Input */}
-          <div className="flex items-end gap-2 px-3 py-3 border-t border-white/[0.06] flex-shrink-0">
+          <div className="flex items-end gap-2 px-3 py-3 border-t border-t-06 flex-shrink-0">
             <textarea
               ref={inputRef}
               value={input}
@@ -323,7 +323,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
               disabled={!isConfigured || loading}
               placeholder={isConfigured ? 'Введите сообщение... (Enter — отправить, Shift+Enter — перенос)' : 'Настройте AI в настройках'}
               rows={2}
-              className="flex-1 resize-none bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-xl px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors scrollbar-thin disabled:opacity-40"
+              className="flex-1 resize-none bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded-xl px-3 py-2 text-sm text-t-85 placeholder:text-t-25 outline-none transition-colors scrollbar-thin disabled:opacity-40"
             />
             <button
               onClick={() => { if (input.trim()) sendMessage(input); }}

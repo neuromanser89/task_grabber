@@ -355,13 +355,13 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                             : <code className="bg-t-07 rounded px-1 py-0.5 text-[11px] font-mono text-t-60">{children}</code>;
                         },
                         blockquote: ({ children }) => (
-                          <blockquote className="border-l-2 border-white/20 pl-3 text-white/45 italic mb-2">{children}</blockquote>
+                          <blockquote className="border-l-2 border-t-20 pl-3 text-t-45 italic mb-2">{children}</blockquote>
                         ),
                         a: ({ children, href }) => (
                           <a href={href} className="text-blue-400/80 underline hover:text-blue-400" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>{children}</a>
                         ),
-                        strong: ({ children }) => <strong className="font-semibold text-white/85">{children}</strong>,
-                        em: ({ children }) => <em className="text-white/60 italic">{children}</em>,
+                        strong: ({ children }) => <strong className="font-semibold text-t-85">{children}</strong>,
+                        em: ({ children }) => <em className="text-t-60 italic">{children}</em>,
                       }}
                     >
                       {description}
@@ -369,7 +369,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                   );
                 })()
               ) : (
-                <span className="text-white/15">Нет описания. Нажмите чтобы добавить...</span>
+                <span className="text-t-15">Нет описания. Нажмите чтобы добавить...</span>
               )}
             </div>
           ) : (
@@ -379,7 +379,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               onBlur={() => { saveDescription(); if (description.trim()) setDescPreview(true); }}
               rows={6}
               placeholder={"Описание... (Markdown)\n\n- [ ] подзадача 1\n- [x] выполнено\n\n**жирный**, *курсив*, # заголовок"}
-              className="w-full bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.08] focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-white/75 placeholder-white/15 outline-none resize-none transition-all duration-200 font-mono"
+              className="w-full bg-t-03 border border-t-06 hover:border-t-08 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-t-75 placeholder-t-15 outline-none resize-none transition-all duration-200 font-mono"
             />
           )}
         </div>
@@ -394,7 +394,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             <select
               value={columnId}
               onChange={(e) => handleColumnChange(e.target.value)}
-              className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200"
+              className="w-full bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
             >
               {columns.map((col) => (
                 <option key={col.id} value={col.id} style={{ backgroundColor: '#1A1A2E' }}>
@@ -418,7 +418,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                   className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all duration-200 border ${
                     priority === p
                       ? 'border-current scale-[1.05]'
-                      : 'border-white/[0.06] opacity-30 hover:opacity-60 hover:border-white/[0.1]'
+                      : 'border-t-06 opacity-30 hover:opacity-60 hover:border-t-10'
                   }`}
                   style={{
                     color: p === 0 ? '#6B7280' : PRIORITY_COLORS[p],
@@ -434,7 +434,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
         {/* Due date */}
         <div>
-          <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+          <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
             Дедлайн
           </label>
           <div className="flex items-center gap-2">
@@ -442,12 +442,12 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               type="date"
               value={dueDate}
               onChange={(e) => handleDueDateChange(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
             />
             {dueDate && (
               <button
                 onClick={() => handleDueDateChange('')}
-                className="text-white/25 hover:text-white/50 transition-colors text-[11px]"
+                className="text-t-25 hover:text-t-50 transition-colors text-[11px]"
               >
                 Очистить
               </button>
@@ -457,7 +457,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
         {/* Tags */}
         <div>
-          <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+          <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
             Теги
           </label>
           <TagInput
@@ -472,7 +472,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
         {/* Reminder */}
         <div>
-          <div className="text-[11px] font-medium text-white/35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+          <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
             <Bell size={10} />
             Напоминание
           </div>
@@ -481,12 +481,12 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               type="datetime-local"
               value={reminderAt}
               onChange={(e) => handleReminderChange(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
             />
             {reminderAt && (
               <button
                 onClick={() => handleReminderChange('')}
-                className="text-white/25 hover:text-white/50 transition-colors"
+                className="text-t-25 hover:text-t-50 transition-colors"
                 title="Убрать напоминание"
               >
                 <BellOff size={13} />
@@ -497,7 +497,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
         {/* Recurrence */}
         <div>
-          <div className="text-[11px] font-medium text-white/35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+          <div className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5 mb-2">
             <Timer size={10} />
             Повторение
           </div>
@@ -505,7 +505,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             <select
               value={recurrenceRule}
               onChange={(e) => handleRecurrenceChange(e.target.value, recurrenceNext)}
-              className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+              className="bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
             >
               <option value="">Не повторять</option>
               <option value="daily">Каждый день</option>
@@ -518,17 +518,17 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             </select>
             {recurrenceRule && (
               <div className="flex items-center gap-2">
-                <label className="text-[11px] text-white/40 flex-shrink-0">Следующее:</label>
+                <label className="text-[11px] text-t-40 flex-shrink-0">Следующее:</label>
                 <input
                   type="date"
                   value={recurrenceNext}
                   onChange={(e) => handleRecurrenceChange(recurrenceRule, e.target.value)}
-                  className="flex-1 bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-white/75 transition-all duration-200 [color-scheme:dark]"
+                  className="flex-1 bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
                 />
               </div>
             )}
             {task.recurrence_rule && (
-              <p className="text-[10px] text-white/25 italic">
+              <p className="text-[10px] text-t-25 italic">
                 Новая задача создаётся автоматически когда наступает дата.
               </p>
             )}
@@ -557,8 +557,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
         )}
 
         {/* Meta info */}
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/25 pt-2 border-t border-white/[0.04]">
-          <span className="flex items-center gap-1.5 bg-white/[0.03] px-2 py-1 rounded-md">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-t-25 pt-2 border-t border-t-04">
+          <span className="flex items-center gap-1.5 bg-t-03 px-2 py-1 rounded-md">
             {SOURCE_ICON[task.source_type ?? 'manual']}
             {SOURCE_LABEL[task.source_type ?? 'manual']}
           </span>

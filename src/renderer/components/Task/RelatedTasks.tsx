@@ -52,31 +52,31 @@ export default function RelatedTasks({ taskId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider flex items-center gap-1.5">
+        <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider flex items-center gap-1.5">
           <Link2 size={10} />
           Связанные задачи
         </label>
         <button
           onClick={() => setShowSearch((v) => !v)}
-          className="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 transition-colors"
+          className="flex items-center gap-1 text-[11px] text-t-25 hover:text-t-50 transition-colors"
         >
           <Plus size={11} />
         </button>
       </div>
 
       {related.length === 0 && !showSearch && (
-        <div className="text-[11px] text-white/15">Нет связанных задач</div>
+        <div className="text-[11px] text-t-15">Нет связанных задач</div>
       )}
 
       {related.length > 0 && (
         <div className="flex flex-col gap-1 mb-2">
           {related.map((r) => (
             <div key={r.id} className="flex items-center gap-2 group">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/20 flex-shrink-0" />
-              <span className="flex-1 text-[12px] text-white/50 truncate">{r.title}</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-t-20 flex-shrink-0" />
+              <span className="flex-1 text-[12px] text-t-50 truncate">{r.title}</span>
               <button
                 onClick={() => handleRemove(r.id)}
-                className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-white/60 transition-all flex-shrink-0"
+                className="opacity-0 group-hover:opacity-100 text-t-25 hover:text-t-60 transition-all flex-shrink-0"
               >
                 <X size={10} />
               </button>
@@ -87,22 +87,22 @@ export default function RelatedTasks({ taskId }: Props) {
 
       {showSearch && (
         <div className="relative">
-          <Search size={10} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none" />
+          <Search size={10} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-t-25 pointer-events-none" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Escape') { setShowSearch(false); setQuery(''); } }}
             placeholder="Найти задачу..."
-            className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] focus:border-accent-blue/40 outline-none rounded-lg pl-7 pr-2.5 py-1.5 text-[12px] text-white/75 placeholder-white/20 transition-all"
+            className="w-full bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/40 outline-none rounded-lg pl-7 pr-2.5 py-1.5 text-[12px] text-t-75 placeholder-t-20 transition-all"
           />
           {suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 glass-heavy border border-white/[0.08] rounded-lg overflow-hidden z-50 shadow-2xl max-h-[180px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 glass-heavy border border-t-08 rounded-lg overflow-hidden z-50 shadow-2xl max-h-[180px] overflow-y-auto">
               {suggestions.map((t) => (
                 <button
                   key={t.id}
                   onMouseDown={(e) => { e.preventDefault(); handleAdd(t.id); }}
-                  className="w-full text-left px-3 py-2 text-[12px] text-white/60 hover:bg-white/[0.06] hover:text-white/85 transition-colors truncate"
+                  className="w-full text-left px-3 py-2 text-[12px] text-t-60 hover:bg-t-06 hover:text-t-85 transition-colors truncate"
                 >
                   {t.title}
                 </button>
