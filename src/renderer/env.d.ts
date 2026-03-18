@@ -87,6 +87,8 @@ interface ElectronAPI {
   focusEnd?: (id: string, duration: number, notes: string | null) => Promise<unknown>;
   focusGetByTask?: (taskId: string) => Promise<unknown[]>;
   focusGetTotalTime?: (taskId: string) => Promise<number>;
+  focusUpdateTime?: (taskId: string, seconds: number) => Promise<boolean>;
+  focusComplete?: (taskId: string, seconds: number) => Promise<boolean>;
   onFocusSetTask?: (cb: (taskId: string) => void) => () => void;
 
   // Recurring tasks

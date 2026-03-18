@@ -3,7 +3,7 @@ import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Timer } from 'lucide-react';
 
 interface Props {
   task: TaskWithAttachments;
@@ -79,10 +79,10 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       onClick={(e) => { if (onClick && !isDragging) { e.stopPropagation(); onClick(task); } }}
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
-          ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-white/15'
+          ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-t-15'
           : isSelected
           ? 'glass-card bg-accent-blue/[0.06] border border-accent-blue/40 shadow-[0_0_12px_rgba(59,130,246,0.15),0_0_0_1px_rgba(59,130,246,0.25)] -translate-y-[1px]'
-          : 'glass-card hover:border-white/[0.08] hover:shadow-card-hover hover:-translate-y-[2px] hover:brightness-110'
+          : 'glass-card hover:border-t-08 hover:shadow-card-hover hover:-translate-y-[2px] hover:brightness-110'
       }`}
     >
       {/* Priority stripe with glow */}
@@ -100,12 +100,24 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       )}
 
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-medium text-white/85 leading-snug line-clamp-2 flex-1">
+        <p className="text-[13px] font-medium text-t-85 leading-snug line-clamp-2 flex-1">
           {task.title}
         </p>
-        <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity duration-200 flex-shrink-0 mt-0.5">
-          {SOURCE_EMOJI[task.source_type ?? 'manual']}
-        </span>
+        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              window.electronAPI?.ipcSend('focus:openTask', task.id);
+            }}
+            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity duration-200 text-white/40 hover:text-blue-400 p-0.5 rounded"
+            title="Начать фокус-сессию"
+          >
+            <Timer size={11} />
+          </button>
+          <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity duration-200">
+            {SOURCE_EMOJI[task.source_type ?? 'manual']}
+          </span>
+        </div>
       </div>
 
       {task.description && (() => {
@@ -115,11 +127,11 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           const pct = total > 0 ? Math.round((done / total) * 100) : 0;
           return (
             <div className="mt-1.5">
-              <div className="flex items-center justify-between text-[10px] text-white/25 mb-1">
+              <div className="flex items-center justify-between text-[10px] text-t-25 mb-1">
                 <span>{done}/{total}</span>
                 <span>{pct}%</span>
               </div>
-              <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-[3px] bg-t-06 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{ width: `${pct}%`, backgroundColor: pct === 100 ? '#10B981' : '#3B82F6' }}
@@ -129,7 +141,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           );
         }
         return (
-          <p className="text-[11px] text-white/30 mt-1.5 line-clamp-2 leading-relaxed">
+          <p className="text-[11px] text-t-30 mt-1.5 line-clamp-2 leading-relaxed">
             {task.description}
           </p>
         );
@@ -153,9 +165,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-2.5 text-[10px] text-white/20">
-        <span className="transition-colors group-hover:text-white/30">{relativeTime(task.created_at)}</span>
+      <div className="flex items-center justify-between mt-2.5 text-[10px] text-t-20">
+        <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
         <div className="flex items-center gap-1.5">
+          {(task as unknown as { time_spent?: number }).time_spent && (task as unknown as { time_spent?: number }).time_spent! > 0 && (
+            <span className="flex items-center gap-0.5 text-[10px] text-white/20">
+              <Timer size={9} />
+              {Math.round(((task as unknown as { time_spent: number }).time_spent) / 60)}м
+            </span>
+          )}
           {task.due_date && (() => {
             const { label, isOverdue, isToday } = formatDueDate(task.due_date);
             return (
@@ -165,7 +183,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
                     ? 'bg-red-500/15 text-red-400/80'
                     : isToday
                     ? 'bg-amber-500/15 text-amber-400/80'
-                    : 'bg-white/[0.05] text-white/30'
+                    : 'bg-t-05 text-t-30'
                 }`}
               >
                 <CalendarDays size={9} />
@@ -173,7 +191,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               </span>
             );
           })()}
-          {hasAttachments && <span className="text-white/25">📎</span>}
+          {hasAttachments && <span className="text-t-25">📎</span>}
         </div>
       </div>
     </div>
