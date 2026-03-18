@@ -102,7 +102,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
 
-    // Fly-away animation: find BoardSwitcher dropdown button as target
+    // Fly-away animation: card shrinks and flies to BoardSwitcher
     const switcher = document.querySelector('[data-board-switcher]');
     if (switcher && cardRef.current) {
       const switcherRect = switcher.getBoundingClientRect();
@@ -111,10 +111,9 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
         targetX: switcherRect.left + switcherRect.width / 2 - cardRect.left - cardRect.width / 2,
         targetY: switcherRect.top + switcherRect.height / 2 - cardRect.top - cardRect.height / 2,
       });
+      // Wait for fly animation, then moveTask will remove from DOM
+      await new Promise((r) => setTimeout(r, 350));
     }
-
-    // Wait for animation then move
-    await new Promise((r) => setTimeout(r, 400));
 
     const allColumns = (await window.electronAPI?.getColumns() ?? []) as typeof columns;
     const boardCols = allColumns.filter(c => c.board_id === targetBoardId);
@@ -145,18 +144,18 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   const taskBoardId = columns.find(c => c.id === task.column_id)?.board_id ?? null;
   const otherBoards = boards.filter(b => b.id !== taskBoardId);
 
-  const flyStyle: React.CSSProperties = flyAway ? {
+  const flyCardStyle: React.CSSProperties = flyAway ? {
     ...style,
     transform: `translate(${flyAway.targetX}px, ${flyAway.targetY}px) scale(0.05)`,
     opacity: 0,
-    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
+    transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
     pointerEvents: 'none' as const,
   } : style;
 
   return (
     <div
       ref={(node) => { setNodeRef(node); (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node; }}
-      style={flyStyle}
+      style={flyCardStyle}
       {...attributes}
       {...listeners}
       onClick={handleClick}
