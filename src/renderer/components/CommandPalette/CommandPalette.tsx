@@ -353,7 +353,6 @@ export default function CommandPalette({
   return (
     <div
       className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Ambient glow */}
       <div className="absolute top-[8vh] left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-accent-blue/[0.04] rounded-full blur-[100px] pointer-events-none" />

@@ -307,7 +307,6 @@ export default function GlobalSearch({ isOpen, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[110] flex items-start justify-center pt-[8vh] bg-black/60 backdrop-blur-sm"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="absolute top-[4vh] left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-accent-blue/[0.03] rounded-full blur-[120px] pointer-events-none" />
 

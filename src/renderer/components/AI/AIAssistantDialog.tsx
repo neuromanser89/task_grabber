@@ -242,7 +242,7 @@ export default function AIAssistantDialog({ isOpen, onClose }: AIAssistantDialog
   return (
     <>
       <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-        onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        /* backdrop click disabled */
       >
         <div className="relative w-full max-w-[620px] mx-4 glass-heavy rounded-2xl border border-t-08 shadow-2xl flex flex-col animate-fade-in-scale" style={{ maxHeight: '80vh' }}>
           {/* Top gradient line */}
