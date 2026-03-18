@@ -87,14 +87,14 @@ function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: str
 
   return (
     <div
-      className="relative flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg group hover:border-white/[0.12] transition-all duration-150"
+      className="relative flex items-center gap-2 px-2.5 py-1.5 bg-t-03 border border-t-06 rounded-lg group hover:border-t-12 transition-all duration-150"
       onMouseEnter={() => img && setShowPreview(true)}
       onMouseLeave={() => setShowPreview(false)}
     >
       {/* Image preview tooltip */}
       {showPreview && img && (
         <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-none">
-          <div className="glass-heavy border border-white/[0.12] rounded-lg p-1.5 shadow-2xl">
+          <div className="glass-heavy border border-t-12 rounded-lg p-1.5 shadow-2xl">
             <img
               src={`file://${att.filepath.replace(/\\/g, '/')}`}
               alt={att.filename}
@@ -105,27 +105,27 @@ function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: str
         </div>
       )}
 
-      <span className="text-white/30 flex-shrink-0">
+      <span className="text-t-30 flex-shrink-0">
         {img ? <Image size={12} /> : <Paperclip size={12} />}
       </span>
 
       <button
         onClick={handleOpen}
-        className="flex-1 text-left text-[11px] text-white/60 hover:text-white/85 transition-colors truncate max-w-[200px]"
+        className="flex-1 text-left text-[11px] text-t-60 hover:text-t-85 transition-colors truncate max-w-[200px]"
         title={att.filename}
       >
         {att.filename}
       </button>
 
       {att.filesize && (
-        <span className="text-[10px] text-white/20 flex-shrink-0">
+        <span className="text-[10px] text-t-20 flex-shrink-0">
           {formatFileSize(att.filesize)}
         </span>
       )}
 
       <button
         onClick={() => onDelete(att.id)}
-        className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-red-400/70 transition-all ml-1 flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 text-t-25 hover:text-red-400/70 transition-all ml-1 flex-shrink-0"
         title="Удалить вложение"
       >
         <X size={11} />
@@ -279,17 +279,17 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
           onChange={(e) => setTitle(e.target.value)}
           onBlur={saveTitle}
           onKeyDown={(e) => { if (e.key === 'Enter') titleRef.current?.blur(); }}
-          className="text-lg font-semibold text-white/90 bg-transparent border-b border-transparent hover:border-white/[0.08] focus:border-accent-blue/50 outline-none pb-1.5 transition-all duration-200 w-full tracking-tight"
+          className="text-lg font-semibold text-t-90 bg-transparent border-b border-transparent hover:border-t-08 focus:border-accent-blue/50 outline-none pb-1.5 transition-all duration-200 w-full tracking-tight"
           placeholder="Заголовок задачи"
         />
 
         {/* Description with Markdown + Checklist */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider">
+            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider">
               Описание
               {totalCount > 0 && (
-                <span className="ml-2 normal-case font-normal text-white/25">
+                <span className="ml-2 normal-case font-normal text-t-25">
                   {doneCount}/{totalCount}
                 </span>
               )}
@@ -303,7 +303,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                   setDescPreview(true);
                 }
               }}
-              className="flex items-center gap-1 text-[11px] text-white/25 hover:text-white/50 transition-colors"
+              className="flex items-center gap-1 text-[11px] text-t-25 hover:text-t-50 transition-colors"
             >
               {descPreview ? <Edit3 size={11} /> : <Eye size={11} />}
               {descPreview ? 'Редактировать' : 'Предпросмотр'}
@@ -312,7 +312,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
           {descPreview ? (
             <div
-              className="min-h-[96px] w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 text-[13px] text-white/75 leading-relaxed cursor-text"
+              className="min-h-[96px] w-full bg-t-03 border border-t-06 rounded-lg px-3 py-2.5 text-[13px] text-t-75 leading-relaxed cursor-text"
               onClick={() => setDescPreview(false)}
             >
               {description ? (
@@ -343,16 +343,16 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                           );
                         },
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                        h1: ({ children }) => <h1 className="text-[15px] font-bold text-white/85 mb-2">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-[13px] font-bold text-white/80 mb-1.5">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-[12px] font-semibold text-white/75 mb-1">{children}</h3>,
+                        h1: ({ children }) => <h1 className="text-[15px] font-bold text-t-85 mb-2">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-[13px] font-bold text-t-80 mb-1.5">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-[12px] font-semibold text-t-75 mb-1">{children}</h3>,
                         ul: ({ children }) => <ul className="mb-2 space-y-1 pl-4">{children}</ul>,
                         ol: ({ children }) => <ol className="mb-2 space-y-1 list-decimal pl-4">{children}</ol>,
                         code: ({ children, className }) => {
                           const isBlock = className?.includes('language-');
                           return isBlock
-                            ? <code className="block bg-white/[0.05] rounded px-2 py-1.5 text-[11px] font-mono text-white/60 mb-2 overflow-x-auto">{children}</code>
-                            : <code className="bg-white/[0.07] rounded px-1 py-0.5 text-[11px] font-mono text-white/65">{children}</code>;
+                            ? <code className="block bg-t-05 rounded px-2 py-1.5 text-[11px] font-mono text-t-60 mb-2 overflow-x-auto">{children}</code>
+                            : <code className="bg-t-07 rounded px-1 py-0.5 text-[11px] font-mono text-t-60">{children}</code>;
                         },
                         blockquote: ({ children }) => (
                           <blockquote className="border-l-2 border-white/20 pl-3 text-white/45 italic mb-2">{children}</blockquote>
@@ -388,7 +388,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
         <div className="flex gap-4">
           {/* Column */}
           <div className="flex-1">
-            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
               Колонка
             </label>
             <select
@@ -406,7 +406,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
 
           {/* Priority */}
           <div>
-            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
               Приоритет
             </label>
             <div className="flex gap-1">
@@ -541,7 +541,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
         {/* Attachments */}
         {task.attachments && task.attachments.length > 0 && (
           <div>
-            <label className="text-[11px] font-medium text-white/35 uppercase tracking-wider block mb-2">
+            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
               Вложения ({task.attachments.length})
             </label>
             <div className="flex flex-col gap-1.5">
@@ -572,6 +572,18 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               {formatDate(task.updated_at)}
             </span>
           )}
+          {(task as unknown as { time_spent?: number }).time_spent != null && (task as unknown as { time_spent: number }).time_spent > 0 && (() => {
+            const secs = (task as unknown as { time_spent: number }).time_spent;
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const timeStr = h > 0 ? `${h}ч ${m}м` : `${m}м`;
+            return (
+              <span className="flex items-center gap-1.5 bg-blue-500/[0.08] text-blue-400/60 px-2 py-1 rounded-md">
+                <Timer size={11} />
+                {timeStr} в фокусе
+              </span>
+            );
+          })()}
         </div>
 
         {/* Footer */}
