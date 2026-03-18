@@ -14,10 +14,10 @@ interface Props {
 
 function toggleCheckbox(text: string, index: number): string {
   let count = -1;
-  return text.replace(/- \[([ x])\]/g, (match, state) => {
+  return text.replace(/^([\s]*[-*]\s+)\[([ xX])\]/gm, (match, prefix, state) => {
     count++;
     if (count === index) {
-      return state === ' ' ? '- [x]' : '- [ ]';
+      return `${prefix}[${state.trim() === '' ? 'x' : ' '}]`;
     }
     return match;
   });
