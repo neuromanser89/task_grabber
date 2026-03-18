@@ -13,14 +13,21 @@ interface Props {
 }
 
 function toggleCheckbox(text: string, index: number): string {
-  let count = -1;
-  return text.replace(/^([\s]*[-*]\s+)\[([ xX])\]/gm, (match, prefix, state) => {
-    count++;
-    if (count === index) {
-      return `${prefix}[${state.trim() === '' ? 'x' : ' '}]`;
+  const lines = text.split('\n');
+  let checkboxCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^([\s]*[-*]\s+)\[([ xX])\](.*)$/);
+    if (match) {
+      if (checkboxCount === index) {
+        const state = match[2];
+        const newState = state.trim() === '' ? 'x' : ' ';
+        lines[i] = `${match[1]}[${newState}]${match[3]}`;
+        break;
+      }
+      checkboxCount++;
     }
-    return match;
-  });
+  }
+  return lines.join('\n');
 }
 
 export default function MarkdownEditor({

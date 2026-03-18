@@ -57,7 +57,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
         style={isDragOverlay ? {} : style}
         className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
           isOverWip ? 'ring-1 ring-red-500/15' : ''
-        }`}
+        } ${isOver ? 'ring-1 ring-accent-blue/30 bg-accent-blue/[0.02]' : ''}`}
       >
         {/* Header with colored top accent */}
         <div className="relative" ref={headerRef}>
