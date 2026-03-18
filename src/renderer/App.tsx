@@ -212,6 +212,12 @@ export default function App() {
         onNewTask={openCreateDialog}
         onSettings={() => setShowSettings(true)}
         onAI={() => setShowAI(true)}
+        onQuickNote={() => setShowQuickNote(true)}
+        onThemeCycle={() => {
+          const next = theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark';
+          handleThemeChange(next);
+        }}
+        currentTheme={theme}
       />
       <AIAssistantDialog
         isOpen={showAI}

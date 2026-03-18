@@ -74,4 +74,8 @@ export function setupWidgetIpc(getMainWindow: () => BrowserWindow | null) {
     main.focus();
     main.webContents.send('widget:openTask', taskId);
   });
+
+  ipcMain.on('widget:toggle', () => {
+    toggleWidgetWindow();
+  });
 }
