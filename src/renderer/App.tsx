@@ -6,6 +6,7 @@ import Sidebar, { type SidebarHandle } from './components/Layout/Sidebar';
 import TaskCreateDialog from './components/Task/TaskCreateDialog';
 import QuickNoteDialog from './components/Notes/QuickNoteDialog';
 import SettingsDialog from './components/Settings/SettingsDialog';
+import CommandPalette from './components/CommandPalette/CommandPalette';
 import { useNoteStore } from './stores/noteStore';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -30,6 +31,7 @@ export default function App() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showQuickNote, setShowQuickNote] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -76,11 +78,22 @@ export default function App() {
     const unsubQuickNote = window.electronAPI?.onShowQuickNote(() => {
       setShowQuickNote(true);
     });
+
+    // Ctrl+K — Command Palette
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowPalette((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       unsubText?.();
       unsubFiles?.();
       unsubDialog?.();
       unsubQuickNote?.();
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -130,6 +143,12 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         onThemeChange={handleThemeChange}
         currentTheme={theme}
+      />
+      <CommandPalette
+        isOpen={showPalette}
+        onClose={() => setShowPalette(false)}
+        onNewTask={openCreateDialog}
+        onSettings={() => setShowSettings(true)}
       />
     </div>
   );

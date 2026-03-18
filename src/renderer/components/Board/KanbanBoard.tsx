@@ -58,7 +58,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     fetchColumns();
   }, [fetchAll, fetchColumns]);
 
-  // Open task from reminder notification or widget click
+  // Open task from reminder notification, widget click, or command palette
   useEffect(() => {
     const unsubReminder = window.electronAPI?.onReminderShow((taskId) => {
       const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
@@ -68,9 +68,16 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
       if (task) setSelectedTask(task);
     });
+    const handleBoardOpenTask = (e: Event) => {
+      const taskId = (e as CustomEvent<string>).detail;
+      const task = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+      if (task) setSelectedTask(task);
+    };
+    window.addEventListener('board:openTask', handleBoardOpenTask);
     return () => {
       unsubReminder?.();
       unsubWidget?.();
+      window.removeEventListener('board:openTask', handleBoardOpenTask);
     };
   }, []);
 
