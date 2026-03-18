@@ -69,7 +69,9 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
   async function handleSave() {
     if (!name.trim()) return;
     const wip = wipLimit.trim() === '' ? null : parseInt(wipLimit, 10);
-    await updateColumn(column.id, { name: name.trim(), color, wip_limit: isNaN(wip as number) ? null : wip, column_type: columnType });
+    await updateColumn(column.id, { name: name.trim(), color, wip_limit: isNaN(wip as number) ? null : wip, column_type: columnType } as Partial<Column>);
+    // Re-fetch to ensure column_type is persisted in store
+    useColumnStore.getState().fetchColumns();
     onClose();
   }
 
@@ -154,7 +156,12 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
         <select
           value={columnType ?? ''}
           onChange={(e) => setColumnType((e.target.value || null) as ColumnType)}
-          className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-all duration-200 appearance-none cursor-pointer"
+          className="w-full bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-80 outline-none focus:border-accent-blue/50 transition-all duration-200 appearance-none cursor-pointer pr-8"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 8px center',
+          }}
         >
           <option value="">— без типа —</option>
           {Object.entries(COLUMN_TYPE_LABELS).map(([key, label]) => (
