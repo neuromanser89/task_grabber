@@ -22,6 +22,18 @@ function toggleCheckbox(text: string, lineIndex: number): string {
   return lines.join('\n');
 }
 
+/** Maps sequential checkbox render index → line number in source text */
+function buildCheckboxLineMap(text: string): number[] {
+  const lines = text.split('\n');
+  const map: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*[-*]\s+\[([ xX])\]/.test(lines[i])) {
+      map.push(i);
+    }
+  }
+  return map;
+}
+
 export default function MarkdownEditor({
   value,
   onChange,
@@ -165,30 +177,36 @@ export default function MarkdownEditor({
           title="Нажмите для редактирования"
         >
           {hasContent ? (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                // Intercept list items to make checkboxes clickable
-                input({ type, checked, node }) {
-                  if (type === 'checkbox') {
-                    const lineIndex = (node as any)?.position?.start?.line - 1;
-                    return (
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => onChange(toggleCheckbox(value, lineIndex))}
-                        className="mr-1.5 cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ accentColor: '#3B82F6' }}
-                      />
-                    );
-                  }
-                  return <input type={type} defaultChecked={checked} />;
-                },
-              }}
-            >
-              {value}
-            </ReactMarkdown>
+            (() => {
+              const cbLineMap = buildCheckboxLineMap(value);
+              let cbIndex = 0;
+              return (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    // Intercept list items to make checkboxes clickable
+                    input({ type, checked }) {
+                      if (type === 'checkbox') {
+                        const lineIndex = cbLineMap[cbIndex++];
+                        return (
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => onChange(toggleCheckbox(value, lineIndex))}
+                            className="mr-1.5 cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ accentColor: '#3B82F6' }}
+                          />
+                        );
+                      }
+                      return <input type={type} defaultChecked={checked} />;
+                    },
+                  }}
+                >
+                  {value}
+                </ReactMarkdown>
+              );
+            })()
           ) : (
             <span className="text-[13px] text-t-15 italic">{placeholder}</span>
           )}
