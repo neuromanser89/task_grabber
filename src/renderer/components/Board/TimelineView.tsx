@@ -59,6 +59,13 @@ export default function TimelineView() {
     originalEnd: string;
   } | null>(null);
 
+  // Track if bar was actually dragged (to suppress click → modal)
+  const barDraggedRef = useRef(false);
+
+  // Grab-scroll state
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  const grabScrollRef = useRef<{ startX: number; scrollLeft: number } | null>(null);
+
   // Center on today
   const today = useMemo(() => {
     const d = new Date();
@@ -125,6 +132,7 @@ export default function TimelineView() {
     endD: Date
   ) {
     e.stopPropagation();
+    barDraggedRef.current = false;
     const startX = e.clientX;
     setDragInfo({
       taskId: task.id,
@@ -136,6 +144,7 @@ export default function TimelineView() {
 
     const onMove = (me: MouseEvent) => {
       const dx = me.clientX - startX;
+      if (Math.abs(dx) > 3) barDraggedRef.current = true;
       const daysDelta = Math.round(dx / DAY_W);
       setDragInfo((prev) => prev ? { ...prev, offsetDays: daysDelta } : null);
     };
@@ -147,17 +156,42 @@ export default function TimelineView() {
       const dx = me.clientX - startX;
       const daysDelta = Math.round(dx / DAY_W);
 
-      if (daysDelta !== 0) {
-        const origEnd = task.due_date ? new Date(task.due_date) : null;
-        if (origEnd) {
-          origEnd.setHours(0, 0, 0, 0);
-          const newEnd = addDays(origEnd, daysDelta);
-          await updateTask(task.id, { due_date: isoDate(newEnd) });
-        }
+      if (daysDelta !== 0 && barDraggedRef.current) {
+        // Always set due_date based on drag delta
+        const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
+        baseEnd.setHours(0, 0, 0, 0);
+        const newEnd = addDays(baseEnd, daysDelta);
+        await updateTask(task.id, { due_date: isoDate(newEnd) });
       }
       setDragInfo(null);
     };
 
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
+  // Grab-scroll handlers on the grid background
+  function handleGridMouseDown(e: React.MouseEvent) {
+    // Only if clicking directly on the grid (not on a bar)
+    if ((e.target as HTMLElement).closest('[data-bar]')) return;
+    if (e.button !== 0) return;
+    const el = gridScrollRef.current;
+    if (!el) return;
+    grabScrollRef.current = { startX: e.clientX, scrollLeft: el.scrollLeft };
+    el.style.cursor = 'grabbing';
+    e.preventDefault();
+
+    const onMove = (me: MouseEvent) => {
+      if (!grabScrollRef.current || !el) return;
+      const dx = me.clientX - grabScrollRef.current.startX;
+      el.scrollLeft = grabScrollRef.current.scrollLeft - dx;
+    };
+    const onUp = () => {
+      grabScrollRef.current = null;
+      if (el) el.style.cursor = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
   }
@@ -227,7 +261,12 @@ export default function TimelineView() {
         </div>
 
         {/* Scrollable grid */}
-        <div className="flex-1 overflow-x-auto">
+        <div
+          ref={gridScrollRef}
+          className="flex-1 overflow-x-auto"
+          style={{ cursor: 'grab' }}
+          onMouseDown={handleGridMouseDown}
+        >
           <div style={{ width: DAYS * DAY_W, minWidth: DAYS * DAY_W }}>
             {/* Day headers */}
             <div
@@ -288,9 +327,10 @@ export default function TimelineView() {
                       />
                     )}
 
-                    {/* Task bar */}
+                    {/* Task bar — drag changes due_date, no modal on click */}
                     {visible && (
                       <div
+                        data-bar="1"
                         className={`absolute top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-[11px] font-medium text-white
                           cursor-grab active:cursor-grabbing select-none transition-all duration-150
                           ${isDragging ? 'opacity-80 shadow-drag scale-[1.02]' : 'hover:brightness-110 hover:shadow-md'}`}
@@ -305,8 +345,7 @@ export default function TimelineView() {
                           zIndex: isDragging ? 20 : 5,
                         }}
                         onMouseDown={(e) => handleBarMouseDown(e, task, startD, endD)}
-                        onClick={() => setSelectedTask(task)}
-                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна)'}`}
+                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна — потяни чтобы установить)'}`}
                       >
                         <span className="truncate">{task.title}</span>
                       </div>
