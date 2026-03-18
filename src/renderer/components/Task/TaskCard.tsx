@@ -101,8 +101,9 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
 
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
-    // Find default column of target board
-    const boardCols = columns.filter(c => c.board_id === targetBoardId);
+    // Fetch fresh columns via IPC to ensure we have target board's columns
+    const allColumns = (await window.electronAPI?.getColumns() ?? []) as typeof columns;
+    const boardCols = allColumns.filter(c => c.board_id === targetBoardId);
     const targetCol = boardCols.find(c => c.is_default === 1) ?? boardCols[0];
     if (!targetCol) return;
     const tasksInCol = tasks.filter(t => t.column_id === targetCol.id);
