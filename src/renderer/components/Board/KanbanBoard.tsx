@@ -96,8 +96,13 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     }
   }, [addingColumn]);
 
+  // Custom pointer sensor that ignores right-click
+  const pointerSensorOptions = React.useMemo(() => ({
+    activationConstraint: { distance: 5 },
+  }), []);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, pointerSensorOptions)
   );
 
   const sortedColumns = [...columns]

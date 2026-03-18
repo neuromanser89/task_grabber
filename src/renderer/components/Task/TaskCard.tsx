@@ -105,6 +105,10 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    // Release any pointer capture that dnd-kit may have set
+    try {
+      (e.target as HTMLElement).releasePointerCapture?.((e as unknown as PointerEvent).pointerId);
+    } catch { /* ignore */ }
     setCtxMenu({ x: e.clientX, y: e.clientY });
   }
 

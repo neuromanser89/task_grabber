@@ -60,15 +60,20 @@ function formatDate(dateStr: string): string {
 }
 
 function toggleChecklistItem(text: string, index: number): string {
-  let count = 0;
-  return text.replace(/^(\s*[-*]\s+)\[([ xX])\]/gm, (_match, prefix, state) => {
-    if (count === index) {
-      count++;
-      return `${prefix}[${state.trim() === '' ? 'x' : ' '}]`;
+  const lines = text.split('\n');
+  let checkboxCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(/^(\s*[-*]\s+)\[([ xX])\](.*)$/);
+    if (match) {
+      if (checkboxCount === index) {
+        const newState = match[2].trim() === '' ? 'x' : ' ';
+        lines[i] = `${match[1]}[${newState}]${match[3]}`;
+        break;
+      }
+      checkboxCount++;
     }
-    count++;
-    return _match;
-  });
+  }
+  return lines.join('\n');
 }
 
 function countChecklist(text: string): [number, number] {
