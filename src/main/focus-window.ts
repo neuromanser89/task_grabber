@@ -71,4 +71,10 @@ export function setupFocusIpc(_getMainWindow: () => BrowserWindow | null) {
   ipcMain.on('focus:openTask', (_event, taskId: string) => {
     createFocusWindow(taskId);
   });
+
+  ipcMain.on('focus:close', () => {
+    if (focusWindow && !focusWindow.isDestroyed()) {
+      focusWindow.close();
+    }
+  });
 }
