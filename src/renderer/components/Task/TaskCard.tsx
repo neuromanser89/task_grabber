@@ -94,7 +94,6 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   };
 
   function handleContextMenu(e: React.MouseEvent) {
-    if (boards.length === 0) return;
     e.preventDefault();
     e.stopPropagation();
     setCtxMenu({ x: e.clientX, y: e.clientY });
@@ -280,7 +279,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       </div>
 
       {/* Context menu: Move to board */}
-      {ctxMenu && otherBoards.length > 0 && (
+      {ctxMenu && (
         <div
           ref={ctxRef}
           className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden py-1"
@@ -291,7 +290,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
             <ArrowRightLeft size={10} />
             Перенести на доску
           </div>
-          {otherBoards.map(b => (
+          {otherBoards.length > 0 ? otherBoards.map(b => (
             <button
               key={b.id}
               onClick={() => handleMoveToBoard(b.id)}
@@ -303,7 +302,9 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               />
               {b.name}
             </button>
-          ))}
+          )) : (
+            <div className="px-3 py-2 text-[11px] text-t-30 italic">Нет других досок</div>
+          )}
         </div>
       )}
     </div>
