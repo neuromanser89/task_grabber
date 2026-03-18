@@ -39,8 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Notes
   getNotes: () => ipcRenderer.invoke('notes:getAll'),
-  createNote: (content: string) => ipcRenderer.invoke('notes:create', content),
-  updateNote: (id: string, content: string) => ipcRenderer.invoke('notes:update', id, content),
+  createNote: (content: string, title?: string | null) => ipcRenderer.invoke('notes:create', content, title),
+  updateNote: (id: string, content: string, title?: string | null) => ipcRenderer.invoke('notes:update', id, content, title),
   deleteNote: (id: string) => ipcRenderer.invoke('notes:delete', id),
 
   // MSG parsing — creates task automatically from .msg file

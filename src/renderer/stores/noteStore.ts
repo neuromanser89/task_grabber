@@ -6,8 +6,8 @@ interface NoteState {
   loading: boolean;
 
   fetchNotes: () => Promise<void>;
-  createNote: (content: string) => Promise<Note>;
-  updateNote: (id: string, content: string) => Promise<void>;
+  createNote: (content: string, title?: string | null) => Promise<Note>;
+  updateNote: (id: string, content: string, title?: string | null) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
 }
 
@@ -25,14 +25,14 @@ export const useNoteStore = create<NoteState>((set) => ({
     }
   },
 
-  createNote: async (content) => {
-    const note = await window.electronAPI!.createNote(content);
+  createNote: async (content, title) => {
+    const note = await window.electronAPI!.createNote(content, title);
     set((s) => ({ notes: [note, ...s.notes] }));
     return note;
   },
 
-  updateNote: async (id, content) => {
-    const updated = await window.electronAPI!.updateNote(id, content);
+  updateNote: async (id, content, title) => {
+    const updated = await window.electronAPI!.updateNote(id, content, title);
     set((s) => ({
       notes: s.notes.map((n) => (n.id === id ? updated : n)),
     }));

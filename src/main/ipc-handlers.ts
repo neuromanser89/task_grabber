@@ -230,10 +230,10 @@ export function setupIpcHandlers() {
   // ─── Notes ────────────────────────────────────────────────────────────────
   ipcMain.handle('notes:getAll', () => queries.getAllNotes());
 
-  ipcMain.handle('notes:create', (_e, content: string) => queries.createNote(content));
+  ipcMain.handle('notes:create', (_e, content: string, title?: string | null) => queries.createNote(content, title));
 
-  ipcMain.handle('notes:update', (_e, id: string, content: string) =>
-    queries.updateNote(id, content)
+  ipcMain.handle('notes:update', (_e, id: string, content: string, title?: string | null) =>
+    queries.updateNote(id, content, title)
   );
 
   ipcMain.handle('notes:delete', (_e, id: string) => {

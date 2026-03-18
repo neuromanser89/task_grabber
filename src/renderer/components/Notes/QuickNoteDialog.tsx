@@ -9,12 +9,14 @@ interface Props {
 
 export default function QuickNoteDialog({ isOpen, onClose }: Props) {
   const [text, setText] = useState('');
+  const [title, setTitle] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { createNote } = useNoteStore();
 
   useEffect(() => {
     if (isOpen) {
       setText('');
+      setTitle('');
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
   }, [isOpen]);
@@ -35,7 +37,7 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
       onClose();
       return;
     }
-    await createNote(trimmed);
+    await createNote(trimmed, title.trim() || null);
     onClose();
   };
 
@@ -70,8 +72,15 @@ export default function QuickNoteDialog({ isOpen, onClose }: Props) {
           </button>
         </div>
 
-        {/* Textarea */}
-        <div className="p-4">
+        {/* Title + Textarea */}
+        <div className="p-4 flex flex-col gap-2">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Тема (опционально)"
+            className="w-full bg-transparent text-[13px] font-semibold text-t-85 placeholder-t-20 outline-none border-b border-t-06 pb-1.5"
+          />
           <textarea
             ref={textareaRef}
             value={text}

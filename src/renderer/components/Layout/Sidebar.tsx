@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, Hand, FileText, Folder, Mail, StickyNote, BarChart2 } from 'lucide-react';
+import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
-import { useNoteStore } from '../../stores/noteStore';
+import { useColumnStore } from '../../stores/columnStore';
+import { useBoardStore } from '../../stores/boardStore';
 import type { Tag as TagType } from '@shared/types';
 import { PRIORITY_LABELS, PRIORITY_COLORS } from '@shared/constants';
 import type { Priority, SourceType } from '@shared/types';
-import NotesPanel from '../Notes/NotesPanel';
 import StatsPanel from '../Stats/StatsPanel';
 
 const SOURCES: { value: SourceType; label: string; icon: React.ReactNode }[] = [
@@ -26,13 +26,15 @@ interface Props {
 
 const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, onToggle }, ref) {
   const {
-    searchQuery, filterTags, filterPriority, filterSource,
-    setSearch, toggleTagFilter, togglePriorityFilter, toggleSourceFilter, resetFilters,
-    tasks,
+    searchQuery, filterTags, filterPriority, filterSource, filterBoards,
+    setSearch, toggleTagFilter, togglePriorityFilter, toggleSourceFilter, toggleBoardFilter, resetFilters,
+    tasks, setColumnBoardMap,
   } = useTaskStore();
 
-  const { notes } = useNoteStore();
-  const [activeTab, setActiveTab] = useState<'filters' | 'notes' | 'stats'>('filters');
+  const { columns } = useColumnStore();
+  const { boards } = useBoardStore();
+
+  const [activeTab, setActiveTab] = useState<'filters' | 'stats'>('filters');
   const [allTags, setAllTags] = useState<TagType[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +48,16 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
     window.electronAPI?.getTags().then(setAllTags);
   }, [tasks]); // reload when tasks change (new tags might appear)
 
-  const hasFilters = searchQuery || filterTags.length > 0 || filterPriority.length > 0 || filterSource.length > 0;
+  // Keep columnBoardMap in sync
+  useEffect(() => {
+    const map: Record<string, string> = {};
+    for (const col of columns) {
+      if (col.board_id) map[col.id] = col.board_id;
+    }
+    setColumnBoardMap(map);
+  }, [columns, setColumnBoardMap]);
+
+  const hasFilters = !!(searchQuery || filterTags.length > 0 || filterPriority.length > 0 || filterSource.length > 0 || filterBoards.length > 0);
 
   // Count tasks per tag
   const tagCounts: Record<string, number> = {};
@@ -76,17 +87,6 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
             >
               Фильтры
               {hasFilters && <span className="ml-1 w-1.5 h-1.5 inline-block rounded-full bg-accent-blue align-middle" />}
-            </button>
-            <button
-              onClick={() => setActiveTab('notes')}
-              className={`text-[11px] px-2 py-0.5 rounded transition-colors flex items-center gap-1 ${
-                activeTab === 'notes'
-                  ? 'bg-t-07 text-t-70'
-                  : 'text-t-30 hover:text-t-55'
-              }`}
-            >
-              <StickyNote size={10} />
-              {notes.length > 0 && <span className="text-t-25">{notes.length}</span>}
             </button>
             <button
               onClick={() => setActiveTab('stats')}
@@ -163,6 +163,38 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                 </div>
               )}
 
+              {/* Boards */}
+              {boards.length > 1 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <LayoutDashboard size={10} className="text-t-25" />
+                    <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Доски</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {boards.map((board) => {
+                      const active = filterBoards.includes(board.id);
+                      return (
+                        <button
+                          key={board.id}
+                          onClick={() => toggleBoardFilter(board.id)}
+                          className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
+                            active
+                              ? 'bg-t-08 text-t-85'
+                              : 'text-t-45 hover:text-t-60 hover:bg-t-04'
+                          }`}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: board.color }}
+                          />
+                          <span className="flex-1 truncate">{board.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Priority */}
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
@@ -226,10 +258,6 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                   Сбросить фильтры
                 </button>
               )}
-            </div>
-          ) : activeTab === 'notes' ? (
-            <div className="flex-1 overflow-y-auto px-3 py-3">
-              <NotesPanel />
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto px-3 py-3">
