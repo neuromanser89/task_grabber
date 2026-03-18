@@ -26,10 +26,12 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
   const { updateNote, deleteNote } = useNoteStore();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(note.content);
+  const [titleValue, setTitleValue] = useState(note.title ?? '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const startEdit = () => {
     setValue(note.content);
+    setTitleValue(note.title ?? '');
     setEditing(true);
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -39,14 +41,16 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
 
   const save = async () => {
     const trimmed = value.trim();
-    if (trimmed && trimmed !== note.content) {
-      await updateNote(note.id, trimmed);
+    const titleTrimmed = titleValue.trim() || null;
+    if (trimmed && (trimmed !== note.content || titleTrimmed !== note.title)) {
+      await updateNote(note.id, trimmed, titleTrimmed);
     }
     setEditing(false);
   };
 
   const cancel = () => {
     setValue(note.content);
+    setTitleValue(note.title ?? '');
     setEditing(false);
   };
 
@@ -59,6 +63,13 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
     <div className="group glass-card rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 hover:border-t-12 hover:shadow-lg">
       {editing ? (
         <div className="flex flex-col gap-2 flex-1">
+          <input
+            type="text"
+            value={titleValue}
+            onChange={(e) => setTitleValue(e.target.value)}
+            placeholder="Тема (опционально)"
+            className="w-full bg-transparent text-[13px] font-semibold text-t-85 outline-none border-b border-t-06 pb-1.5 mb-1 placeholder-t-20"
+          />
           <textarea
             ref={textareaRef}
             value={value}
@@ -88,6 +99,9 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
       ) : (
         <>
           <div className="flex-1 min-h-[60px] overflow-hidden">
+            {note.title && (
+              <p className="text-[13px] font-semibold text-t-85 mb-2 leading-snug">{note.title}</p>
+            )}
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -150,6 +164,7 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
 function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
   const { createNote } = useNoteStore();
   const [value, setValue] = useState('');
+  const [titleValue, setTitleValue] = useState('');
   const [active, setActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -161,8 +176,9 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
   const save = async () => {
     const trimmed = value.trim();
     if (trimmed) {
-      await createNote(trimmed);
+      await createNote(trimmed, titleValue.trim() || null);
       setValue('');
+      setTitleValue('');
       onCreated();
     }
     setActive(false);
@@ -170,6 +186,7 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
 
   const cancel = () => {
     setValue('');
+    setTitleValue('');
     setActive(false);
   };
 
@@ -192,6 +209,13 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
 
   return (
     <div className="glass-card rounded-xl p-4 flex flex-col gap-3 border-accent-blue/30">
+      <input
+        type="text"
+        value={titleValue}
+        onChange={(e) => setTitleValue(e.target.value)}
+        placeholder="Тема (опционально)"
+        className="w-full bg-transparent text-[13px] font-semibold text-t-85 outline-none border-b border-t-06 pb-1.5 placeholder-t-20"
+      />
       <textarea
         ref={textareaRef}
         value={value}

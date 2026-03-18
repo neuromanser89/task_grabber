@@ -160,6 +160,12 @@ export function runMigrations(db: Database.Database) {
     db.exec("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0");
   }
 
+  // Migrate: add title column to notes
+  const notesCols = db.prepare("PRAGMA table_info(notes)").all() as { name: string }[];
+  if (!notesCols.find((c) => c.name === 'title')) {
+    db.exec("ALTER TABLE notes ADD COLUMN title TEXT");
+  }
+
   // Migrate: add board_files table
   db.exec(`
     CREATE TABLE IF NOT EXISTS board_files (

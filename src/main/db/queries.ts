@@ -270,18 +270,18 @@ export function getAllNotes(): Note[] {
   return getDb().prepare('SELECT * FROM notes ORDER BY created_at DESC').all() as Note[];
 }
 
-export function createNote(content: string): Note {
+export function createNote(content: string, title?: string | null): Note {
   const id = uuidv4();
   getDb()
-    .prepare('INSERT INTO notes (id, content) VALUES (?, ?)')
-    .run(id, content);
+    .prepare('INSERT INTO notes (id, title, content) VALUES (?, ?, ?)')
+    .run(id, title ?? null, content);
   return getDb().prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 }
 
-export function updateNote(id: string, content: string): Note {
+export function updateNote(id: string, content: string, title?: string | null): Note {
   getDb()
-    .prepare("UPDATE notes SET content = ?, updated_at = datetime('now') WHERE id = ?")
-    .run(content, id);
+    .prepare("UPDATE notes SET content = ?, title = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(content, title ?? null, id);
   return getDb().prepare('SELECT * FROM notes WHERE id = ?').get(id) as Note;
 }
 
