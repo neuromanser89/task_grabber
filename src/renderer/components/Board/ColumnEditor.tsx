@@ -22,6 +22,7 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
 
   const [name, setName] = useState(column.name);
   const [color, setColor] = useState(column.color);
+  const [wipLimit, setWipLimit] = useState<string>(column.wip_limit ? String(column.wip_limit) : '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moveToId, setMoveToId] = useState<string>('');
 
@@ -65,7 +66,8 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
 
   async function handleSave() {
     if (!name.trim()) return;
-    await updateColumn(column.id, { name: name.trim(), color });
+    const wip = wipLimit.trim() === '' ? null : parseInt(wipLimit, 10);
+    await updateColumn(column.id, { name: name.trim(), color, wip_limit: isNaN(wip as number) ? null : wip });
     onClose();
   }
 
@@ -128,6 +130,20 @@ export default function ColumnEditor({ column, anchorRect, onClose }: Props) {
             />
           ))}
         </div>
+      </div>
+
+      {/* WIP limit */}
+      <div>
+        <p className="text-[10px] text-white/30 mb-1.5 uppercase tracking-wider">Лимит задач (WIP)</p>
+        <input
+          type="number"
+          min="0"
+          value={wipLimit}
+          onChange={(e) => setWipLimit(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+          className="w-full bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+          placeholder="0 = без лимита"
+        />
       </div>
 
       {/* Save */}

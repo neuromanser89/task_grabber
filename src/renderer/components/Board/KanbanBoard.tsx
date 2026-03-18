@@ -5,6 +5,7 @@ import Column from './Column';
 import TaskCard from '../Task/TaskCard';
 import TaskDetail from '../Task/TaskDetail';
 import DropZone from '../DropZone/DropZone';
+import { ToastContainer, useToast } from '../common/Toast';
 import { Plus } from 'lucide-react';
 import {
   DndContext,
@@ -38,6 +39,7 @@ interface Props {
 export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const { tasks, fetchAll, moveTask, filteredTasks, deleteTask } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
+  const { toasts, addToast, dismiss } = useToast();
 
   const [activeTask, setActiveTask] = useState<TaskWithAttachments | null>(null);
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
@@ -178,19 +180,29 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
 
     const overColumn = columns.find((c) => c.id === overId);
     if (overColumn && draggedTask.column_id !== overColumn.id) {
-      const tasksInTarget = tasks
-        .filter((t) => t.column_id === overColumn.id)
-        .sort((a, b) => a.sort_order - b.sort_order);
-      const newSortOrder =
-        tasksInTarget.length > 0
-          ? tasksInTarget[tasksInTarget.length - 1].sort_order + 1
-          : 0;
+      const tasksInTarget = tasks.filter((t) => t.column_id === overColumn.id);
+      const wip = overColumn.wip_limit ?? 0;
+      if (wip > 0 && tasksInTarget.length >= wip) {
+        addToast(`Лимит колонки "${overColumn.name}": ${wip} задач`, 'error');
+        return;
+      }
+      const sorted = tasksInTarget.sort((a, b) => a.sort_order - b.sort_order);
+      const newSortOrder = sorted.length > 0 ? sorted[sorted.length - 1].sort_order + 1 : 0;
       moveTask(activeId, overColumn.id, newSortOrder);
       return;
     }
 
     const overTask = tasks.find((t) => t.id === overId);
     if (overTask && draggedTask.column_id !== overTask.column_id) {
+      const targetCol = columns.find((c) => c.id === overTask.column_id);
+      const wip = targetCol?.wip_limit ?? 0;
+      if (wip > 0) {
+        const tasksInTarget = tasks.filter((t) => t.column_id === overTask.column_id);
+        if (tasksInTarget.length >= wip) {
+          addToast(`Лимит колонки "${targetCol?.name}": ${wip} задач`, 'error');
+          return;
+        }
+      }
       moveTask(activeId, overTask.column_id, overTask.sort_order);
     }
   }
@@ -294,19 +306,19 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                     if (e.key === 'Escape') { setAddingColumn(false); setNewColName(''); }
                   }}
                   onBlur={handleAddColumn}
-                  className="bg-white/[0.04] border border-white/[0.06] hover:border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[12px] text-white/90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
+                  className="bg-t-04 border border-t-06 hover:border-t-10 rounded-lg px-2.5 py-1.5 text-[12px] text-t-90 outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 transition-all duration-200"
                   placeholder="Название колонки"
                 />
                 <div className="flex gap-1.5">
                   <button
                     onMouseDown={(e) => { e.preventDefault(); handleAddColumn(); }}
-                    className="flex-1 py-1 rounded-lg text-[11px] text-white/70 bg-white/[0.06] hover:bg-white/[0.10] transition-colors"
+                    className="flex-1 py-1 rounded-lg text-[11px] text-t-70 bg-t-06 hover:bg-t-10 transition-colors"
                   >
                     Добавить
                   </button>
                   <button
                     onMouseDown={(e) => { e.preventDefault(); setAddingColumn(false); setNewColName(''); }}
-                    className="px-2 py-1 rounded-lg text-[11px] text-white/35 hover:text-white/60 transition-colors"
+                    className="px-2 py-1 rounded-lg text-[11px] text-t-35 hover:text-t-60 transition-colors"
                   >
                     ✕
                   </button>
@@ -315,7 +327,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
             ) : (
               <button
                 onClick={() => setAddingColumn(true)}
-                className="flex items-center gap-2 w-[48px] h-[42px] flex-shrink-0 rounded-xl glass border border-white/[0.06] text-white/30 hover:text-white/60 hover:border-white/15 transition-all duration-200 justify-center group"
+                className="flex items-center gap-2 w-[48px] h-[42px] flex-shrink-0 rounded-xl glass border border-t-06 text-t-30 hover:text-t-60 hover:border-t-15 transition-all duration-200 justify-center group"
                 title="Добавить колонку"
               >
                 <Plus size={16} className="group-hover:scale-110 transition-transform" />
@@ -344,13 +356,13 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       {/* Delete confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="glass-heavy rounded-xl p-6 max-w-sm w-full mx-4 border border-white/[0.08] shadow-2xl">
-            <p className="text-white/80 text-sm mb-1">Удалить задачу?</p>
-            <p className="text-white/40 text-xs mb-4 line-clamp-2">{deleteConfirm.title}</p>
+          <div className="glass-heavy rounded-xl p-6 max-w-sm w-full mx-4 border border-t-08 shadow-2xl">
+            <p className="text-t-80 text-sm mb-1">Удалить задачу?</p>
+            <p className="text-t-40 text-xs mb-4 line-clamp-2">{deleteConfirm.title}</p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-1.5 rounded-lg text-xs text-white/50 hover:text-white/70 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                className="px-4 py-1.5 rounded-lg text-xs text-t-50 hover:text-t-70 bg-t-04 hover:bg-t-08 transition-colors"
               >
                 Отмена
               </button>
@@ -364,6 +376,9 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
           </div>
         </div>
       )}
+
+      {/* WIP limit warnings */}
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>
   );
 }

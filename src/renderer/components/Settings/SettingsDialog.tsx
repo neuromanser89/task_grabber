@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, Monitor, Sun, Moon, Keyboard, Power, Check, RotateCcw, Download, Upload, Database, Clock, AlertTriangle } from 'lucide-react';
+import { Settings, Monitor, Sun, Moon, Keyboard, Power, Check, RotateCcw, Download, Upload, Database, Clock, AlertTriangle, Bot } from 'lucide-react';
 import Modal from '../common/Modal';
 
 type Theme = 'dark' | 'light' | 'system';
@@ -8,6 +8,7 @@ interface HotkeyConfig {
   GRAB_TEXT: string;
   GRAB_FILES: string;
   QUICK_NOTE: string;
+  SCREENSHOT: string;
 }
 
 interface SettingsDialogProps {
@@ -21,6 +22,7 @@ const DEFAULT_HOTKEYS: HotkeyConfig = {
   GRAB_TEXT: 'CommandOrControl+Shift+T',
   GRAB_FILES: 'CommandOrControl+Shift+F',
   QUICK_NOTE: 'CommandOrControl+Shift+N',
+  SCREENSHOT: 'CommandOrControl+Shift+S',
 };
 
 function formatHotkey(raw: string): string {
@@ -60,7 +62,7 @@ export default function SettingsDialog({
   onThemeChange,
   currentTheme,
 }: SettingsDialogProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance' | 'data'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance' | 'data' | 'ai' | 'automation'>('general');
   const [autoLaunch, setAutoLaunch] = useState(false);
   const [hotkeys, setHotkeys] = useState<HotkeyConfig>(DEFAULT_HOTKEYS);
   const [recordingKey, setRecordingKey] = useState<keyof HotkeyConfig | null>(null);
@@ -68,6 +70,20 @@ export default function SettingsDialog({
   const [backups, setBackups] = useState<{ name: string; path: string; date: string; size: number }[]>([]);
   const [dataStatus, setDataStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
+
+  // Automation settings
+  const [autoArchive, setAutoArchive] = useState(true);
+  const [autoArchiveDays, setAutoArchiveDays] = useState('7');
+  const [overdueReminders, setOverdueReminders] = useState(true);
+  const [staleHighPriority, setStaleHighPriority] = useState(true);
+
+  // AI settings
+  const [aiProvider, setAiProvider] = useState<'openrouter' | 'ollama'>('openrouter');
+  const [aiModel, setAiModel] = useState('openai/gpt-4o-mini');
+  const [aiApiKey, setAiApiKey] = useState('');
+  const [aiBaseUrl, setAiBaseUrl] = useState('http://localhost:11434');
+  const [aiExcludeConf, setAiExcludeConf] = useState(false);
+  const [aiSaving, setAiSaving] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,6 +99,32 @@ export default function SettingsDialog({
     });
     // Load backups
     window.electronAPI?.listBackups().then((list) => setBackups(list ?? []));
+    // Load automation settings
+    Promise.all([
+      window.electronAPI?.getSetting('automation_autoArchive'),
+      window.electronAPI?.getSetting('automation_autoArchiveDays'),
+      window.electronAPI?.getSetting('automation_overdueReminders'),
+      window.electronAPI?.getSetting('automation_staleHighPriority'),
+    ]).then(([arch, days, overdue, stale]) => {
+      setAutoArchive(arch !== 'false');
+      if (days) setAutoArchiveDays(days as string);
+      setOverdueReminders(overdue !== 'false');
+      setStaleHighPriority(stale !== 'false');
+    });
+    // Load AI settings
+    Promise.all([
+      window.electronAPI?.getSetting('ai_provider'),
+      window.electronAPI?.getSetting('ai_model'),
+      window.electronAPI?.getSetting('ai_api_key'),
+      window.electronAPI?.getSetting('ai_base_url'),
+      window.electronAPI?.getSetting('ai_exclude_confidential'),
+    ]).then(([prov, model, key, url, excl]) => {
+      if (prov) setAiProvider(prov as 'openrouter' | 'ollama');
+      if (model) setAiModel(model as string);
+      if (key) setAiApiKey(key as string);
+      if (url) setAiBaseUrl(url as string);
+      setAiExcludeConf(excl === 'true');
+    });
   }, [isOpen]);
 
   const handleExport = async () => {
@@ -190,10 +232,23 @@ export default function SettingsDialog({
     setHotkeys(DEFAULT_HOTKEYS);
   };
 
+  const handleSaveAi = async () => {
+    setAiSaving(true);
+    await Promise.all([
+      window.electronAPI?.setSetting('ai_provider', aiProvider),
+      window.electronAPI?.setSetting('ai_model', aiModel),
+      window.electronAPI?.setSetting('ai_api_key', aiApiKey),
+      window.electronAPI?.setSetting('ai_base_url', aiBaseUrl),
+      window.electronAPI?.setSetting('ai_exclude_confidential', aiExcludeConf ? 'true' : 'false'),
+    ]);
+    setAiSaving(false);
+  };
+
   const HOTKEY_LABELS: Record<keyof HotkeyConfig, string> = {
     GRAB_TEXT: 'Захватить текст',
     GRAB_FILES: 'Захватить файлы',
     QUICK_NOTE: 'Быстрая заметка',
+    SCREENSHOT: 'Скриншот-задача',
   };
 
   const THEME_OPTIONS: { value: Theme; label: string; icon: React.ReactNode }[] = [
@@ -211,6 +266,8 @@ export default function SettingsDialog({
           { id: 'hotkeys', label: 'Хоткеи', icon: <Keyboard size={13} /> },
           { id: 'appearance', label: 'Вид', icon: <Sun size={13} /> },
           { id: 'data', label: 'Данные', icon: <Database size={13} /> },
+          { id: 'ai', label: 'AI', icon: <Bot size={13} /> },
+          { id: 'automation', label: 'Авто', icon: <Clock size={13} /> },
         ] as const).map((tab) => (
           <button
             key={tab.id}
@@ -414,6 +471,199 @@ export default function SettingsDialog({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* AI tab */}
+      {activeTab === 'ai' && (
+        <div className="space-y-4">
+          {/* Security notice */}
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-500/[0.07] border border-amber-500/[0.2]">
+            <AlertTriangle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <span className="text-xs text-amber-300/80">
+              Данные задач отправляются на внешний сервер при каждом запросе.
+              Конфиденциальные задачи обфусцируются автоматически.
+            </span>
+          </div>
+
+          {/* Provider */}
+          <div>
+            <div className="text-xs font-medium text-white/40 mb-2 uppercase tracking-wider">Провайдер</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(['openrouter', 'ollama'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setAiProvider(p)}
+                  className={`py-2 rounded-lg text-xs font-medium border transition-all duration-150 ${
+                    aiProvider === p
+                      ? 'bg-accent-blue/15 border-accent-blue/40 text-white/90'
+                      : 'bg-white/[0.03] border-white/[0.06] text-white/50 hover:border-white/[0.12]'
+                  }`}
+                >
+                  {p === 'openrouter' ? 'OpenRouter (облако)' : 'Ollama (локально)'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Model */}
+          <div>
+            <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Модель</div>
+            <input
+              value={aiModel}
+              onChange={(e) => setAiModel(e.target.value)}
+              placeholder={aiProvider === 'ollama' ? 'llama3.2' : 'openai/gpt-4o-mini'}
+              className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+            />
+          </div>
+
+          {/* API Key (OpenRouter only) */}
+          {aiProvider === 'openrouter' && (
+            <div>
+              <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">API Ключ</div>
+              <input
+                value={aiApiKey}
+                onChange={(e) => setAiApiKey(e.target.value)}
+                type="password"
+                placeholder="sk-or-..."
+                className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+              />
+            </div>
+          )}
+
+          {/* Base URL (Ollama only) */}
+          {aiProvider === 'ollama' && (
+            <div>
+              <div className="text-xs font-medium text-white/40 mb-1.5 uppercase tracking-wider">Ollama URL</div>
+              <input
+                value={aiBaseUrl}
+                onChange={(e) => setAiBaseUrl(e.target.value)}
+                placeholder="http://localhost:11434"
+                className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/25 outline-none transition-colors"
+              />
+            </div>
+          )}
+
+          {/* Exclude confidential */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <div>
+              <div className="text-sm text-white/80">Полностью исключать конфиденциальные</div>
+              <div className="text-xs text-white/40 mt-0.5">Задачи с пометкой "конфиденциально" не попадут в контекст</div>
+            </div>
+            <button
+              onClick={() => setAiExcludeConf((v) => !v)}
+              className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ml-3 ${
+                aiExcludeConf ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+              }`}
+            >
+              <div
+                className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${
+                  aiExcludeConf ? 'left-[21px]' : 'left-[3px]'
+                }`}
+              />
+            </button>
+          </div>
+
+          <button
+            onClick={handleSaveAi}
+            disabled={aiSaving}
+            className="w-full flex items-center justify-center gap-1.5 h-9 text-xs font-medium bg-gradient-to-r from-accent-blue to-accent-purple text-white rounded-lg transition-all duration-200 hover:opacity-90 disabled:opacity-60"
+          >
+            <Check size={12} />
+            {aiSaving ? 'Сохранение...' : 'Сохранить настройки AI'}
+          </button>
+        </div>
+      )}
+
+      {/* Automation tab */}
+      {activeTab === 'automation' && (
+        <div className="space-y-4">
+          {/* Auto-archive */}
+          <div className="p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06] space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-medium text-white/85">Автоархивация готовых задач</div>
+                <div className="text-xs text-white/40">Задачи в "Готово"/"Забито" старше N дней</div>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !autoArchive;
+                  setAutoArchive(next);
+                  window.electronAPI?.setSetting('automation_autoArchive', String(next));
+                }}
+                className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
+                  autoArchive ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+                }`}
+              >
+                <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${autoArchive ? 'left-[21px]' : 'left-[3px]'}`} />
+              </button>
+            </div>
+            {autoArchive && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/50">Через</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={autoArchiveDays}
+                  onChange={(e) => {
+                    setAutoArchiveDays(e.target.value);
+                    window.electronAPI?.setSetting('automation_autoArchiveDays', e.target.value);
+                  }}
+                  className="w-16 bg-white/[0.04] border border-white/[0.08] focus:border-accent-blue/40 rounded-lg px-2.5 py-1 text-xs text-white/85 outline-none transition-colors"
+                />
+                <span className="text-xs text-white/50">дней</span>
+              </div>
+            )}
+          </div>
+
+          {/* Overdue reminders */}
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <div>
+              <div className="text-sm font-medium text-white/85">Напоминания о просроченных</div>
+              <div className="text-xs text-white/40">Автоматически ставить reminder для overdue задач</div>
+            </div>
+            <button
+              onClick={() => {
+                const next = !overdueReminders;
+                setOverdueReminders(next);
+                window.electronAPI?.setSetting('automation_overdueReminders', String(next));
+              }}
+              className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
+                overdueReminders ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+              }`}
+            >
+              <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${overdueReminders ? 'left-[21px]' : 'left-[3px]'}`} />
+            </button>
+          </div>
+
+          {/* Stale high-priority */}
+          <div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <div>
+              <div className="text-sm font-medium text-white/85">Залежавшиеся важные задачи</div>
+              <div className="text-xs text-white/40">Напоминать если высокий приоритет в "Новые" 3+ дней</div>
+            </div>
+            <button
+              onClick={() => {
+                const next = !staleHighPriority;
+                setStaleHighPriority(next);
+                window.electronAPI?.setSetting('automation_staleHighPriority', String(next));
+              }}
+              className={`relative w-10 h-[22px] rounded-full transition-all duration-200 flex-shrink-0 ${
+                staleHighPriority ? 'bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.3)]' : 'bg-white/[0.12]'
+              }`}
+            >
+              <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200 ${staleHighPriority ? 'left-[21px]' : 'left-[3px]'}`} />
+            </button>
+          </div>
+
+          {/* Manual trigger */}
+          <button
+            onClick={() => window.electronAPI?.runAutomation()}
+            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs text-white/60 hover:text-white/90 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] rounded-lg transition-all duration-150"
+          >
+            <Clock size={12} />
+            Запустить проверку сейчас
+          </button>
         </div>
       )}
     </Modal>
