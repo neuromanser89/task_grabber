@@ -75,17 +75,6 @@ function countChecklist(text: string): [number, number] {
   return [done, matches.length];
 }
 
-/** Maps sequential checkbox render index → line number in source text */
-function buildCheckboxLineMap(text: string): number[] {
-  const lines = text.split('\n');
-  const map: number[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    if (/^\s*[-*]\s+\[([ xX])\]/.test(lines[i])) {
-      map.push(i);
-    }
-  }
-  return map;
-}
 
 // Attachment item with hover preview for images
 function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: string) => void }) {
@@ -386,33 +375,43 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               onClick={() => setDescPreview(false)}
             >
               {description ? (
-                (() => {
-                  const cbLineMap = buildCheckboxLineMap(description);
-                  let cbIndex = 0;
-                  return (
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        li: ({ children, ...props }) => {
-                          const childArr = React.Children.toArray(children);
-                          const first = childArr[0] as React.ReactElement | undefined;
-                          if (first && typeof first === 'object' && (first as React.ReactElement).type === 'input') {
-                            return <li className="flex items-start gap-2 list-none -ml-4" {...props}>{children}</li>;
+                        li: ({ children, node, className: liClass, ...props }) => {
+                          const isTask = typeof liClass === 'string'
+                            ? liClass.includes('task-list-item')
+                            : Array.isArray(liClass) && (liClass as string[]).includes('task-list-item');
+                          if (isTask) {
+                            const lineIndex = (node as any)?.position?.start?.line;
+                            const childArr = React.Children.toArray(children);
+                            const firstChild = childArr[0] as React.ReactElement | undefined;
+                            const checked = firstChild && React.isValidElement(firstChild)
+                              ? (firstChild.props as any)?.checked ?? false
+                              : false;
+                            return (
+                              <li className="flex items-start gap-2 list-none -ml-4" {...props}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => { e.stopPropagation(); if (lineIndex != null) handleCheckboxToggle(lineIndex - 1); }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="mt-0.5 accent-blue-500 cursor-pointer flex-shrink-0"
+                                />
+                                {childArr.slice(1)}
+                              </li>
+                            );
                           }
                           return <li className="ml-1" {...props}>{children}</li>;
                         },
-                        input: ({ checked }) => {
-                          const lineIndex = cbLineMap[cbIndex++];
-                          return (
-                            <input
-                              type="checkbox"
-                              checked={checked ?? false}
-                              onChange={(e) => { e.stopPropagation(); handleCheckboxToggle(lineIndex); }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="mt-0.5 accent-blue-500 cursor-pointer flex-shrink-0"
-                            />
-                          );
-                        },
+                        input: ({ checked }) => (
+                          <input
+                            type="checkbox"
+                            checked={checked ?? false}
+                            readOnly
+                            className="mt-0.5 accent-blue-500 cursor-pointer flex-shrink-0"
+                          />
+                        ),
                         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
                         h1: ({ children }) => <h1 className="text-[15px] font-bold text-t-85 mb-2">{children}</h1>,
                         h2: ({ children }) => <h2 className="text-[13px] font-bold text-t-80 mb-1.5">{children}</h2>,
@@ -437,8 +436,6 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                     >
                       {description}
                     </ReactMarkdown>
-                  );
-                })()
               ) : (
                 <span className="text-t-15">Нет описания. Нажмите чтобы добавить...</span>
               )}
