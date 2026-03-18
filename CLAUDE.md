@@ -119,3 +119,22 @@
 - Основная работа СТРОГО в пределах проекта
 - НЕ читать и НЕ изменять пользовательские файлы за пределами проекта
 - Допустимо: системные/временные пути (temp, .claude, node_modules, npm/node глобальные)
+
+## 13. Специфика проекта Task Grabber
+- **Стек:** Electron 33 + React 18 + TypeScript + Tailwind 3 + SQLite (better-sqlite3 v11) + Zustand
+- **3 окна:** main (канбан), widget (мини-виджет), focus (pomodoro)
+- **Vite** с 3 entry points: index.html, widget.html, focus.html
+- **Порт dev server:** 6173 (НЕ 5173!)
+- **uuid:** `import { randomUUID as uuidv4 } from 'crypto'` — НЕ из пакета uuid (ESM incompatibility)
+- **better-sqlite3:** v11+ (пересобирать через `npx electron-rebuild -f -w better-sqlite3`)
+- **PostCSS:** postcss.config.js обязателен для Tailwind
+- **Темы:** dark/light через CSS переменные + theme-aware классы (text-t-XX, bg-t-XX, border-t-XX)
+- **БД:** app.getPath('userData') — данные отдельно от приложения, миграции через IF NOT EXISTS
+- **Сборка:** `npm run build` (tsc + vite), `npx electron-builder --win --x64` → release/*.exe
+- **AI:** OpenRouter + Ollama (localhost), конфиденциальные задачи обфусцируются
+- **Принципы UX:** БЫСТРОТА, минимум трения, никаких обязательных полей, максимум автоматизации
+
+## 14. Документация проекта
+- `PROJECT_MAP.md` — полная карта проекта (архитектура, компоненты, IPC, БД, дизайн-система). Читать ПЕРЕД работой.
+- `PROJECT_PLAN.md` — план разработки, фазы, статус фич
+- `USER_GUIDE.md` — инструкция пользователя на русском
