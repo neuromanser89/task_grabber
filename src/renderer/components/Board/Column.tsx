@@ -54,13 +54,21 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
     <>
       <div
         ref={(node) => { setSortRef(node); setDropRef(node); }}
-        style={isDragOverlay ? {} : style}
-        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 border border-transparent ${
-          isOverWip ? '!border-red-500/20' : ''
-        } ${isOver ? '!border-accent-blue/40 bg-accent-blue/[0.02]' : ''}`}
+        style={{
+          ...(isDragOverlay ? {} : style),
+          outline: isOver
+            ? '2px solid rgba(59, 130, 246, 0.5)'
+            : isOverWip
+            ? '2px solid rgba(239, 68, 68, 0.3)'
+            : 'none',
+          outlineOffset: '-2px',
+        }}
+        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
+          isOver ? 'bg-accent-blue/[0.02]' : ''
+        }`}
       >
         {/* Header with colored top accent */}
-        <div className={`relative ${isOver ? 'bg-accent-blue/[0.03]' : ''}`} ref={headerRef}>
+        <div className={`relative ${isOver ? 'bg-accent-blue/[0.06]' : ''}`} ref={headerRef}>
           {/* Colored top line — pulses red when WIP exceeded */}
           <div
             className={`absolute top-0 left-4 right-4 h-[2px] rounded-full transition-all duration-300 ${isOverWip ? 'opacity-90 animate-glow-pulse' : 'opacity-60'}`}

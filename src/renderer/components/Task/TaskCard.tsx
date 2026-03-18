@@ -99,6 +99,14 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     setCtxMenu({ x: e.clientX, y: e.clientY });
   }
 
+  // Fallback: mouseup with button=2 shows context menu even if onContextMenu is blocked
+  function handleMouseUp(e: React.MouseEvent) {
+    if (e.button === 2) {
+      e.stopPropagation();
+      setCtxMenu({ x: e.clientX, y: e.clientY });
+    }
+  }
+
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
     // Fetch fresh columns via IPC to ensure we have target board's columns
@@ -138,6 +146,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       {...listeners}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      onMouseUp={handleMouseUp}
       className={`group relative rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all duration-200 ${
         isDragOverlay
           ? 'glass-heavy shadow-drag rotate-[1.5deg] scale-[1.02] border-t-15'
