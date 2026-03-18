@@ -88,7 +88,7 @@ export default function App() {
     });
 
     // Instant capture — create task immediately from clipboard
-    const unsubInstant = window.electronAPI?.onGrabInstant(async (clipText) => {
+    const unsubInstant = window.electronAPI?.onGrabInstant?.(async (clipText) => {
       const cols = useColumnStore.getState().columns;
       const defaultCol = cols.find((c) => c.is_default) ?? cols[0];
       if (!defaultCol) return;
@@ -122,7 +122,7 @@ export default function App() {
     });
 
     // Screenshot capture hotkey
-    const unsubScreenshot = window.electronAPI?.onScreenshotCapture(() => {
+    const unsubScreenshot = window.electronAPI?.onScreenshotCapture?.(() => {
       setInitialText(`Screenshot ${new Date().toLocaleString('ru-RU')}`);
       setInitialFiles([]);
       setShowCreateDialog(true);
@@ -130,7 +130,7 @@ export default function App() {
     });
 
     // Automation toasts
-    const unsubAutomation = window.electronAPI?.onAutomationToast((message) => {
+    const unsubAutomation = window.electronAPI?.onAutomationToast?.((message) => {
       addToast(message, 'info');
     });
 

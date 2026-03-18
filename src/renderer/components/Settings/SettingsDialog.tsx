@@ -658,7 +658,7 @@ export default function SettingsDialog({
 
           {/* Manual trigger */}
           <button
-            onClick={() => window.electronAPI?.runAutomation()}
+            onClick={() => window.electronAPI?.runAutomation?.()}
             className="w-full flex items-center justify-center gap-1.5 h-8 text-xs text-t-60 hover:text-t-90 bg-t-04 hover:bg-t-08 border border-t-06 rounded-lg transition-all duration-150"
           >
             <Clock size={12} />
