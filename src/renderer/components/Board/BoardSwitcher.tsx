@@ -81,6 +81,7 @@ export default function BoardSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        data-board-switcher
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[12px] text-t-60 hover:text-t-85 bg-t-04 hover:bg-t-08 border border-t-06 hover:border-t-10 transition-all duration-150 group"
         title="Сменить доску"

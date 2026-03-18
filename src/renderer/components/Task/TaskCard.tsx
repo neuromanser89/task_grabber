@@ -62,7 +62,9 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
 
   // Context menu state
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const [flyAway, setFlyAway] = useState<{ targetX: number; targetY: number } | null>(null);
   const ctxRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!ctxMenu) return;
@@ -99,7 +101,21 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
 
   async function handleMoveToBoard(targetBoardId: string) {
     setCtxMenu(null);
-    // Fetch fresh columns via IPC to ensure we have target board's columns
+
+    // Fly-away animation: find BoardSwitcher dropdown button as target
+    const switcher = document.querySelector('[data-board-switcher]');
+    if (switcher && cardRef.current) {
+      const switcherRect = switcher.getBoundingClientRect();
+      const cardRect = cardRef.current.getBoundingClientRect();
+      setFlyAway({
+        targetX: switcherRect.left + switcherRect.width / 2 - cardRect.left - cardRect.width / 2,
+        targetY: switcherRect.top + switcherRect.height / 2 - cardRect.top - cardRect.height / 2,
+      });
+    }
+
+    // Wait for animation then move
+    await new Promise((r) => setTimeout(r, 400));
+
     const allColumns = (await window.electronAPI?.getColumns() ?? []) as typeof columns;
     const boardCols = allColumns.filter(c => c.board_id === targetBoardId);
     const targetCol = boardCols.find(c => c.is_default === 1) ?? boardCols[0];
@@ -107,10 +123,11 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     const tasksInCol = tasks.filter(t => t.column_id === targetCol.id);
     const maxOrder = tasksInCol.reduce((m, t) => Math.max(m, t.sort_order), -1) + 1;
     await moveTask(task.id, targetCol.id, maxOrder);
+    setFlyAway(null);
   }
 
   function handleClick(e: React.MouseEvent) {
-    if (isDragging) return;
+    if (isDragging || ctxMenu || flyAway) return;
     if (onBatchSelect && (e.ctrlKey || e.metaKey)) {
       e.stopPropagation();
       onBatchSelect(task, 'toggle');
@@ -128,10 +145,18 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   const taskBoardId = columns.find(c => c.id === task.column_id)?.board_id ?? null;
   const otherBoards = boards.filter(b => b.id !== taskBoardId);
 
+  const flyStyle: React.CSSProperties = flyAway ? {
+    ...style,
+    transform: `translate(${flyAway.targetX}px, ${flyAway.targetY}px) scale(0.05)`,
+    opacity: 0,
+    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
+    pointerEvents: 'none' as const,
+  } : style;
+
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      ref={(node) => { setNodeRef(node); (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node; }}
+      style={flyStyle}
       {...attributes}
       {...listeners}
       onClick={handleClick}
@@ -284,6 +309,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden py-1"
           style={{ top: ctxMenu.y, left: ctxMenu.x, minWidth: 180 }}
           onMouseDown={e => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <div className="px-3 py-1.5 text-[10px] font-semibold text-t-30 uppercase tracking-wider flex items-center gap-1.5">
             <ArrowRightLeft size={10} />
