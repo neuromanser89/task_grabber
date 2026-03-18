@@ -22,17 +22,6 @@ function toggleCheckbox(text: string, lineIndex: number): string {
   return lines.join('\n');
 }
 
-/** Maps sequential checkbox render index → line number in source text */
-function buildCheckboxLineMap(text: string): number[] {
-  const lines = text.split('\n');
-  const map: number[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    if (/^\s*[-*]\s+\[([ xX])\]/.test(lines[i])) {
-      map.push(i);
-    }
-  }
-  return map;
-}
 
 export default function MarkdownEditor({
   value,
@@ -177,24 +166,44 @@ export default function MarkdownEditor({
           title="Нажмите для редактирования"
         >
           {hasContent ? (
-            (() => {
-              const cbLineMap = buildCheckboxLineMap(value);
-              let cbIndex = 0;
-              return (
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    // Intercept list items to make checkboxes clickable
+                    li({ children, node, className: liClass, ...props }) {
+                      const isTask = typeof liClass === 'string'
+                        ? liClass.includes('task-list-item')
+                        : Array.isArray(liClass) && (liClass as string[]).includes('task-list-item');
+                      if (isTask) {
+                        const lineIndex = (node as any)?.position?.start?.line;
+                        const childArr = React.Children.toArray(children);
+                        const firstChild = childArr[0] as React.ReactElement | undefined;
+                        const checked = firstChild && React.isValidElement(firstChild)
+                          ? (firstChild.props as any)?.checked ?? false
+                          : false;
+                        return (
+                          <li className="flex items-start gap-2 list-none -ml-4" {...props}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => { e.stopPropagation(); if (lineIndex != null) onChange(toggleCheckbox(value, lineIndex - 1)); }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mr-1.5 cursor-pointer"
+                              style={{ accentColor: '#3B82F6' }}
+                            />
+                            {childArr.slice(1)}
+                          </li>
+                        );
+                      }
+                      return <li {...props}>{children}</li>;
+                    },
                     input({ type, checked }) {
                       if (type === 'checkbox') {
-                        const lineIndex = cbLineMap[cbIndex++];
                         return (
                           <input
                             type="checkbox"
                             checked={checked}
-                            onChange={() => onChange(toggleCheckbox(value, lineIndex))}
+                            readOnly
                             className="mr-1.5 cursor-pointer"
-                            onClick={(e) => e.stopPropagation()}
                             style={{ accentColor: '#3B82F6' }}
                           />
                         );
@@ -205,8 +214,6 @@ export default function MarkdownEditor({
                 >
                   {value}
                 </ReactMarkdown>
-              );
-            })()
           ) : (
             <span className="text-[13px] text-t-15 italic">{placeholder}</span>
           )}
