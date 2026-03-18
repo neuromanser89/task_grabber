@@ -30,7 +30,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
-      onClick={onClose}
     >
       {/* Overlay with blur */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -41,7 +40,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
       {/* Dialog */}
       <div
         className={`relative z-10 w-full ${SIZE_CLASSES[size]} mx-4 glass-heavy rounded-xl shadow-2xl animate-fade-in-scale`}
-        onClick={e => e.stopPropagation()}
       >
         {/* Top gradient line */}
         <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-accent-blue/30 to-transparent rounded-full" />
