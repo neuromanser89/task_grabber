@@ -6,10 +6,26 @@ import * as queries from './db/queries';
 import { parseMsgFile } from './msg-parser';
 import { copyToStorage, saveBufferToStorage } from './file-handler';
 import { listBackups, restoreBackup, createBackup } from './backup';
-import type { Task, Column } from '../shared/types';
+import type { Task, Column, Board, Rule } from '../shared/types';
 
 export function setupIpcHandlers() {
   initDatabase();
+
+  // ─── Boards ───────────────────────────────────────────────────────────────
+  ipcMain.handle('boards:getAll', () => queries.getAllBoards());
+
+  ipcMain.handle('boards:create', (_e, data: { name: string; color: string; icon?: string | null }) =>
+    queries.createBoard(data)
+  );
+
+  ipcMain.handle('boards:update', (_e, id: string, data: Partial<Board>) =>
+    queries.updateBoard(id, data)
+  );
+
+  ipcMain.handle('boards:delete', (_e, id: string) => {
+    queries.deleteBoard(id);
+    return true;
+  });
 
   // ─── Columns ──────────────────────────────────────────────────────────────
   ipcMain.handle('columns:getAll', () => queries.getAllColumns());
@@ -412,4 +428,132 @@ export function setupIpcHandlers() {
     });
     return true;
   });
+
+  // ─── Smart Rules ────────────────────────────────────────────────────────────
+  ipcMain.handle('rules:getAll', () => queries.getAllRules());
+
+  ipcMain.handle('rules:create', (_e, data: Omit<Rule, 'id' | 'created_at'>) =>
+    queries.createRule(data)
+  );
+
+  ipcMain.handle('rules:update', (_e, id: string, data: Partial<Omit<Rule, 'id' | 'created_at'>>) =>
+    queries.updateRule(id, data)
+  );
+
+  ipcMain.handle('rules:delete', (_e, id: string) => {
+    queries.deleteRule(id);
+    return true;
+  });
+
+  ipcMain.handle('rules:run', () => {
+    const rules = queries.getAllRules().filter((r) => r.enabled === 1);
+    const tasks = queries.getAllTasks();
+    const columns = queries.getAllColumns();
+    const tags = queries.getAllTags();
+    let actionsApplied = 0;
+
+    for (const task of tasks) {
+      const taskTags = queries.getTagsByTaskId(task.id);
+
+      for (const rule of rules) {
+        if (!matchesRule(task, rule, taskTags, columns)) continue;
+
+        switch (rule.action_type) {
+          case 'move_to_column': {
+            if (task.column_id !== rule.action_value) {
+              const colTasks = queries.getTasksByColumnId(rule.action_value);
+              const maxOrder = colTasks.length > 0 ? Math.max(...colTasks.map((t) => t.sort_order)) + 1 : 0;
+              queries.moveTask(task.id, rule.action_value, maxOrder);
+              actionsApplied++;
+            }
+            break;
+          }
+          case 'set_priority': {
+            const newPriority = parseInt(rule.action_value, 10) as Task['priority'];
+            if (task.priority !== newPriority) {
+              queries.updateTask(task.id, { priority: newPriority });
+              actionsApplied++;
+            }
+            break;
+          }
+          case 'add_tag': {
+            const tag = tags.find((t) => t.id === rule.action_value);
+            if (tag && !taskTags.find((t) => t.id === tag.id)) {
+              queries.addTagToTask(task.id, tag.id);
+              actionsApplied++;
+            }
+            break;
+          }
+          case 'archive': {
+            queries.archiveTask(task.id);
+            actionsApplied++;
+            break;
+          }
+          case 'set_color': {
+            if (task.color !== rule.action_value) {
+              queries.updateTask(task.id, { color: rule.action_value });
+              actionsApplied++;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    return { actionsApplied };
+  });
+}
+
+function matchesRule(
+  task: Task,
+  rule: Rule,
+  taskTags: { id: string; name: string; color: string }[],
+  columns: { id: string; name: string }[]
+): boolean {
+  const { trigger_field, trigger_op, trigger_value } = rule;
+
+  switch (trigger_field) {
+    case 'priority': {
+      const v = parseInt(trigger_value, 10);
+      const p = task.priority ?? 0;
+      if (trigger_op === 'equals') return p === v;
+      if (trigger_op === 'not_equals') return p !== v;
+      if (trigger_op === 'greater_than') return p > v;
+      if (trigger_op === 'less_than') return p < v;
+      return false;
+    }
+    case 'column_id': {
+      if (trigger_op === 'equals') return task.column_id === trigger_value;
+      if (trigger_op === 'not_equals') return task.column_id !== trigger_value;
+      return false;
+    }
+    case 'due_date': {
+      if (trigger_op === 'overdue') {
+        if (!task.due_date || task.archived_at) return false;
+        return new Date(task.due_date) < new Date();
+      }
+      return false;
+    }
+    case 'tag': {
+      const hasTag = taskTags.some((t) => t.id === trigger_value);
+      if (trigger_op === 'equals') return hasTag;
+      if (trigger_op === 'not_equals') return !hasTag;
+      return false;
+    }
+    case 'title': {
+      const title = (task.title ?? '').toLowerCase();
+      const val = trigger_value.toLowerCase();
+      if (trigger_op === 'contains') return title.includes(val);
+      if (trigger_op === 'equals') return title === val;
+      if (trigger_op === 'not_equals') return title !== val;
+      return false;
+    }
+    case 'source_type': {
+      if (trigger_op === 'equals') return task.source_type === trigger_value;
+      if (trigger_op === 'not_equals') return task.source_type !== trigger_value;
+      return false;
+    }
+    default:
+      return false;
+  }
 }

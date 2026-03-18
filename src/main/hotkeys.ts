@@ -91,6 +91,12 @@ function registerHotkeys(mainWindow: BrowserWindow, config: HotkeyConfig) {
       mainWindow.webContents.send('screenshot:capture');
     });
   }
+
+  // Global Search Overlay — Ctrl+Space
+  globalShortcut.register('CommandOrControl+Space', () => {
+    showWindow(mainWindow);
+    mainWindow.webContents.send('search:open');
+  });
 }
 
 export function unregisterHotkeys() {

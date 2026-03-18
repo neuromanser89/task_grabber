@@ -3,6 +3,19 @@ import { DEFAULT_COLUMNS } from '../../shared/constants';
 import { randomUUID as uuidv4 } from 'crypto';
 
 export function runMigrations(db: Database.Database) {
+  // Boards table (must exist before columns)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS boards (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      color      TEXT NOT NULL DEFAULT '#3B82F6',
+      icon       TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS columns (
       id          TEXT PRIMARY KEY,
@@ -74,6 +87,22 @@ export function runMigrations(db: Database.Database) {
     );
   `);
 
+  // Smart Rules table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rules (
+      id            TEXT PRIMARY KEY,
+      name          TEXT NOT NULL,
+      enabled       INTEGER DEFAULT 1,
+      trigger_field TEXT NOT NULL,
+      trigger_op    TEXT NOT NULL,
+      trigger_value TEXT NOT NULL,
+      action_type   TEXT NOT NULL,
+      action_value  TEXT NOT NULL,
+      sort_order    INTEGER DEFAULT 0,
+      created_at    TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Migrate: add related_tasks table
   db.exec(`
     CREATE TABLE IF NOT EXISTS related_tasks (
@@ -94,6 +123,12 @@ export function runMigrations(db: Database.Database) {
       notes      TEXT
     );
   `);
+
+  // Migrate: add board_id to columns table
+  const colMetaInit = db.prepare("PRAGMA table_info(columns)").all() as { name: string }[];
+  if (!colMetaInit.find((c) => c.name === 'board_id')) {
+    db.exec("ALTER TABLE columns ADD COLUMN board_id TEXT");
+  }
 
   // Migrate: add wip_limit to columns table
   const colMeta = db.prepare("PRAGMA table_info(columns)").all() as { name: string }[];
@@ -125,18 +160,33 @@ export function runMigrations(db: Database.Database) {
     db.exec("ALTER TABLE tasks ADD COLUMN time_spent INTEGER DEFAULT 0");
   }
 
+  // Seed default board if empty, then seed columns with board_id
+  const boardCount = db.prepare('SELECT COUNT(*) as cnt FROM boards').get() as { cnt: number };
+  let defaultBoardId: string;
+  if (boardCount.cnt === 0) {
+    defaultBoardId = uuidv4();
+    db.prepare('INSERT INTO boards (id, name, color, icon, sort_order) VALUES (?, ?, ?, ?, ?)')
+      .run(defaultBoardId, 'Основная', '#3B82F6', 'layout-dashboard', 0);
+  } else {
+    const firstBoard = db.prepare('SELECT id FROM boards ORDER BY sort_order LIMIT 1').get() as { id: string };
+    defaultBoardId = firstBoard.id;
+  }
+
   // Seed default columns if empty
   const count = db.prepare('SELECT COUNT(*) as cnt FROM columns').get() as { cnt: number };
   if (count.cnt === 0) {
     const insert = db.prepare(
-      'INSERT INTO columns (id, name, color, icon, sort_order, is_default) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO columns (id, name, color, icon, sort_order, is_default, board_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
     const insertMany = db.transaction(() => {
       for (const col of DEFAULT_COLUMNS) {
-        insert.run(uuidv4(), col.name, col.color, col.icon, col.sort_order, col.is_default);
+        insert.run(uuidv4(), col.name, col.color, col.icon, col.sort_order, col.is_default, defaultBoardId);
       }
     });
     insertMany();
+  } else {
+    // Assign board_id to existing columns that have NULL board_id
+    db.prepare("UPDATE columns SET board_id = ? WHERE board_id IS NULL").run(defaultBoardId);
   }
 
   // Seed default settings if empty

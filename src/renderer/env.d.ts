@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats } from '../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats, Rule, Board } from '../shared/types';
 
 interface ElectronAPI {
   getFilePath: (file: File) => string;
@@ -111,6 +111,22 @@ interface ElectronAPI {
     baseUrl: string | null;
     messages: { role: string; content: string }[];
   }) => Promise<{ content: string }>;
+
+  // Smart Rules
+  getRules?: () => Promise<Rule[]>;
+  createRule?: (data: unknown) => Promise<Rule>;
+  updateRule?: (id: string, data: unknown) => Promise<Rule>;
+  deleteRule?: (id: string) => Promise<boolean>;
+  runRules?: () => Promise<{ actionsApplied: number }>;
+
+  // Boards
+  getBoards: () => Promise<Board[]>;
+  createBoard: (data: unknown) => Promise<Board>;
+  updateBoard: (id: string, data: unknown) => Promise<Board>;
+  deleteBoard: (id: string) => Promise<boolean>;
+
+  // Global Search
+  onSearchOpen?: (cb: () => void) => () => void;
 }
 
 declare global {
