@@ -555,7 +555,7 @@ export function importAllData(data: ExportData): void {
 
     // Insert tasks
     const insertTask = db.prepare(
-      'INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date, created_at, updated_at) VALUES (@id, @title, @description, @column_id, @sort_order, @priority, @color, @source_type, @source_info, @due_date, @created_at, @updated_at)'
+      'INSERT INTO tasks (id, title, description, column_id, sort_order, priority, color, source_type, source_info, due_date, reminder_at, archived_at, is_confidential, recurrence_rule, recurrence_next, time_spent, created_at, updated_at) VALUES (@id, @title, @description, @column_id, @sort_order, @priority, @color, @source_type, @source_info, @due_date, @reminder_at, @archived_at, @is_confidential, @recurrence_rule, @recurrence_next, @time_spent, @created_at, @updated_at)'
     );
     for (const task of data.tasks as Record<string, unknown>[]) {
       insertTask.run(task);

@@ -401,7 +401,18 @@ export function setupIpcHandlers() {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
     if (provider === 'ollama') {
-      endpoint = `${baseUrl ?? 'http://localhost:11434'}/v1/chat/completions`;
+      // Validate baseUrl: only allow http(s) to localhost/127.0.0.1
+      let ollamaBase = baseUrl ?? 'http://localhost:11434';
+      try {
+        const parsed = new URL(ollamaBase);
+        if (!['http:', 'https:'].includes(parsed.protocol) ||
+            !['localhost', '127.0.0.1', '::1'].includes(parsed.hostname)) {
+          throw new Error('Invalid Ollama URL');
+        }
+      } catch {
+        ollamaBase = 'http://localhost:11434';
+      }
+      endpoint = `${ollamaBase}/v1/chat/completions`;
     } else {
       // openrouter
       endpoint = 'https://openrouter.ai/api/v1/chat/completions';

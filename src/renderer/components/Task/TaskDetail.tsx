@@ -59,21 +59,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function toggleChecklistItem(text: string, lineIndex: number): string {
-  const lines = text.split('\n');
-  const match = lines[lineIndex]?.match(/^(\s*[-*]\s+)\[([ xX])\](.*)$/);
-  if (match) {
-    const newState = match[2].trim() === '' ? 'x' : ' ';
-    lines[lineIndex] = `${match[1]}[${newState}]${match[3]}`;
-  }
-  return lines.join('\n');
-}
-
-function countChecklist(text: string): [number, number] {
-  const matches = text.match(/^[-*]\s+\[([ xX])\]/gm) ?? [];
-  const done = matches.filter((m) => /\[([xX])\]/.test(m)).length;
-  return [done, matches.length];
-}
+import { toggleChecklistItem, countChecklist } from '../../utils/checklist';
 
 
 // Attachment item with hover preview for images
@@ -379,9 +365,7 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                       remarkPlugins={[remarkGfm]}
                       components={{
                         li: ({ children, node, className: liClass, ...props }) => {
-                          const isTask = typeof liClass === 'string'
-                            ? liClass.includes('task-list-item')
-                            : Array.isArray(liClass) && (liClass as string[]).includes('task-list-item');
+                          const isTask = typeof liClass === 'string' && liClass.includes('task-list-item');
                           if (isTask) {
                             const lineIndex = (node as any)?.position?.start?.line;
                             const childArr = React.Children.toArray(children);

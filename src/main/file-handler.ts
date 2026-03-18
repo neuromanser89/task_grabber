@@ -11,11 +11,17 @@ function getStorageDir(): string {
   return dir;
 }
 
+/** Sanitize filename: strip path separators, dots-only names, null bytes */
+function sanitizeFilename(name: string): string {
+  return path.basename(name).replace(/[\x00-\x1f]/g, '').replace(/^\.+$/, 'file') || 'file';
+}
+
 /** Copies a file to userData/storage and returns the destination path. */
 export function copyToStorage(filePath: string): string {
   const storageDir = getStorageDir();
-  const ext = path.extname(filePath);
-  const base = path.basename(filePath, ext);
+  const safeName = sanitizeFilename(path.basename(filePath));
+  const ext = path.extname(safeName);
+  const base = path.basename(safeName, ext);
   const dest = path.join(storageDir, `${uuidv4()}-${base}${ext}`);
   fs.copyFileSync(filePath, dest);
   return dest;
@@ -24,8 +30,9 @@ export function copyToStorage(filePath: string): string {
 /** Saves a Buffer as a file in userData/storage and returns the destination path. */
 export function saveBufferToStorage(filename: string, content: Buffer): string {
   const storageDir = getStorageDir();
-  const ext = path.extname(filename);
-  const base = path.basename(filename, ext);
+  const safeName = sanitizeFilename(filename);
+  const ext = path.extname(safeName);
+  const base = path.basename(safeName, ext);
   const dest = path.join(storageDir, `${uuidv4()}-${base}${ext}`);
   fs.writeFileSync(dest, content);
   return dest;
