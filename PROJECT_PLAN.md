@@ -56,12 +56,16 @@ task_grabber/
 │   │   ├── stores/
 │   │   │   ├── taskStore.ts     # Zustand store для задач
 │   │   │   ├── columnStore.ts   # Zustand store для колонок
-│   │   │   └── noteStore.ts     # Zustand store для заметок
+│   │   │   ├── noteStore.ts     # Zustand store для заметок
+│   │   │   └── boardStore.ts    # Zustand store для досок (Phase 6)
 │   │   ├── components/
 │   │   │   ├── Board/
 │   │   │   │   ├── KanbanBoard.tsx    # Основная доска
 │   │   │   │   ├── Column.tsx         # Колонка канбана (WIP лимиты)
-│   │   │   │   └── ColumnEditor.tsx   # Редактор колонок
+│   │   │   │   ├── ColumnEditor.tsx   # Редактор колонок
+│   │   │   │   ├── BoardSwitcher.tsx  # Переключатель досок (Phase 6)
+│   │   │   │   ├── TimelineView.tsx   # Timeline/Gantt вид (Phase 6)
+│   │   │   │   └── CalendarView.tsx   # Календарный вид (Phase 6)
 │   │   │   ├── Task/
 │   │   │   │   ├── TaskCard.tsx        # Карточка задачи
 │   │   │   │   ├── TaskDetail.tsx      # Детальный вид задачи (модалка)
@@ -71,6 +75,12 @@ task_grabber/
 │   │   │   │   └── AIAssistantDialog.tsx # AI ассистент (OpenRouter/Ollama)
 │   │   │   ├── CommandPalette/
 │   │   │   │   └── CommandPalette.tsx  # Command Palette (Ctrl+K)
+│   │   │   ├── Search/
+│   │   │   │   └── GlobalSearchOverlay.tsx  # Global Search (Ctrl+Space, Phase 6)
+│   │   │   ├── Automation/
+│   │   │   │   └── SmartRulesDialog.tsx     # Smart Rules Engine (Phase 6)
+│   │   │   ├── Batch/
+│   │   │   │   └── BatchToolbar.tsx         # Массовые действия (Phase 6)
 │   │   │   ├── DropZone/
 │   │   │   │   └── DropZone.tsx        # Зона для drag&drop файлов/писем
 │   │   │   ├── Layout/
@@ -246,6 +256,31 @@ CREATE TABLE focus_sessions (
 );
 ```
 
+### Таблица `boards` (Phase 6)
+```sql
+CREATE TABLE boards (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    color      TEXT,
+    icon       TEXT,
+    sort_order INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### Таблица `automation_rules` (Phase 6)
+```sql
+CREATE TABLE automation_rules (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    trigger    TEXT NOT NULL,   -- JSON: условие ЕСЛИ
+    action     TEXT NOT NULL,   -- JSON: действие ТО
+    is_active  INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+```
+
 ---
 
 ## Дизайн UI
@@ -390,6 +425,7 @@ CREATE TABLE focus_sessions (
 | `Ctrl+Shift+F2` | Показать/скрыть Focus Mode окно |
 | `Ctrl+Shift+S` | Скриншот → вложение к новой задаче |
 | `Ctrl+K` | Command Palette (поиск задач, команды) |
+| `Ctrl+Space` | Global Search Overlay (поиск по задачам/заметкам/доскам) |
 
 ### Логика работы хоткеев
 
@@ -486,23 +522,36 @@ CREATE TABLE focus_sessions (
 
 ## Текущий статус
 
-**Фаза:** Phase 5 завершена
+**Фаза:** Phase 6 завершена
 **Прогресс Phase 1:** 12/12 ✅
 **Прогресс Phase 2:** 11/11 ✅
 **Прогресс Phase 3:** 9/9 ✅
 **Прогресс Phase 4:** 7/7 ✅
 **Прогресс Phase 5:** 6/6 ✅
+**Прогресс Phase 6:** 7/7 ✅
 
 ---
 
-## Phase 6 — Новые фичи ✅ В РАЗРАБОТКЕ
+## Phase 6 — Новые фичи ✅ DONE
 
-- [x] **Поддержка нескольких досок** — таблица `boards`, `board_id` в колонках, BoardSwitcher в TitleBar, фильтрация KanbanBoard по активной доске
+- [x] **Поддержка нескольких досок** — таблица `boards`, `board_id` в колонках, BoardSwitcher в TitleBar, boardStore, фильтрация KanbanBoard по активной доске
+- [x] **Smart Rules Engine** — визуальный конструктор ЕСЛИ → ТО, таблица `automation_rules`, применение правил по триггерам
+- [x] **Массовые действия** — Shift/Ctrl+клик для выбора задач, BatchToolbar с групповыми операциями
+- [x] **Timeline/Gantt view** — горизонтальная шкала времени, drag баров для изменения дат
+- [x] **Календарный вид** — месячная сетка CSS Grid, drag&drop задач по дням
 - [x] **Global Search Overlay** — Ctrl+Space, поиск по задачам/заметкам/доскам с подсветкой, фильтры по типу, навигация клавиатурой
-- [x] **Timeline/Gantt view** — альтернативное отображение задач на временной шкале
-- [x] **Календарный вид** — просмотр задач по датам в формате календаря
-- [ ] **Smart Rules Engine** — визуальный конструктор ЕСЛИ → ТО (в разработке)
-- [ ] **Массовые действия** — выбор нескольких задач и групповые операции (в разработке)
+- [x] **Дизайн-ревью Phase 6** — финальная полировка UI
+
+### UX фиксы Phase 5-6
+- [x] Focus Mode — крестик закрытия, мини-режим с ресайзом окна
+- [x] TaskDetail — компактный вид с collapsible секцией "Ещё..."
+- [x] Markdown toolbar — кнопки Bold, Italic, Checkbox, List, Heading, Code
+- [x] BoardSwitcher — фикс z-index (отображается поверх остальных элементов)
+
+---
+
+## Phase 7 — Идеи (backlog)
+
 - [ ] **Синхронизация** — облачная синхронизация через WebDAV / локальная сеть
 - [ ] **Мобильное companion-приложение** — просмотр задач с телефона
 - [ ] **Интеграции** — Telegram-бот для создания задач, webhook приём
