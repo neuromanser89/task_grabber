@@ -75,6 +75,18 @@ function countChecklist(text: string): [number, number] {
   return [done, matches.length];
 }
 
+/** Maps sequential checkbox render index → line number in source text */
+function buildCheckboxLineMap(text: string): number[] {
+  const lines = text.split('\n');
+  const map: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*[-*]\s+\[([ xX])\]/.test(lines[i])) {
+      map.push(i);
+    }
+  }
+  return map;
+}
+
 // Attachment item with hover preview for images
 function AttachmentItem({ att, onDelete }: { att: Attachment; onDelete: (id: string) => void }) {
   const [showPreview, setShowPreview] = useState(false);
@@ -375,6 +387,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             >
               {description ? (
                 (() => {
+                  const cbLineMap = buildCheckboxLineMap(description);
+                  let cbIndex = 0;
                   return (
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
@@ -387,8 +401,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                           }
                           return <li className="ml-1" {...props}>{children}</li>;
                         },
-                        input: ({ checked, node }) => {
-                          const lineIndex = (node as any)?.position?.start?.line - 1;
+                        input: ({ checked }) => {
+                          const lineIndex = cbLineMap[cbIndex++];
                           return (
                             <input
                               type="checkbox"
