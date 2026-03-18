@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote, Stethoscope } from 'lucide-react';
 import BoardSwitcher from '../Board/BoardSwitcher';
 
 export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes';
@@ -9,6 +9,7 @@ interface TitleBarProps {
   onSettings?: () => void;
   onAI?: () => void;
   onRules?: () => void;
+  onDoctor?: () => void;
   viewMode?: ViewMode;
   onViewChange?: (mode: ViewMode) => void;
 }
@@ -21,7 +22,7 @@ const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[]
   { mode: 'files', label: 'Файлы', Icon: FolderOpen },
 ];
 
-export default function TitleBar({ onNewTask, onSettings, onAI, onRules, viewMode = 'kanban', onViewChange }: TitleBarProps) {
+export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDoctor, viewMode = 'kanban', onViewChange }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -78,6 +79,15 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, viewMod
             title="Умные правила"
           >
             <Zap size={14} />
+          </button>
+        )}
+        {onDoctor && (
+          <button
+            onClick={onDoctor}
+            className="w-7 h-7 flex items-center justify-center hover:bg-t-08 rounded-md transition-all duration-150 text-t-40 hover:text-emerald-400"
+            title="Task Doctor — аудит задач"
+          >
+            <Stethoscope size={14} />
           </button>
         )}
         {onAI && (

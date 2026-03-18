@@ -15,6 +15,7 @@ import CommandPalette from './components/CommandPalette/CommandPalette';
 import AIAssistantDialog from './components/AI/AIAssistantDialog';
 import GlobalSearch from './components/GlobalSearch/GlobalSearch';
 import RulesDialog from './components/Rules/RulesDialog';
+import TaskDoctorDialog from './components/TaskDoctor/TaskDoctorDialog';
 import { ToastContainer, useToast } from './components/common/Toast';
 import { useNoteStore } from './stores/noteStore';
 import { useTaskStore } from './stores/taskStore';
@@ -49,6 +50,7 @@ export default function App() {
   const [showAI, setShowAI] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+  const [showDoctor, setShowDoctor] = useState(false);
   const [initialText, setInitialText] = useState('');
   const [initialFiles, setInitialFiles] = useState<string[]>([]);
   const [reminderTask, setReminderTask] = useState<TaskWithAttachments | null>(null);
@@ -242,6 +244,7 @@ export default function App() {
         onSettings={() => setShowSettings(true)}
         onAI={() => setShowAI(true)}
         onRules={() => setShowRules(true)}
+        onDoctor={() => setShowDoctor(true)}
         viewMode={viewMode}
         onViewChange={setViewMode}
       />
@@ -294,6 +297,10 @@ export default function App() {
       <GlobalSearch
         isOpen={showGlobalSearch}
         onClose={() => setShowGlobalSearch(false)}
+      />
+      <TaskDoctorDialog
+        isOpen={showDoctor}
+        onClose={() => setShowDoctor(false)}
       />
       <TaskDetail
         task={reminderTask}
