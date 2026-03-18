@@ -1,13 +1,23 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Settings, Bot } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare } from 'lucide-react';
+
+export type ViewMode = 'kanban' | 'timeline' | 'calendar';
 
 interface TitleBarProps {
   onNewTask?: () => void;
   onSettings?: () => void;
   onAI?: () => void;
+  viewMode?: ViewMode;
+  onViewChange?: (mode: ViewMode) => void;
 }
 
-export default function TitleBar({ onNewTask, onSettings, onAI }: TitleBarProps) {
+const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[] = [
+  { mode: 'kanban', label: 'Канбан', Icon: LayoutList },
+  { mode: 'timeline', label: 'Timeline', Icon: GanttChartSquare },
+  { mode: 'calendar', label: 'Календарь', Icon: Calendar },
+];
+
+export default function TitleBar({ onNewTask, onSettings, onAI, viewMode = 'kanban', onViewChange }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -25,6 +35,24 @@ export default function TitleBar({ onNewTask, onSettings, onAI }: TitleBarProps)
         <span className="text-sm font-semibold text-t-primary tracking-tight">
           Task Grabber
         </span>
+      </div>
+
+      {/* View switcher — center */}
+      <div className="absolute left-1/2 -translate-x-1/2 no-drag flex items-center gap-0.5 bg-t-06 rounded-lg p-0.5">
+        {VIEW_BUTTONS.map(({ mode, label, Icon }) => (
+          <button
+            key={mode}
+            onClick={() => onViewChange?.(mode)}
+            className={`flex items-center gap-1.5 h-6 px-2.5 text-[11px] font-medium rounded-md transition-all duration-150
+              ${viewMode === mode
+                ? 'bg-accent-blue/80 text-white shadow-sm'
+                : 'text-t-40 hover:text-t-70 hover:bg-t-06'
+              }`}
+          >
+            <Icon size={11} strokeWidth={2} />
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="flex items-center gap-2 no-drag">
