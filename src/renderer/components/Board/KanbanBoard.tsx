@@ -12,7 +12,8 @@ import { Plus } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -96,13 +97,9 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     }
   }, [addingColumn]);
 
-  // Custom pointer sensor that ignores right-click
-  const pointerSensorOptions = React.useMemo(() => ({
-    activationConstraint: { distance: 5 },
-  }), []);
-
   const sensors = useSensors(
-    useSensor(PointerSensor, pointerSensorOptions)
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 5 } })
   );
 
   const sortedColumns = [...columns]

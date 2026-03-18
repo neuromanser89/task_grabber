@@ -55,12 +55,12 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
       <div
         ref={(node) => { setSortRef(node); setDropRef(node); }}
         style={isDragOverlay ? {} : style}
-        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
-          isOverWip ? 'ring-1 ring-red-500/15' : ''
-        } ${isOver ? 'ring-1 ring-accent-blue/30 bg-accent-blue/[0.02]' : ''}`}
+        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 border border-transparent ${
+          isOverWip ? '!border-red-500/20' : ''
+        } ${isOver ? '!border-accent-blue/40 bg-accent-blue/[0.02]' : ''}`}
       >
         {/* Header with colored top accent */}
-        <div className="relative" ref={headerRef}>
+        <div className={`relative ${isOver ? 'bg-accent-blue/[0.03]' : ''}`} ref={headerRef}>
           {/* Colored top line — pulses red when WIP exceeded */}
           <div
             className={`absolute top-0 left-4 right-4 h-[2px] rounded-full transition-all duration-300 ${isOverWip ? 'opacity-90 animate-glow-pulse' : 'opacity-60'}`}

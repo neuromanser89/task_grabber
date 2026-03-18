@@ -80,21 +80,12 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
 
   const {
     attributes,
-    listeners: rawListeners,
+    listeners,
     setNodeRef,
     transform,
     transition,
     isDragging,
   } = useSortable({ id: task.id });
-
-  // Filter out right-click from drag listeners so context menu works
-  const listeners = rawListeners ? {
-    ...rawListeners,
-    onPointerDown: (e: React.PointerEvent) => {
-      if (e.button === 2) return; // right-click — don't start drag
-      rawListeners.onPointerDown?.(e);
-    },
-  } : undefined;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -105,10 +96,6 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    // Release any pointer capture that dnd-kit may have set
-    try {
-      (e.target as HTMLElement).releasePointerCapture?.((e as unknown as PointerEvent).pointerId);
-    } catch { /* ignore */ }
     setCtxMenu({ x: e.clientX, y: e.clientY });
   }
 
