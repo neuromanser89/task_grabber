@@ -12,6 +12,8 @@ export type Priority = 0 | 1 | 2 | 3; // none, low, medium, high
 export type SourceType = 'manual' | 'text' | 'file' | 'email';
 export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'weekdays' | (string & {}); // 'custom:N:day|week|month'
 
+export type ColumnType = 'backlog' | 'in_progress' | 'waiting' | 'done' | 'cancelled' | null;
+
 export interface Column {
   id: string;
   name: string;
@@ -19,6 +21,7 @@ export interface Column {
   icon: string | null;
   sort_order: number;
   is_default: number;
+  column_type?: ColumnType;
   wip_limit?: number | null;
   board_id?: string | null;
   created_at: string;

@@ -24,9 +24,11 @@ export default function Widget() {
       window.electronAPI?.getTasks() ?? [],
       window.electronAPI?.getColumns() ?? [],
     ]);
-    const sortedCols = [...(columns as Column[])].sort((a, b) => a.sort_order - b.sort_order);
-    // Second column (index 1) is typically "В работе", fallback to first non-default
-    const inWork = sortedCols[1] ?? sortedCols.find((c) => !c.is_default) ?? sortedCols[0];
+    const allCols = columns as Column[];
+    // Find "in_progress" column by type, fallback to sort_order 1
+    const inWork = allCols.find((c) => c.column_type === 'in_progress')
+      ?? [...allCols].sort((a, b) => a.sort_order - b.sort_order)[1]
+      ?? allCols[0];
     setInWorkColumnId(inWork?.id ?? null);
     setTasks(allTasks as TaskWithAttachments[]);
   }

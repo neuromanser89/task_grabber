@@ -1,10 +1,18 @@
 export const DEFAULT_COLUMNS = [
-  { name: 'Новые', color: '#3B82F6', icon: 'inbox', sort_order: 0, is_default: 1 },
-  { name: 'В работе', color: '#F59E0B', icon: 'loader', sort_order: 1, is_default: 0 },
-  { name: 'Ждём', color: '#8B5CF6', icon: 'pause-circle', sort_order: 2, is_default: 0 },
-  { name: 'Готово', color: '#10B981', icon: 'check-circle', sort_order: 3, is_default: 0 },
-  { name: 'Забито', color: '#6B7280', icon: 'x-circle', sort_order: 4, is_default: 0 },
+  { name: 'Новые', color: '#3B82F6', icon: 'inbox', sort_order: 0, is_default: 1, column_type: 'backlog' as const },
+  { name: 'В работе', color: '#F59E0B', icon: 'loader', sort_order: 1, is_default: 0, column_type: 'in_progress' as const },
+  { name: 'Ждём', color: '#8B5CF6', icon: 'pause-circle', sort_order: 2, is_default: 0, column_type: 'waiting' as const },
+  { name: 'Готово', color: '#10B981', icon: 'check-circle', sort_order: 3, is_default: 0, column_type: 'done' as const },
+  { name: 'Забито', color: '#6B7280', icon: 'x-circle', sort_order: 4, is_default: 0, column_type: 'cancelled' as const },
 ] as const;
+
+export const COLUMN_TYPE_LABELS: Record<string, string> = {
+  backlog: 'Бэклог / Входящие',
+  in_progress: 'В работе',
+  waiting: 'Ожидание',
+  done: 'Выполнено',
+  cancelled: 'Отменено',
+};
 
 export const HOTKEYS = {
   GRAB_TEXT: 'CommandOrControl+Shift+T',
