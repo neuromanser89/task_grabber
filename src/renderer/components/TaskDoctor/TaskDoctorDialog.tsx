@@ -274,16 +274,20 @@ export default function TaskDoctorDialog({ isOpen, onClose }: Props) {
     setCurrentIndex(0);
     setStats({ fixed: 0, skipped: 0, archived: 0 });
 
-    window.electronAPI?.getTags?.().then((tags: Tag[]) => setAllTags(tags ?? []));
+    // Load tags first, then run diagnostics
+    (async () => {
+      const tags = await window.electronAPI?.getTags?.() ?? [];
+      setAllTags(tags as Tag[]);
 
-    const active = tasks.filter((t) => !t.archived_at);
-    const sick: SickTask[] = [];
-    for (const task of active) {
-      const diags = diagnoseTask(task, columns, allTags, handleFix, handleMove, removeDiagnosis);
-      if (diags.length > 0) sick.push({ task, diagnoses: diags });
-    }
-    setSickTasks(sick);
-    if (sick.length === 0) setDone(true);
+      const active = tasks.filter((t) => !t.archived_at);
+      const sick: SickTask[] = [];
+      for (const task of active) {
+        const diags = diagnoseTask(task, columns, tags as Tag[], handleFix, handleMove, removeDiagnosis);
+        if (diags.length > 0) sick.push({ task, diagnoses: diags });
+      }
+      setSickTasks(sick);
+      if (sick.length === 0) setDone(true);
+    })();
   }, [isOpen]);
 
   useEffect(() => {
