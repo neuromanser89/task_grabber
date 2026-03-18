@@ -14,9 +14,10 @@ interface Props {
   selectedTaskId?: string | null;
   selectedBatchIds?: Set<string>;
   onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
+  isDropTarget?: boolean;
 }
 
-export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect }: Props) {
+export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect, isDropTarget }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -56,7 +57,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
         ref={(node) => { setSortRef(node); setDropRef(node); }}
         style={{
           ...(isDragOverlay ? {} : style),
-          outline: isOver
+          outline: (isOver || isDropTarget)
             ? '2px solid rgba(59, 130, 246, 0.5)'
             : isOverWip
             ? '2px solid rgba(239, 68, 68, 0.3)'
@@ -64,11 +65,11 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
           outlineOffset: '-2px',
         }}
         className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
-          isOver ? 'bg-accent-blue/[0.02]' : ''
+          (isOver || isDropTarget) ? 'bg-accent-blue/[0.02]' : ''
         }`}
       >
         {/* Header with colored top accent */}
-        <div className={`relative ${isOver ? 'bg-accent-blue/[0.06]' : ''}`} ref={headerRef}>
+        <div className={`relative ${(isOver || isDropTarget) ? 'bg-accent-blue/[0.06]' : ''}`} ref={headerRef}>
           {/* Colored top line — pulses red when WIP exceeded */}
           <div
             className={`absolute top-0 left-4 right-4 h-[2px] rounded-full transition-all duration-300 ${isOverWip ? 'opacity-90 animate-glow-pulse' : 'opacity-60'}`}
@@ -110,7 +111,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           <div
             className={`flex-1 overflow-y-auto p-2 flex flex-col gap-1.5 min-h-[80px] transition-all duration-300 ${
-              isOver ? 'bg-accent-blue/[0.04] column-drop-active' : ''
+              (isOver || isDropTarget) ? 'bg-accent-blue/[0.04] column-drop-active' : ''
             }`}
           >
             {sorted.map((task, index) => (

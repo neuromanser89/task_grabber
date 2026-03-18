@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
@@ -288,8 +289,8 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
         </div>
       </div>
 
-      {/* Context menu: Move to board */}
-      {ctxMenu && (
+      {/* Context menu: rendered via portal to escape transform containing block + overflow-hidden */}
+      {ctxMenu && createPortal(
         <div
           ref={ctxRef}
           className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden py-1"
@@ -315,7 +316,8 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
           )) : (
             <div className="px-3 py-2 text-[11px] text-t-30 italic">Нет других досок</div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
