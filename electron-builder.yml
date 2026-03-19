@@ -29,6 +29,31 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: assets/icons/icon.png
+  category: public.app-category.productivity
+  hardenedRuntime: false
+  gatekeeperAssess: false
+
+dmg:
+  writeUpdateInfo: false
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: rpm
+      arch:
+        - x64
+  icon: assets/icons/icon.png
+  category: Office
+
 extraResources:
   - from: assets/
     to: assets/
