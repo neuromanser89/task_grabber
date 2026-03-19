@@ -57,7 +57,8 @@ export default function App() {
   const [reminderTask, setReminderTask] = useState<TaskWithAttachments | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
-  const [highContrast, setHighContrast] = useState(false);
+  const [textBrighter, setTextBrighter] = useState(false);
+  const [textBolder, setTextBolder] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
   const { fetchBoards, setActiveBoard } = useBoardStore();
@@ -71,11 +72,11 @@ export default function App() {
       setTheme(saved);
       applyTheme(saved);
     });
-    window.electronAPI?.getSetting('high_contrast').then((v) => {
-      if (v === 'true') {
-        setHighContrast(true);
-        document.documentElement.classList.add('high-contrast');
-      }
+    window.electronAPI?.getSetting('text_brighter').then((v) => {
+      if (v === 'true') { setTextBrighter(true); document.documentElement.classList.add('text-brighter'); }
+    });
+    window.electronAPI?.getSetting('text_bolder').then((v) => {
+      if (v === 'true') { setTextBolder(true); document.documentElement.classList.add('text-bolder'); }
     });
   }, []);
 
@@ -233,11 +234,20 @@ export default function App() {
     }
   }, [sidebarCollapsed]);
 
-  const handleContrastToggle = useCallback(() => {
-    setHighContrast((prev) => {
+  const handleBrighterToggle = useCallback(() => {
+    setTextBrighter((prev) => {
       const next = !prev;
-      document.documentElement.classList.toggle('high-contrast', next);
-      window.electronAPI?.setSetting('high_contrast', String(next));
+      document.documentElement.classList.toggle('text-brighter', next);
+      window.electronAPI?.setSetting('text_brighter', String(next));
+      return next;
+    });
+  }, []);
+
+  const handleBolderToggle = useCallback(() => {
+    setTextBolder((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle('text-bolder', next);
+      window.electronAPI?.setSetting('text_bolder', String(next));
       return next;
     });
   }, []);
@@ -290,8 +300,10 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         onThemeChange={handleThemeChange}
         currentTheme={theme}
-        highContrast={highContrast}
-        onContrastToggle={handleContrastToggle}
+        textBrighter={textBrighter}
+        onBrighterToggle={handleBrighterToggle}
+        textBolder={textBolder}
+        onBolderToggle={handleBolderToggle}
       />
       <CommandPalette
         isOpen={showPalette}

@@ -178,48 +178,54 @@ html, body, #root {
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
 }
 
-/* High contrast mode — dark theme overrides */
-.high-contrast {
+/* Brighter text mode — dark theme */
+.text-brighter {
   --text-primary: rgba(255, 255, 255, 1);
   --text-secondary: rgba(255, 255, 255, 0.85);
   --text-muted: rgba(255, 255, 255, 0.55);
-  -webkit-text-stroke: 0.2px;
 }
-.high-contrast .text-t-20 { color: rgba(255,255,255,0.40); }
-.high-contrast .text-t-25 { color: rgba(255,255,255,0.50); }
-.high-contrast .text-t-30 { color: rgba(255,255,255,0.55); }
-.high-contrast .text-t-35 { color: rgba(255,255,255,0.60); }
-.high-contrast .text-t-40 { color: rgba(255,255,255,0.65); }
-.high-contrast .text-t-45 { color: rgba(255,255,255,0.70); }
-.high-contrast .text-t-50 { color: rgba(255,255,255,0.75); }
-.high-contrast .text-t-55 { color: rgba(255,255,255,0.80); }
-.high-contrast .text-t-60 { color: rgba(255,255,255,0.85); }
-.high-contrast .text-t-70 { color: rgba(255,255,255,0.90); }
-.high-contrast .text-t-75 { color: rgba(255,255,255,0.93); }
-.high-contrast .text-t-80 { color: rgba(255,255,255,0.95); }
-.high-contrast .text-t-85 { color: rgba(255,255,255,0.97); }
-.high-contrast .text-t-90 { color: rgba(255,255,255,1); }
+.text-brighter .text-t-20 { color: rgba(255,255,255,0.40); }
+.text-brighter .text-t-25 { color: rgba(255,255,255,0.50); }
+.text-brighter .text-t-30 { color: rgba(255,255,255,0.55); }
+.text-brighter .text-t-35 { color: rgba(255,255,255,0.60); }
+.text-brighter .text-t-40 { color: rgba(255,255,255,0.65); }
+.text-brighter .text-t-45 { color: rgba(255,255,255,0.70); }
+.text-brighter .text-t-50 { color: rgba(255,255,255,0.75); }
+.text-brighter .text-t-55 { color: rgba(255,255,255,0.80); }
+.text-brighter .text-t-60 { color: rgba(255,255,255,0.85); }
+.text-brighter .text-t-70 { color: rgba(255,255,255,0.90); }
+.text-brighter .text-t-75 { color: rgba(255,255,255,0.93); }
+.text-brighter .text-t-80 { color: rgba(255,255,255,0.95); }
+.text-brighter .text-t-85 { color: rgba(255,255,255,0.97); }
+.text-brighter .text-t-90 { color: rgba(255,255,255,1); }
 
-/* High contrast mode — light theme overrides */
-.light.high-contrast {
+/* Brighter text mode — light theme */
+.light.text-brighter {
   --text-primary: rgba(0, 0, 0, 1);
   --text-secondary: rgba(0, 0, 0, 0.80);
   --text-muted: rgba(0, 0, 0, 0.55);
 }
-.light.high-contrast .text-t-20 { color: rgba(0,0,0,0.40); }
-.light.high-contrast .text-t-25 { color: rgba(0,0,0,0.50); }
-.light.high-contrast .text-t-30 { color: rgba(0,0,0,0.55); }
-.light.high-contrast .text-t-35 { color: rgba(0,0,0,0.60); }
-.light.high-contrast .text-t-40 { color: rgba(0,0,0,0.65); }
-.light.high-contrast .text-t-45 { color: rgba(0,0,0,0.70); }
-.light.high-contrast .text-t-50 { color: rgba(0,0,0,0.78); }
-.light.high-contrast .text-t-55 { color: rgba(0,0,0,0.82); }
-.light.high-contrast .text-t-60 { color: rgba(0,0,0,0.85); }
-.light.high-contrast .text-t-70 { color: rgba(0,0,0,0.90); }
-.light.high-contrast .text-t-75 { color: rgba(0,0,0,0.93); }
-.light.high-contrast .text-t-80 { color: rgba(0,0,0,0.95); }
-.light.high-contrast .text-t-85 { color: rgba(0,0,0,0.97); }
-.light.high-contrast .text-t-90 { color: rgba(0,0,0,1); }
+.light.text-brighter .text-t-20 { color: rgba(0,0,0,0.40); }
+.light.text-brighter .text-t-25 { color: rgba(0,0,0,0.50); }
+.light.text-brighter .text-t-30 { color: rgba(0,0,0,0.55); }
+.light.text-brighter .text-t-35 { color: rgba(0,0,0,0.60); }
+.light.text-brighter .text-t-40 { color: rgba(0,0,0,0.65); }
+.light.text-brighter .text-t-45 { color: rgba(0,0,0,0.70); }
+.light.text-brighter .text-t-50 { color: rgba(0,0,0,0.78); }
+.light.text-brighter .text-t-55 { color: rgba(0,0,0,0.82); }
+.light.text-brighter .text-t-60 { color: rgba(0,0,0,0.85); }
+.light.text-brighter .text-t-70 { color: rgba(0,0,0,0.90); }
+.light.text-brighter .text-t-75 { color: rgba(0,0,0,0.93); }
+.light.text-brighter .text-t-80 { color: rgba(0,0,0,0.95); }
+.light.text-brighter .text-t-85 { color: rgba(0,0,0,0.97); }
+.light.text-brighter .text-t-90 { color: rgba(0,0,0,1); }
+
+/* Bolder text mode */
+.text-bolder { -webkit-text-stroke: 0.3px; font-weight: 500; }
+.text-bolder * { font-weight: inherit; }
+.text-bolder [class*="font-medium"] { font-weight: 600; }
+.text-bolder [class*="font-semibold"] { font-weight: 700; }
+.text-bolder [class*="font-bold"] { font-weight: 800; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

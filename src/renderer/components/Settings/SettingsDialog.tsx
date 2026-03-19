@@ -16,8 +16,10 @@ interface SettingsDialogProps {
   onClose: () => void;
   onThemeChange: (theme: Theme) => void;
   currentTheme: Theme;
-  highContrast?: boolean;
-  onContrastToggle?: () => void;
+  textBrighter?: boolean;
+  onBrighterToggle?: () => void;
+  textBolder?: boolean;
+  onBolderToggle?: () => void;
 }
 
 const DEFAULT_HOTKEYS: HotkeyConfig = {
@@ -63,8 +65,10 @@ export default function SettingsDialog({
   onClose,
   onThemeChange,
   currentTheme,
-  highContrast,
-  onContrastToggle,
+  textBrighter,
+  onBrighterToggle,
+  textBolder,
+  onBolderToggle,
 }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance' | 'data' | 'ai' | 'automation'>('general');
   const [autoLaunch, setAutoLaunch] = useState(false);
@@ -401,27 +405,47 @@ export default function SettingsDialog({
             </div>
           </div>
 
-          {/* High contrast toggle */}
+          {/* Accessibility toggles */}
           <div>
             <div className="text-xs font-medium text-t-40 mb-3 uppercase tracking-wider">Доступность</div>
-            <button
-              onClick={onContrastToggle}
-              className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg border transition-all duration-200 ${
-                highContrast
-                  ? 'bg-accent-blue/10 border-accent-blue/40'
-                  : 'bg-t-03 border-t-06 hover:border-t-12'
-              }`}
-            >
-              <div>
-                <div className="text-[13px] font-medium text-t-80">Повышенная контрастность</div>
-                <div className="text-[11px] text-t-35 mt-0.5">Ярче текст, жирнее шрифт</div>
-              </div>
-              <div className={`w-9 h-5 rounded-full transition-colors duration-200 flex items-center ${
-                highContrast ? 'bg-accent-blue justify-end' : 'bg-t-12 justify-start'
-              }`}>
-                <div className="w-4 h-4 rounded-full bg-white shadow-sm mx-0.5" />
-              </div>
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={onBrighterToggle}
+                className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg border transition-all duration-200 ${
+                  textBrighter
+                    ? 'bg-accent-blue/10 border-accent-blue/40'
+                    : 'bg-t-03 border-t-06 hover:border-t-12'
+                }`}
+              >
+                <div>
+                  <div className="text-[13px] font-medium text-t-80">Ярче</div>
+                  <div className="text-[11px] text-t-35 mt-0.5">Повышенная яркость текста</div>
+                </div>
+                <div className={`w-9 h-5 rounded-full transition-colors duration-200 flex items-center ${
+                  textBrighter ? 'bg-accent-blue justify-end' : 'bg-t-12 justify-start'
+                }`}>
+                  <div className="w-4 h-4 rounded-full bg-white shadow-sm mx-0.5" />
+                </div>
+              </button>
+              <button
+                onClick={onBolderToggle}
+                className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg border transition-all duration-200 ${
+                  textBolder
+                    ? 'bg-accent-blue/10 border-accent-blue/40'
+                    : 'bg-t-03 border-t-06 hover:border-t-12'
+                }`}
+              >
+                <div>
+                  <div className="text-[13px] font-medium text-t-80">Жирнее</div>
+                  <div className="text-[11px] text-t-35 mt-0.5">Утолщённый шрифт</div>
+                </div>
+                <div className={`w-9 h-5 rounded-full transition-colors duration-200 flex items-center ${
+                  textBolder ? 'bg-accent-blue justify-end' : 'bg-t-12 justify-start'
+                }`}>
+                  <div className="w-4 h-4 rounded-full bg-white shadow-sm mx-0.5" />
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}
