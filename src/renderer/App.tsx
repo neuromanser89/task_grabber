@@ -57,18 +57,25 @@ export default function App() {
   const [reminderTask, setReminderTask] = useState<TaskWithAttachments | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
+  const [highContrast, setHighContrast] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
   const { fetchBoards, setActiveBoard } = useBoardStore();
   const sidebarRef = useRef<SidebarHandle>(null);
   const { toasts, addToast, dismiss } = useToast();
 
-  // Load theme from settings on mount
+  // Load theme + contrast from settings on mount
   useEffect(() => {
     window.electronAPI?.getSetting('theme').then((t) => {
       const saved = (t as Theme) || 'dark';
       setTheme(saved);
       applyTheme(saved);
+    });
+    window.electronAPI?.getSetting('high_contrast').then((v) => {
+      if (v === 'true') {
+        setHighContrast(true);
+        document.documentElement.classList.add('high-contrast');
+      }
     });
   }, []);
 
@@ -226,6 +233,15 @@ export default function App() {
     }
   }, [sidebarCollapsed]);
 
+  const handleContrastToggle = useCallback(() => {
+    setHighContrast((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle('high-contrast', next);
+      window.electronAPI?.setSetting('high_contrast', String(next));
+      return next;
+    });
+  }, []);
+
   const handleThemeChange = useCallback((newTheme: Theme) => {
     setTheme(newTheme);
     applyTheme(newTheme);
@@ -274,6 +290,8 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         onThemeChange={handleThemeChange}
         currentTheme={theme}
+        highContrast={highContrast}
+        onContrastToggle={handleContrastToggle}
       />
       <CommandPalette
         isOpen={showPalette}

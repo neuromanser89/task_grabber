@@ -16,6 +16,8 @@ interface SettingsDialogProps {
   onClose: () => void;
   onThemeChange: (theme: Theme) => void;
   currentTheme: Theme;
+  highContrast?: boolean;
+  onContrastToggle?: () => void;
 }
 
 const DEFAULT_HOTKEYS: HotkeyConfig = {
@@ -61,6 +63,8 @@ export default function SettingsDialog({
   onClose,
   onThemeChange,
   currentTheme,
+  highContrast,
+  onContrastToggle,
 }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'hotkeys' | 'appearance' | 'data' | 'ai' | 'automation'>('general');
   const [autoLaunch, setAutoLaunch] = useState(false);
@@ -395,6 +399,29 @@ export default function SettingsDialog({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* High contrast toggle */}
+          <div>
+            <div className="text-xs font-medium text-t-40 mb-3 uppercase tracking-wider">Доступность</div>
+            <button
+              onClick={onContrastToggle}
+              className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg border transition-all duration-200 ${
+                highContrast
+                  ? 'bg-accent-blue/10 border-accent-blue/40'
+                  : 'bg-t-03 border-t-06 hover:border-t-12'
+              }`}
+            >
+              <div>
+                <div className="text-[13px] font-medium text-t-80">Повышенная контрастность</div>
+                <div className="text-[11px] text-t-35 mt-0.5">Ярче текст, жирнее шрифт</div>
+              </div>
+              <div className={`w-9 h-5 rounded-full transition-colors duration-200 flex items-center ${
+                highContrast ? 'bg-accent-blue justify-end' : 'bg-t-12 justify-start'
+              }`}>
+                <div className="w-4 h-4 rounded-full bg-white shadow-sm mx-0.5" />
+              </div>
+            </button>
           </div>
         </div>
       )}
