@@ -188,6 +188,8 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
     if (type === 'tag') {
       await window.electronAPI?.updateTag(id, { color });
       setAllTags(prev => prev.map(t => t.id === id ? { ...t, color } : t));
+      // Обновить теги на карточках задач
+      useTaskStore.getState().fetchAll();
     } else if (type === 'board') {
       await window.electronAPI?.updateBoard(id, { color });
       useBoardStore.getState().fetchBoards();
