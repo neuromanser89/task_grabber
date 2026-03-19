@@ -513,6 +513,26 @@ export function setupIpcHandlers() {
     return { actionsApplied };
   });
 
+  // ─── Task Updates ───────────────────────────────────────────────────────────
+  ipcMain.handle('taskUpdates:get', (_e, taskId: string) => queries.getTaskUpdates(taskId));
+
+  ipcMain.handle('taskUpdates:create', (_e, taskId: string, content: string, createdAt?: string) =>
+    queries.createTaskUpdate(taskId, content, createdAt)
+  );
+
+  ipcMain.handle('taskUpdates:update', (_e, id: string, data: { content?: string; created_at?: string }) =>
+    queries.updateTaskUpdate(id, data)
+  );
+
+  ipcMain.handle('taskUpdates:delete', (_e, id: string) => {
+    queries.deleteTaskUpdate(id);
+    return true;
+  });
+
+  ipcMain.handle('taskUpdates:counts', (_e, taskIds: string[]) =>
+    queries.countTaskUpdates(taskIds)
+  );
+
   // ─── Projects ────────────────────────────────────────────────────────────────
   ipcMain.handle('projects:getAll', () => queries.getAllProjects());
 

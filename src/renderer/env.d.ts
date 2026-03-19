@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats, Rule, Board, BoardFile, Project } from '../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemplate, TaskStats, Rule, Board, BoardFile, Project, TaskUpdate } from '../shared/types';
 
 interface ElectronAPI {
   getFilePath: (file: File) => string;
@@ -118,6 +118,13 @@ interface ElectronAPI {
   updateRule?: (id: string, data: unknown) => Promise<Rule>;
   deleteRule?: (id: string) => Promise<boolean>;
   runRules?: () => Promise<{ actionsApplied: number }>;
+
+  // Task Updates
+  getTaskUpdates?: (taskId: string) => Promise<TaskUpdate[]>;
+  createTaskUpdate?: (taskId: string, content: string, createdAt?: string) => Promise<TaskUpdate>;
+  updateTaskUpdate?: (id: string, data: { content?: string; created_at?: string }) => Promise<TaskUpdate>;
+  deleteTaskUpdate?: (id: string) => Promise<boolean>;
+  getTaskUpdateCounts?: (taskIds: string[]) => Promise<Record<string, number>>;
 
   // Boards
   getBoards: () => Promise<Board[]>;

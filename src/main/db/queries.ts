@@ -1,6 +1,6 @@
 import { getDb } from './database';
 import { randomUUID as uuidv4 } from 'crypto';
-import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule, BoardFile, Project } from '../../shared/types';
+import type { Task, Column, Attachment, Note, Tag, TaskTemplate, TaskStats, Board, Rule, BoardFile, Project, TaskUpdate } from '../../shared/types';
 
 const SAFE_FIELD_RE = /^[a-z_]+$/;
 
@@ -692,6 +692,48 @@ export function updateProject(id: string, data: Partial<Project>): Project {
 
 export function deleteProject(id: string): void {
   getDb().prepare('DELETE FROM projects WHERE id = ?').run(id);
+}
+
+// ─── Task Updates ────────────────────────────────────────────────────────────
+
+export function getTaskUpdates(taskId: string): TaskUpdate[] {
+  return getDb()
+    .prepare('SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at ASC')
+    .all(taskId) as TaskUpdate[];
+}
+
+export function createTaskUpdate(taskId: string, content: string, createdAt?: string): TaskUpdate {
+  const id = uuidv4();
+  const at = createdAt || new Date().toISOString();
+  getDb()
+    .prepare('INSERT INTO task_updates (id, task_id, content, created_at) VALUES (?, ?, ?, ?)')
+    .run(id, taskId, content, at);
+  return getDb().prepare('SELECT * FROM task_updates WHERE id = ?').get(id) as TaskUpdate;
+}
+
+export function updateTaskUpdate(id: string, data: { content?: string; created_at?: string }): TaskUpdate {
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  if (data.content !== undefined) { sets.push('content = ?'); vals.push(data.content); }
+  if (data.created_at !== undefined) { sets.push('created_at = ?'); vals.push(data.created_at); }
+  if (sets.length > 0) {
+    getDb().prepare(`UPDATE task_updates SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
+  }
+  return getDb().prepare('SELECT * FROM task_updates WHERE id = ?').get(id) as TaskUpdate;
+}
+
+export function deleteTaskUpdate(id: string): void {
+  getDb().prepare('DELETE FROM task_updates WHERE id = ?').run(id);
+}
+
+export function countTaskUpdates(taskIds: string[]): Record<string, number> {
+  if (taskIds.length === 0) return {};
+  const rows = getDb()
+    .prepare(`SELECT task_id, COUNT(*) as cnt FROM task_updates WHERE task_id IN (${taskIds.map(() => '?').join(',')}) GROUP BY task_id`)
+    .all(...taskIds) as { task_id: string; cnt: number }[];
+  const map: Record<string, number> = {};
+  for (const r of rows) map[r.task_id] = r.cnt;
+  return map;
 }
 
 // ─── Rules ───────────────────────────────────────────────────────────────────

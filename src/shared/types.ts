@@ -84,6 +84,13 @@ export interface TaskWithAttachments extends Task {
   tags: Tag[];
 }
 
+export interface TaskUpdate {
+  id: string;
+  task_id: string;
+  content: string;
+  created_at: string;
+}
+
 export interface TaskTemplate {
   id: string;
   title: string;
