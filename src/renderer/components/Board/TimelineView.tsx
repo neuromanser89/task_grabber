@@ -14,7 +14,9 @@ const PRIORITY_COLORS: Record<number, string> = {
 };
 
 const ROW_H = 36;
-const HEADER_H = 40;
+const HEADER_H = 48;
+
+const WEEKDAY_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 const DAY_W = 40;
 const LABEL_W = 200;
 
@@ -59,6 +61,7 @@ export default function TimelineView() {
     originalStart: string;
     originalEnd: string;
   } | null>(null);
+  const [dragTooltip, setDragTooltip] = useState<{ x: number; y: number } | null>(null);
 
   // Track if bar was actually dragged (to suppress click → modal)
   const barDraggedRef = useRef(false);
@@ -154,6 +157,7 @@ export default function TimelineView() {
       if (Math.abs(dx) > 3) barDraggedRef.current = true;
       const daysDelta = Math.round(dx / DAY_W);
       setDragInfo((prev) => prev ? { ...prev, offsetDays: daysDelta } : null);
+      setDragTooltip({ x: me.clientX, y: me.clientY });
     };
 
     const onUp = async (me: MouseEvent) => {
@@ -164,13 +168,13 @@ export default function TimelineView() {
       const daysDelta = Math.round(dx / DAY_W);
 
       if (daysDelta !== 0 && barDraggedRef.current) {
-        // Always set due_date based on drag delta
         const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
         baseEnd.setHours(0, 0, 0, 0);
         const newEnd = addDays(baseEnd, daysDelta);
         await updateTask(task.id, { due_date: isoDate(newEnd) });
       }
       setDragInfo(null);
+      setDragTooltip(null);
     };
 
     window.addEventListener('mousemove', onMove);
@@ -303,8 +307,9 @@ export default function TimelineView() {
                       isWeekend ? 'text-t-25 bg-t-02' : 'text-t-35'
                     }`}
                   >
+                    <span className="text-[7px] opacity-50">{WEEKDAY_SHORT[d.getDay()]}</span>
                     <span>{d.toLocaleDateString('ru-RU', { day: '2-digit' })}</span>
-                    <span className="text-[8px] opacity-70">{d.toLocaleDateString('ru-RU', { month: 'short' })}</span>
+                    <span className="text-[7px] opacity-50">{d.toLocaleDateString('ru-RU', { month: 'short' })}</span>
                   </div>
                 );
               })}
@@ -381,6 +386,23 @@ export default function TimelineView() {
           </div>
         </div>
       </div>
+
+      {/* Drag tooltip */}
+      {dragInfo && dragTooltip && (() => {
+        const endD = new Date(dragInfo.originalEnd);
+        endD.setHours(0, 0, 0, 0);
+        const targetDate = addDays(endD, dragInfo.offsetDays);
+        return (
+          <div
+            className="fixed z-[9999] pointer-events-none glass-heavy border border-t-10 rounded-lg px-2.5 py-1.5 shadow-2xl text-[11px] text-t-85 font-medium whitespace-nowrap"
+            style={{ left: dragTooltip.x + 12, top: dragTooltip.y - 32 }}
+          >
+            <span className="text-accent-blue">{WEEKDAY_SHORT[targetDate.getDay()]}</span>
+            {', '}
+            {targetDate.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' })}
+          </div>
+        );
+      })()}
 
       {/* Empty state */}
       {tasks.length === 0 && (
