@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Notification } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, shell } from 'electron';
 import path from 'path';
 import { setupTray } from './tray';
 import { setupHotkeys, reloadHotkeys } from './hotkeys';
@@ -12,6 +12,27 @@ import * as queries from './db/queries';
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
+
+/** Все внешние ссылки → системный браузер, не внутри Electron */
+export function setupExternalLinks(win: BrowserWindow) {
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (e, url) => {
+    const currentUrl = win.webContents.getURL();
+    // Разрешаем навигацию только на localhost dev server или file://
+    if (url === currentUrl) return;
+    if (url.startsWith('http://localhost:')) return;
+    if (url.startsWith('file://')) return;
+    e.preventDefault();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+  });
+}
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
@@ -36,6 +57,8 @@ function createWindow() {
     },
     icon: path.join(__dirname, '../../../assets/icons/icon.ico'),
   });
+
+  setupExternalLinks(mainWindow);
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:6173');

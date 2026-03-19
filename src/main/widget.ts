@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, globalShortcut } from 'electron';
 import path from 'path';
 import { HOTKEYS } from '../shared/constants';
+import { setupExternalLinks } from './main';
 
 let widgetWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -28,6 +29,8 @@ export function createWidgetWindow() {
       nodeIntegration: false,
     },
   });
+
+  setupExternalLinks(widgetWindow);
 
   if (isDev) {
     widgetWindow.loadURL('http://localhost:6173/widget.html');
