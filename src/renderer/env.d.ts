@@ -4,6 +4,8 @@ import type { Task, Column, Attachment, Note, Tag, TaskWithAttachments, TaskTemp
 
 interface ElectronAPI {
   getFilePath: (file: File) => string;
+  setZoom: (factor: number) => void;
+  getZoom: () => number;
   minimizeWindow: () => void;
   maximizeWindow: () => void;
   closeWindow: () => void;

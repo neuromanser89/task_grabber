@@ -1,8 +1,12 @@
-import { contextBridge, ipcRenderer, webUtils } from 'electron';
+import { contextBridge, ipcRenderer, webUtils, webFrame } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // File path from drag&drop (contextIsolation safe)
   getFilePath: (file: File) => webUtils.getPathForFile(file),
+
+  // Zoom
+  setZoom: (factor: number) => webFrame.setZoomFactor(factor),
+  getZoom: () => webFrame.getZoomFactor(),
 
   // Window controls
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
