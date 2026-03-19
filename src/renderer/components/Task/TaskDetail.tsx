@@ -457,16 +457,38 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
       <div className="flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
-        {/* Title */}
-        <input
-          ref={titleRef}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={saveTitle}
-          onKeyDown={(e) => { if (e.key === 'Enter') titleRef.current?.blur(); }}
-          className="text-lg font-semibold text-t-90 bg-transparent border-b border-transparent hover:border-t-08 focus:border-accent-blue/50 outline-none pb-1.5 transition-all duration-200 w-full tracking-tight"
-          placeholder="Заголовок задачи"
-        />
+        {/* Title + Priority row */}
+        <div className="flex items-center gap-3">
+          <input
+            ref={titleRef}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={(e) => { if (e.key === 'Enter') titleRef.current?.blur(); }}
+            className="text-lg font-semibold text-t-90 bg-transparent border-b border-transparent hover:border-t-08 focus:border-accent-blue/50 outline-none pb-1.5 transition-all duration-200 flex-1 tracking-tight"
+            placeholder="Заголовок задачи"
+          />
+          <div className="flex gap-1 flex-shrink-0">
+            {([0, 1, 2, 3] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePriorityChange(p)}
+                title={PRIORITY_LABELS[p]}
+                className={`w-7 h-7 rounded-lg text-[11px] font-bold transition-all duration-200 border ${
+                  priority === p
+                    ? 'border-current scale-[1.05]'
+                    : 'border-t-06 opacity-30 hover:opacity-60 hover:border-t-10'
+                }`}
+                style={{
+                  color: p === 0 ? '#6B7280' : PRIORITY_COLORS[p],
+                  boxShadow: priority === p && p > 0 ? `0 0 10px ${PRIORITY_COLORS[p]}15` : 'none',
+                }}
+              >
+                {p === 0 ? '—' : p}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Description with Markdown + Checklist */}
         <div>
@@ -589,54 +611,6 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               className="w-full bg-t-03 border border-t-06 hover:border-t-08 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-t-75 placeholder-t-15 outline-none resize-none transition-all duration-200 font-mono"
             />
           )}
-        </div>
-
-        {/* Column + Priority row */}
-        <div className="flex gap-4">
-          {/* Column */}
-          <div className="flex-1">
-            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
-              Колонка
-            </label>
-            <select
-              value={columnId}
-              onChange={(e) => handleColumnChange(e.target.value)}
-              className="w-full bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/50 outline-none rounded-lg px-3 py-2 text-[13px] text-t-75 transition-all duration-200"
-            >
-              {columns.map((col) => (
-                <option key={col.id} value={col.id} style={{ backgroundColor: '#1A1A2E' }}>
-                  {col.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Priority */}
-          <div>
-            <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
-              Приоритет
-            </label>
-            <div className="flex gap-1">
-              {([0, 1, 2, 3] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => handlePriorityChange(p)}
-                  title={PRIORITY_LABELS[p]}
-                  className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all duration-200 border ${
-                    priority === p
-                      ? 'border-current scale-[1.05]'
-                      : 'border-t-06 opacity-30 hover:opacity-60 hover:border-t-10'
-                  }`}
-                  style={{
-                    color: p === 0 ? '#6B7280' : PRIORITY_COLORS[p],
-                    boxShadow: priority === p && p > 0 ? `0 0 10px ${PRIORITY_COLORS[p]}15` : 'none',
-                  }}
-                >
-                  {p === 0 ? '—' : p}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Attachments — always visible if present, compact */}
