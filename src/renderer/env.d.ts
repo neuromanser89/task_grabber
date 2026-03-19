@@ -120,11 +120,11 @@ interface ElectronAPI {
   runRules?: () => Promise<{ actionsApplied: number }>;
 
   // Task Updates
-  getTaskUpdates: (taskId: string) => Promise<TaskUpdate[]>;
-  createTaskUpdate: (taskId: string, content: string, createdAt?: string) => Promise<TaskUpdate>;
-  updateTaskUpdate: (id: string, data: { content?: string; created_at?: string }) => Promise<TaskUpdate>;
-  deleteTaskUpdate: (id: string) => Promise<boolean>;
-  getTaskUpdateCounts: (taskIds: string[]) => Promise<Record<string, number>>;
+  getTaskUpdates?: (taskId: string) => Promise<TaskUpdate[]>;
+  createTaskUpdate?: (taskId: string, content: string, createdAt?: string) => Promise<TaskUpdate>;
+  updateTaskUpdate?: (id: string, data: { content?: string; created_at?: string }) => Promise<TaskUpdate>;
+  deleteTaskUpdate?: (id: string) => Promise<boolean>;
+  getTaskUpdateCounts?: (taskIds: string[]) => Promise<Record<string, number>>;
 
   // Boards
   getBoards: () => Promise<Board[]>;
