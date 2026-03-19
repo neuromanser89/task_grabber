@@ -736,6 +736,25 @@ export function countTaskUpdates(taskIds: string[]): Record<string, number> {
   return map;
 }
 
+export function getLatestTaskUpdates(taskIds: string[]): Record<string, { content: string; created_at: string }> {
+  if (taskIds.length === 0) return {};
+  const rows = getDb()
+    .prepare(`
+      SELECT tu.task_id, tu.content, tu.created_at
+      FROM task_updates tu
+      INNER JOIN (
+        SELECT task_id, MAX(created_at) as max_at
+        FROM task_updates
+        WHERE task_id IN (${taskIds.map(() => '?').join(',')})
+        GROUP BY task_id
+      ) latest ON tu.task_id = latest.task_id AND tu.created_at = latest.max_at
+    `)
+    .all(...taskIds) as { task_id: string; content: string; created_at: string }[];
+  const map: Record<string, { content: string; created_at: string }> = {};
+  for (const r of rows) map[r.task_id] = { content: r.content, created_at: r.created_at };
+  return map;
+}
+
 // ─── Rules ───────────────────────────────────────────────────────────────────
 
 export function getAllRules(): Rule[] {

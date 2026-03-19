@@ -216,6 +216,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('taskUpdates:update', id, data),
   deleteTaskUpdate: (id: string) => ipcRenderer.invoke('taskUpdates:delete', id),
   getTaskUpdateCounts: (taskIds: string[]) => ipcRenderer.invoke('taskUpdates:counts', taskIds),
+  getLatestTaskUpdates: (taskIds: string[]) => ipcRenderer.invoke('taskUpdates:latest', taskIds),
 
   // Projects
   getProjects: () => ipcRenderer.invoke('projects:getAll'),

@@ -125,6 +125,7 @@ interface ElectronAPI {
   updateTaskUpdate?: (id: string, data: { content?: string; created_at?: string }) => Promise<TaskUpdate>;
   deleteTaskUpdate?: (id: string) => Promise<boolean>;
   getTaskUpdateCounts?: (taskIds: string[]) => Promise<Record<string, number>>;
+  getLatestTaskUpdates?: (taskIds: string[]) => Promise<Record<string, { content: string; created_at: string }>>;
 
   // Boards
   getBoards: () => Promise<Board[]>;

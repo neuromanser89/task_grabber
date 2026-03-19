@@ -59,12 +59,14 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
   const lastClickedTaskId = useRef<string | null>(null);
 
-  // Update counts
+  // Update counts + latest
   const [updateCounts, setUpdateCounts] = useState<Record<string, number>>({});
+  const [latestUpdates, setLatestUpdates] = useState<Record<string, { content: string; created_at: string }>>({});
   const loadUpdateCounts = useCallback(() => {
     const ids = tasks.map(t => t.id);
     if (ids.length > 0) {
       window.electronAPI?.getTaskUpdateCounts?.(ids).then(c => c && setUpdateCounts(c)).catch(() => {});
+      window.electronAPI?.getLatestTaskUpdates?.(ids).then(l => l && setLatestUpdates(l)).catch(() => {});
     }
   }, [tasks]);
   useEffect(() => { loadUpdateCounts(); }, [loadUpdateCounts]);
@@ -398,6 +400,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 onBatchSelect={handleBatchSelect}
                 isDropTarget={overColumnId === col.id}
                 updateCounts={updateCounts}
+                latestUpdates={latestUpdates}
                 onUpdateCountChange={loadUpdateCounts}
               />
             ))}

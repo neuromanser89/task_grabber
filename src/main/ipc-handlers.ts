@@ -533,6 +533,10 @@ export function setupIpcHandlers() {
     queries.countTaskUpdates(taskIds)
   );
 
+  ipcMain.handle('taskUpdates:latest', (_e, taskIds: string[]) =>
+    queries.getLatestTaskUpdates(taskIds)
+  );
+
   // ─── Projects ────────────────────────────────────────────────────────────────
   ipcMain.handle('projects:getAll', () => queries.getAllProjects());
 
