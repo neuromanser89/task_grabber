@@ -16,10 +16,11 @@ interface Props {
   onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
   isDropTarget?: boolean;
   updateCounts?: Record<string, number>;
+  latestUpdates?: Record<string, { content: string; created_at: string }>;
   onUpdateCountChange?: () => void;
 }
 
-export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect, isDropTarget, updateCounts, onUpdateCountChange }: Props) {
+export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect, isDropTarget, updateCounts, latestUpdates, onUpdateCountChange }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -125,6 +126,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
                   isBatchSelected={selectedBatchIds?.has(task.id)}
                   onBatchSelect={onBatchSelect}
                   updateCount={updateCounts?.[task.id]}
+                  lastUpdate={latestUpdates?.[task.id]}
                   onUpdateCountChange={onUpdateCountChange}
                 />
               </div>

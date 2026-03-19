@@ -17,6 +17,7 @@ interface Props {
   onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
   onClick?: (task: TaskWithAttachments) => void;
   updateCount?: number;
+  lastUpdate?: { content: string; created_at: string };
   onUpdateCountChange?: () => void;
 }
 
@@ -55,7 +56,7 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}д назад`;
 }
 
-export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick, updateCount, onUpdateCountChange }: Props) {
+export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick, updateCount, lastUpdate, onUpdateCountChange }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = task.attachments && task.attachments.length > 0;
   const { boards } = useBoardStore();
@@ -336,7 +337,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               </span>
             );
           })()}
-          <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
+          {lastUpdate ? (
+            <span className="flex items-center gap-1 text-t-25 transition-colors group-hover:text-t-40 max-w-[140px]" title={`${lastUpdate.content}\n${new Date(lastUpdate.created_at).toLocaleString('ru-RU')}`}>
+              <MessageSquare size={8} className="flex-shrink-0 text-accent-blue/50" />
+              <span className="truncate">{lastUpdate.content}</span>
+              <span className="flex-shrink-0 text-t-15">· {relativeTime(lastUpdate.created_at)}</span>
+            </span>
+          ) : (
+            <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           {task.recurrence_rule && (
