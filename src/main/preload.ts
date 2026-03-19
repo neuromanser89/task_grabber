@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Tags
   getTags: () => ipcRenderer.invoke('tags:getAll'),
   createTag: (name: string, color: string) => ipcRenderer.invoke('tags:create', name, color),
+  updateTag: (id: string, data: { name?: string; color?: string }) => ipcRenderer.invoke('tags:update', id, data),
   deleteTag: (id: string) => ipcRenderer.invoke('tags:delete', id),
   addTagToTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:add', taskId, tagId),
   removeTagFromTask: (taskId: string, tagId: string) => ipcRenderer.invoke('task-tags:remove', taskId, tagId),

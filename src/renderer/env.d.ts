@@ -35,6 +35,7 @@ interface ElectronAPI {
   // Tags
   getTags: () => Promise<Tag[]>;
   createTag: (name: string, color: string) => Promise<Tag>;
+  updateTag: (id: string, data: { name?: string; color?: string }) => Promise<Tag>;
   deleteTag: (id: string) => Promise<boolean>;
   addTagToTask: (taskId: string, tagId: string) => Promise<boolean>;
   removeTagFromTask: (taskId: string, tagId: string) => Promise<boolean>;

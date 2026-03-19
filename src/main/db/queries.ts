@@ -316,6 +316,17 @@ export function createTag(name: string, color: string): Tag {
   return getDb().prepare('SELECT * FROM tags WHERE id = ?').get(id) as Tag;
 }
 
+export function updateTag(id: string, data: { name?: string; color?: string }): Tag {
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  if (data.name !== undefined) { sets.push('name = ?'); vals.push(data.name); }
+  if (data.color !== undefined) { sets.push('color = ?'); vals.push(data.color); }
+  if (sets.length > 0) {
+    getDb().prepare(`UPDATE tags SET ${sets.join(', ')} WHERE id = ?`).run(...vals, id);
+  }
+  return getDb().prepare('SELECT * FROM tags WHERE id = ?').get(id) as Tag;
+}
+
 export function deleteTag(id: string): void {
   getDb().prepare('DELETE FROM tags WHERE id = ?').run(id);
 }

@@ -191,6 +191,10 @@ export function setupIpcHandlers() {
     queries.createTag(name, color)
   );
 
+  ipcMain.handle('tags:update', (_e, id: string, data: { name?: string; color?: string }) =>
+    queries.updateTag(id, data)
+  );
+
   ipcMain.handle('tags:delete', (_e, id: string) => {
     queries.deleteTag(id);
     return true;
