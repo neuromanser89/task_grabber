@@ -60,6 +60,7 @@ export default function TimelineView() {
     startX: number;
     originalStart: string;
     originalEnd: string;
+    mode: 'end' | 'start'; // ЛКМ = end (вперёд), ПКМ = start (назад)
   } | null>(null);
   const [dragTooltip, setDragTooltip] = useState<{ x: number; y: number } | null>(null);
 
@@ -142,14 +143,18 @@ export default function TimelineView() {
     endD: Date
   ) {
     e.stopPropagation();
+    e.preventDefault();
     barDraggedRef.current = false;
     const startX = e.clientX;
+    // ЛКМ (button=0) → растягиваем конец (due_date), ПКМ (button=2) → растягиваем начало
+    const mode: 'end' | 'start' = e.button === 2 ? 'start' : 'end';
     setDragInfo({
       taskId: task.id,
       offsetDays: 0,
       startX,
       originalStart: isoDate(startD),
       originalEnd: isoDate(endD),
+      mode,
     });
 
     const onMove = (me: MouseEvent) => {
@@ -168,10 +173,22 @@ export default function TimelineView() {
       const daysDelta = Math.round(dx / DAY_W);
 
       if (daysDelta !== 0 && barDraggedRef.current) {
-        const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
-        baseEnd.setHours(0, 0, 0, 0);
-        const newEnd = addDays(baseEnd, daysDelta);
-        await updateTask(task.id, { due_date: isoDate(newEnd) });
+        if (mode === 'end') {
+          // Растягиваем конец → меняем due_date
+          const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
+          baseEnd.setHours(0, 0, 0, 0);
+          const newEnd = addDays(baseEnd, daysDelta);
+          await updateTask(task.id, { due_date: isoDate(newEnd) });
+        } else {
+          // Растягиваем начало → меняем due_date тоже (сдвигаем начало = сдвигаем длительность)
+          // Начало задачи = created_at, нельзя менять. Но можно менять due_date в обратном направлении.
+          // Реально: ПКМ тянем влево = увеличиваем длину (due_date не меняется, но визуально начало раньше)
+          // Проще: ПКМ двигает due_date назад (в прошлое)
+          const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
+          baseEnd.setHours(0, 0, 0, 0);
+          const newEnd = addDays(baseEnd, daysDelta);
+          await updateTask(task.id, { due_date: isoDate(newEnd) });
+        }
       }
       setDragInfo(null);
       setDragTooltip(null);
@@ -319,8 +336,12 @@ export default function TimelineView() {
             <div className="relative">
               {tasksWithDates.map(({ task, startD, endD }) => {
                 const isDragging = dragInfo?.taskId === task.id;
-                const adjustedStart = isDragging ? addDays(startD, dragInfo!.offsetDays) : startD;
-                const adjustedEnd = isDragging ? addDays(endD, dragInfo!.offsetDays) : endD;
+                const adjustedStart = isDragging && dragInfo!.mode === 'start'
+                  ? addDays(startD, dragInfo!.offsetDays)
+                  : startD;
+                const adjustedEnd = isDragging && dragInfo!.mode === 'end'
+                  ? addDays(endD, dragInfo!.offsetDays)
+                  : endD;
                 const { left, width, visible } = getBarStyle(adjustedStart, adjustedEnd);
                 const hasDue = !!task.due_date;
                 const barCt = colTypeMap[task.column_id];
@@ -374,7 +395,8 @@ export default function TimelineView() {
                           zIndex: isDragging ? 20 : 5,
                         }}
                         onMouseDown={(e) => handleBarMouseDown(e, task, startD, endD)}
-                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна — потяни чтобы установить)'}${barStatus ? ` [${barStatus.label}]` : ''}`}
+                        onContextMenu={(e) => e.preventDefault()}
+                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна)'}\nЛКМ: растянуть дедлайн → | ПКМ: сдвинуть начало ←`}
                       >
                         <span className={`truncate ${isDone ? 'line-through' : ''}`}>{task.title}</span>
                       </div>
@@ -389,14 +411,18 @@ export default function TimelineView() {
 
       {/* Drag tooltip */}
       {dragInfo && dragTooltip && (() => {
-        const endD = new Date(dragInfo.originalEnd);
-        endD.setHours(0, 0, 0, 0);
-        const targetDate = addDays(endD, dragInfo.offsetDays);
+        const baseDate = dragInfo.mode === 'end'
+          ? new Date(dragInfo.originalEnd)
+          : new Date(dragInfo.originalStart);
+        baseDate.setHours(0, 0, 0, 0);
+        const targetDate = addDays(baseDate, dragInfo.offsetDays);
+        const modeLabel = dragInfo.mode === 'end' ? 'Дедлайн →' : '← Начало';
         return (
           <div
             className="fixed z-[9999] pointer-events-none glass-heavy border border-t-10 rounded-lg px-2.5 py-1.5 shadow-2xl text-[11px] text-t-85 font-medium whitespace-nowrap"
             style={{ left: dragTooltip.x + 12, top: dragTooltip.y - 32 }}
           >
+            <span className="text-t-30 mr-1.5">{modeLabel}</span>
             <span className="text-accent-blue">{WEEKDAY_SHORT[targetDate.getDay()]}</span>
             {', '}
             {targetDate.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' })}
