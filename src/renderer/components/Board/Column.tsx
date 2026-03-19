@@ -67,7 +67,7 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
             : 'none',
           outlineOffset: '-2px',
         }}
-        className={`flex flex-col min-w-[180px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
+        className={`flex flex-col min-w-[140px] w-full max-w-[320px] flex-1 rounded-xl overflow-hidden glass transition-all duration-300 ${
           (isOver || isDropTarget) ? 'bg-accent-blue/[0.02]' : ''
         }`}
       >

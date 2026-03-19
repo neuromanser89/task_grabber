@@ -45,20 +45,21 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDocto
         <BoardSwitcher />
       </div>
 
-      {/* View switcher — center */}
-      <div className="absolute left-1/2 -translate-x-1/2 no-drag flex items-center gap-0.5 bg-t-06 rounded-lg p-0.5">
+      {/* View switcher — center, responsive */}
+      <div className="no-drag flex items-center gap-0.5 bg-t-06 rounded-lg p-0.5 mx-2 flex-shrink min-w-0 overflow-hidden">
         {VIEW_BUTTONS.map(({ mode, label, Icon }) => (
           <button
             key={mode}
             onClick={() => onViewChange?.(mode)}
-            className={`flex items-center gap-1.5 h-6 px-2.5 text-[11px] font-medium rounded-md transition-all duration-150
+            title={label}
+            className={`flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-md transition-all duration-150 flex-shrink-0
               ${viewMode === mode
                 ? 'bg-accent-blue/80 text-white shadow-sm'
                 : 'text-t-40 hover:text-t-70 hover:bg-t-06'
               }`}
           >
-            <Icon size={11} strokeWidth={2} />
-            {label}
+            <Icon size={11} strokeWidth={2} className="flex-shrink-0" />
+            <span className="hidden xl:inline truncate">{label}</span>
           </button>
         ))}
       </div>
@@ -67,10 +68,11 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDocto
         {onNewTask && (
           <button
             onClick={onNewTask}
-            className="flex items-center gap-1.5 h-7 px-3 text-xs font-medium bg-gradient-to-r from-accent-blue/90 to-accent-purple/90 hover:from-accent-blue hover:to-accent-purple text-white rounded-md transition-all duration-200 hover:shadow-glow-blue active:scale-[0.97]"
+            title="Новая задача"
+            className="flex items-center gap-1.5 h-7 px-2.5 text-xs font-medium bg-gradient-to-r from-accent-blue/90 to-accent-purple/90 hover:from-accent-blue hover:to-accent-purple text-white rounded-md transition-all duration-200 hover:shadow-glow-blue active:scale-[0.97] flex-shrink-0"
           >
             <Plus size={12} strokeWidth={2.5} />
-            Задача
+            <span className="hidden xl:inline">Задача</span>
           </button>
         )}
         {onRules && (
