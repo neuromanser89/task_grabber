@@ -8,7 +8,7 @@ import TaskDetail from '../Task/TaskDetail';
 import DropZone from '../DropZone/DropZone';
 import BatchToolbar from './BatchToolbar';
 import { ToastContainer, useToast } from '../common/Toast';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -70,6 +70,32 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
     }
   }, [tasks]);
   useEffect(() => { loadUpdateCounts(); }, [loadUpdateCounts]);
+
+  // Scroll indicators
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollIndicators = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateScrollIndicators();
+    el.addEventListener('scroll', updateScrollIndicators, { passive: true });
+    const ro = new ResizeObserver(updateScrollIndicators);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', updateScrollIndicators); ro.disconnect(); };
+  }, [updateScrollIndicators, columns]);
+
+  const scrollColumns = useCallback((dir: number) => {
+    scrollRef.current?.scrollBy({ left: dir * 280, behavior: 'smooth' });
+  }, []);
 
   // Inline new column state
   const [addingColumn, setAddingColumn] = useState(false);
@@ -384,7 +410,18 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={columnDndIds} strategy={horizontalListSortingStrategy}>
-          <div className="relative flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden items-stretch">
+          <div ref={scrollRef} className="relative flex flex-1 gap-3 p-4 overflow-x-auto overflow-y-hidden items-stretch">
+            {/* Scroll indicators */}
+            {canScrollLeft && (
+              <button
+                onClick={() => scrollColumns(-1)}
+                className="sticky left-0 top-1/2 -translate-y-1/2 z-20 w-7 h-14 flex items-center justify-center rounded-r-lg glass-heavy border border-l-0 border-t-10 text-t-40 hover:text-t-70 hover:bg-t-08 transition-all shadow-lg flex-shrink-0"
+                title="Прокрутить влево"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            )}
+
             {/* Ambient glow */}
             <div className="pointer-events-none absolute top-0 left-1/4 w-[500px] h-[300px] bg-accent-blue/[0.02] rounded-full blur-[120px]" />
             <div className="pointer-events-none absolute bottom-0 right-1/4 w-[400px] h-[200px] bg-accent-purple/[0.02] rounded-full blur-[100px]" />
@@ -442,6 +479,16 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 title="Добавить колонку"
               >
                 <Plus size={16} className="group-hover:scale-110 transition-transform" />
+              </button>
+            )}
+
+            {canScrollRight && (
+              <button
+                onClick={() => scrollColumns(1)}
+                className="sticky right-0 top-1/2 -translate-y-1/2 z-20 w-7 h-14 flex items-center justify-center rounded-l-lg glass-heavy border border-r-0 border-t-10 text-t-40 hover:text-t-70 hover:bg-t-08 transition-all shadow-lg flex-shrink-0"
+                title="Прокрутить вправо"
+              >
+                <ChevronRight size={16} />
               </button>
             )}
           </div>
