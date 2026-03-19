@@ -83,7 +83,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
-    window.electronAPI?.getTaskUpdates(taskId).then(r => setUpdates(r ?? [])).catch(() => {});
+    window.electronAPI?.getTaskUpdates?.(taskId).then(r => setUpdates(r ?? [])).catch(() => {});
   }, [taskId]);
 
   useEffect(() => { load(); }, [load]);
@@ -92,7 +92,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
     const text = newText.trim();
     if (!text) return;
     try {
-      await window.electronAPI!.createTaskUpdate(taskId, text);
+      await window.electronAPI?.createTaskUpdate?.(taskId, text);
       setNewText('');
       load();
     } catch (err) {
@@ -101,7 +101,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await window.electronAPI!.deleteTaskUpdate(id);
+    await window.electronAPI?.deleteTaskUpdate?.(id);
     load();
   };
 
@@ -113,7 +113,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    await window.electronAPI!.updateTaskUpdate(editingId, {
+    await window.electronAPI?.updateTaskUpdate?.(editingId, {
       content: editContent,
       created_at: editDate ? new Date(editDate).toISOString() : undefined,
     });

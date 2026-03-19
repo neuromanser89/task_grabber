@@ -158,7 +158,7 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     const text = quickUpdate.trim();
     if (!text) return;
     try {
-      await window.electronAPI!.createTaskUpdate(task.id, text);
+      await window.electronAPI?.createTaskUpdate?.(task.id, text);
       setQuickUpdate('');
       setShowUpdateInput(false);
       setCtxMenu(null);
