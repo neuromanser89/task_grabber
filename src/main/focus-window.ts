@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, globalShortcut } from 'electron';
 import path from 'path';
 import { HOTKEYS } from '../shared/constants';
+import { setupExternalLinks } from './main';
 
 let focusWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -29,6 +30,8 @@ export function createFocusWindow(taskId?: string) {
       nodeIntegration: false,
     },
   });
+
+  setupExternalLinks(focusWindow);
 
   if (isDev) {
     focusWindow.loadURL('http://localhost:6173/focus.html');
