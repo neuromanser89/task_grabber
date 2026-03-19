@@ -1,6 +1,6 @@
 # Task Grabber — PROJECT MAP
 
-> Актуально после Phase 1–6 (2026-03-18)
+> Актуально после Phase 1–7 (2026-03-19)
 
 ---
 
@@ -70,7 +70,10 @@ task_grabber/
 │   │   │   ├── taskStore.ts          # Zustand: задачи + фильтры
 │   │   │   ├── columnStore.ts        # Zustand: колонки
 │   │   │   ├── boardStore.ts         # Zustand: доски + activeBoardId
-│   │   │   └── noteStore.ts          # Zustand: заметки
+│   │   │   ├── noteStore.ts          # Zustand: заметки
+│   │   │   └── projectStore.ts       # Zustand: проекты (CRUD)
+│   │   ├── utils/
+│   │   │   └── checklist.ts          # toggleChecklistItem, countChecklist
 │   │   ├── hooks/
 │   │   │   └── useKeyboardNav.ts     # Навигация по доске стрелками
 │   │   ├── styles/
@@ -95,6 +98,10 @@ task_grabber/
 │   │       │   └── CommandPalette.tsx    # Ctrl+K: поиск задач/команд, навигация, смена темы
 │   │       ├── GlobalSearch/
 │   │       │   └── GlobalSearch.tsx      # Ctrl+Space: поиск по задачам/заметкам/доскам с подсветкой
+│   │       ├── TaskDoctor/
+│   │       │   └── TaskDoctorDialog.tsx  # Визард аудита задач (8 диагнозов, quick-fix)
+│   │       ├── Projects/
+│   │       │   └── ProjectsCanvasView.tsx # Канвас проектов (карточки с метаданными)
 │   │       ├── Rules/
 │   │       │   └── RulesDialog.tsx       # Визуальный конструктор Smart Rules (ЕСЛИ → ТО)
 │   │       ├── DropZone/
@@ -119,8 +126,8 @@ task_grabber/
 │   │           ├── MarkdownEditor.tsx    # Markdown редактор с preview
 │   │           └── Toast.tsx             # Toast-уведомления (success/error/info)
 │   └── shared/
-│       ├── types.ts                  # Все интерфейсы + IPC-константы
-│       └── constants.ts              # DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*, SOURCE_ICONS
+│       ├── types.ts                  # Все интерфейсы: Task, Column, Board, Tag, Note, Project, ColumnType + IPC-константы
+│       └── constants.ts              # DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*, SOURCE_ICONS, COLUMN_TYPE_LABELS
 ├── assets/
 │   └── icons/
 │       └── icon.ico                  # Иконка приложения
@@ -179,9 +186,9 @@ task_grabber/
 ### App.tsx
 Корневой компонент. Управляет состоянием всех диалогов/оверлеев, темой, IPC-подписками.
 
-Рендерит: TitleBar → (KanbanBoard | TimelineView | CalendarView) + Sidebar + StatusBar + все диалоги.
+Рендерит: TitleBar → (KanbanBoard | TimelineView | CalendarView | NotesCanvasView | BoardFilesView | ProjectsCanvasView) + Sidebar + StatusBar + все диалоги.
 
-Диалоги: TaskCreateDialog, QuickNoteDialog, SettingsDialog, CommandPalette, AIAssistantDialog, RulesDialog, GlobalSearch.
+Диалоги: TaskCreateDialog, QuickNoteDialog, SettingsDialog, CommandPalette, AIAssistantDialog, RulesDialog, GlobalSearch, TaskDoctorDialog.
 
 ### Board/KanbanBoard.tsx
 DnD-контекст (@dnd-kit). Фильтрует задачи по `activeBoardId`. Рендерит Column-ы.
@@ -248,6 +255,14 @@ Props: `isOpen: boolean`, `onClose: () => void`
 
 Props: `isOpen: boolean`, `onClose: () => void`
 
+### TaskDoctor/TaskDoctorDialog.tsx
+Визард аудита задач. Запускает 8 диагнозов (`overdue`, `deadline_soon`, `no_deadline`, `empty_description`, `stale_task`, `no_tags`, `no_priority`, `abandoned_checklist`), показывает список проблемных задач с severity (error/warning), позволяет применить quick-fix (переместить, проставить приоритет, теги и т.п.).
+
+Props: `isOpen: boolean`, `onClose: () => void`
+
+### Projects/ProjectsCanvasView.tsx
+Канвас проектов. Карточки с метаданными: название, ответственный (rp), архитектор, год старта, флаг PMI, ссылки на Confluence и ПАП, связанный тег. CRUD через `useProjectStore`. Поиск по названию/RP/архитектору.
+
 ### DropZone/DropZone.tsx
 Зона перетаскивания файлов. .msg → `parseMsg()`, остальные файлы → создаёт задачу с вложениями.
 
@@ -255,6 +270,8 @@ Props: `isOpen: boolean`, `onClose: () => void`
 Кастомный title bar: логотип, BoardSwitcher, кнопки вида (kanban/timeline/calendar), кнопки Settings/AI/Rules, кнопки окна.
 
 Props: `onNewTask`, `onSettings`, `onAI`, `onRules`, `viewMode: ViewMode`, `onViewChange`
+
+`ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects'`
 
 ### Layout/Sidebar.tsx
 Сворачиваемый sidebar: поиск, фильтры по тегам/приоритету/источнику, NotesPanel, StatsPanel.
@@ -343,6 +360,17 @@ Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
 | `updateNote(id, content)` | |
 | `deleteNote(id)` | |
 
+### projectStore.ts — `useProjectStore`
+
+| Поле / Action | Тип | Описание |
+|---------------|-----|----------|
+| `projects` | `Project[]` | Все проекты |
+| `loading` | `boolean` | |
+| `fetchProjects()` | `=> Promise<void>` | |
+| `createProject(data)` | `=> Promise<Project>` | |
+| `updateProject(id, data)` | `=> Promise<void>` | |
+| `deleteProject(id)` | `=> Promise<void>` | |
+
 ---
 
 ## 6. IPC-каналы
@@ -411,6 +439,11 @@ Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
 | `rules:delete` | |
 | `rules:run` | Запустить вручную |
 | `automation:run` | Запустить автоматизацию вручную |
+| `projects:getAll` | Все проекты |
+| `projects:create` | Создать проект |
+| `projects:update` | Обновить проект |
+| `projects:delete` | Удалить проект |
+| `shell:openExternal` | Открыть URL в браузере (shell.openExternal) |
 
 ### ipcMain.on (send из renderer)
 
@@ -562,6 +595,25 @@ CREATE TABLE focus_sessions (
 );
 ```
 
+### projects
+```sql
+CREATE TABLE IF NOT EXISTS projects (
+  id          TEXT PRIMARY KEY,
+  name        TEXT NOT NULL,
+  confluence  TEXT,
+  pap_url     TEXT,
+  rp          TEXT,
+  start_year  INTEGER,
+  pmi_done    INTEGER DEFAULT 0,
+  pmi_url     TEXT,
+  architect   TEXT DEFAULT 'Я',
+  tag_id      TEXT,   -- FK → tags.id (опциональная связь)
+  sort_order  INTEGER DEFAULT 0,
+  created_at  TEXT DEFAULT (datetime('now')),
+  updated_at  TEXT DEFAULT (datetime('now'))
+);
+```
+
 ### rules (Smart Rules)
 ```sql
 CREATE TABLE rules (
@@ -604,7 +656,23 @@ GRAB_TEXT, GRAB_FILES, QUICK_NOTE, SCREENSHOT — кастомизируются
 
 ---
 
-## 9. Конфиги
+## 9. Ключевые типы (`src/shared/types.ts`)
+
+| Тип | Описание |
+|-----|----------|
+| `Task` | Задача (id, title, description, column_id, priority, source_type, ...) |
+| `TaskWithAttachments` | `Task` + `attachments: Attachment[]` + `tags: Tag[]` |
+| `Column` | Колонка (id, name, color, icon, sort_order, board_id, wip_limit, **column_type**) |
+| `ColumnType` | `'backlog' \| 'in_progress' \| 'waiting' \| 'done' \| 'cancelled' \| null` — семантический тип колонки |
+| `Board` | Доска (id, name, color, icon, sort_order) |
+| `Tag` | Тег (id, name, color) |
+| `Note` | Заметка (id, content, created_at, updated_at) |
+| `Project` | Проект (id, name, confluence, pap_url, rp, start_year, pmi_done, pmi_url, architect, tag_id, sort_order) |
+| `ViewMode` | `'kanban' \| 'timeline' \| 'calendar' \| 'files' \| 'notes' \| 'projects'` (в TitleBar.tsx) |
+
+---
+
+## 10. Конфиги (Vite, TS, Tailwind)
 
 ### vite.config.ts
 - Root: `src/renderer`
@@ -630,7 +698,7 @@ GRAB_TEXT, GRAB_FILES, QUICK_NOTE, SCREENSHOT — кастомизируются
 
 ---
 
-## 10. Дизайн-система
+## 11. Дизайн-система
 
 ### CSS-переменные тем (`globals.css`)
 
