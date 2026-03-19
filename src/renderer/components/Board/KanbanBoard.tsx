@@ -471,7 +471,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
       <TaskDetail
         task={selectedTask}
         isOpen={selectedTask !== null}
-        onClose={() => setSelectedTask(null)}
+        onClose={() => { setSelectedTask(null); loadUpdateCounts(); }}
       />
 
       {/* Delete confirmation */}
