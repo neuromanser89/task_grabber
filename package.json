@@ -10,7 +10,7 @@
     "pack": "npm run build && electron-builder"
   },
   "keywords": [],
-  "author": "",
+  "author": "neuromanser89 <neuromanser89@users.noreply.github.com>",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.0.0",
