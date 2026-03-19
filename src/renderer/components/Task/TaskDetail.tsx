@@ -9,7 +9,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import TagInput from '../common/TagInput';
 import {
-  Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays,
+  Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, CheckCircle2,
   Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
   ChevronDown, ChevronUp, Bot, Loader2,
 } from 'lucide-react';
@@ -548,6 +548,19 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
                 )}
               </div>
             </div>
+
+            {/* Completed at (read-only) */}
+            {task.completed_at && (
+              <div>
+                <label className="text-[11px] font-medium text-t-35 uppercase tracking-wider block mb-2">
+                  Дата выполнения
+                </label>
+                <span className="text-[13px] text-emerald-400/80 flex items-center gap-1.5">
+                  <CheckCircle2 size={12} />
+                  {new Date(task.completed_at).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            )}
 
             {/* Tags */}
             <div>

@@ -63,8 +63,8 @@ export function setupIpcHandlers() {
   );
 
   ipcMain.handle('tasks:move', (_e, id: string, columnId: string, sortOrder: number) => {
-    queries.moveTask(id, columnId, sortOrder);
-    return true;
+    const result = queries.moveTask(id, columnId, sortOrder);
+    return result;
   });
 
   ipcMain.handle('tasks:delete', (_e, id: string) => {

@@ -39,6 +39,7 @@ export interface Task {
   source_type: SourceType;
   source_info: string | null;
   due_date: string | null;
+  completed_at?: string | null;
   archived_at: string | null;
   reminder_at: string | null;
   is_confidential?: number; // 0 or 1

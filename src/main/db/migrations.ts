@@ -211,6 +211,17 @@ export function runMigrations(db: Database.Database) {
     db.exec("UPDATE columns SET column_type = 'cancelled' WHERE column_type IS NULL AND (LOWER(name) LIKE '%забит%' OR LOWER(name) LIKE '%cancel%' OR LOWER(name) LIKE '%discard%')");
   }
 
+  // Migrate: add completed_at to tasks
+  if (!taskColumns.find((c) => c.name === 'completed_at')) {
+    db.exec("ALTER TABLE tasks ADD COLUMN completed_at TEXT");
+    // Backfill: tasks in done/cancelled columns get completed_at = updated_at
+    db.exec(`
+      UPDATE tasks SET completed_at = updated_at
+      WHERE completed_at IS NULL
+        AND column_id IN (SELECT id FROM columns WHERE column_type IN ('done', 'cancelled'))
+    `);
+  }
+
   // Seed default board if empty, then seed columns with board_id
   const boardCount = db.prepare('SELECT COUNT(*) as cnt FROM boards').get() as { cnt: number };
   let defaultBoardId: string;
