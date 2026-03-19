@@ -7,3 +7,7 @@ storage/
 *.db-wal
 .env
 .claude/
+CLAUDE.md
+KNOWN_BUGS.md
+PROJECT_MAP.md
+PROJECT_PLAN.md
