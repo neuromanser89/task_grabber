@@ -139,6 +139,7 @@ interface ElectronAPI {
 
   // Board Files
   boardFilesGetAll?: (boardId: string) => Promise<BoardFile[]>;
+  boardFilesTaskAttachments?: (boardId: string) => Promise<(Attachment & { task_title: string })[]>;
   boardFilesAdd?: (boardId: string, filePath: string, taskId: string | null) => Promise<BoardFile>;
   boardFilesDelete?: (id: string) => Promise<boolean>;
   boardFilesAttachToTask?: (fileId: string, taskId: string | null) => Promise<boolean>;
