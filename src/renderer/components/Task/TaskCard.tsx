@@ -4,7 +4,7 @@ import type { TaskWithAttachments } from '@shared/types';
 import { PRIORITY_COLORS, COLUMN_TYPE_STATUS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft, Check, Circle, Loader, PauseCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft, Check, Circle, Loader, PauseCircle, CheckCircle2, XCircle, MessageSquare, Send } from 'lucide-react';
 import { useBoardStore } from '../../stores/boardStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useTaskStore } from '../../stores/taskStore';
@@ -16,6 +16,8 @@ interface Props {
   isBatchSelected?: boolean;
   onBatchSelect?: (task: TaskWithAttachments, mode: 'toggle' | 'shift') => void;
   onClick?: (task: TaskWithAttachments) => void;
+  updateCount?: number;
+  onUpdateCountChange?: () => void;
 }
 
 const SOURCE_EMOJI: Record<string, string> = {
@@ -53,7 +55,7 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(hrs / 24)}д назад`;
 }
 
-export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick }: Props) {
+export default function TaskCard({ task, isDragOverlay = false, isSelected = false, isBatchSelected = false, onBatchSelect, onClick, updateCount, onUpdateCountChange }: Props) {
   const priorityColor = PRIORITY_COLORS[task.priority ?? 0];
   const hasAttachments = task.attachments && task.attachments.length > 0;
   const { boards } = useBoardStore();
@@ -63,6 +65,9 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   // Context menu state
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [flyAway, setFlyAway] = useState<{ targetX: number; targetY: number } | null>(null);
+  const [quickUpdate, setQuickUpdate] = useState('');
+  const [showUpdateInput, setShowUpdateInput] = useState(false);
+  const quickUpdateRef = useRef<HTMLInputElement>(null);
   const ctxRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -147,6 +152,16 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
     const maxOrder = tasksInCol.reduce((m, t) => Math.max(m, t.sort_order), -1) + 1;
     await moveTask(task.id, targetCol.id, maxOrder);
     setFlyAway(null);
+  }
+
+  async function handleQuickUpdate() {
+    const text = quickUpdate.trim();
+    if (!text) return;
+    await window.electronAPI?.createTaskUpdate?.(task.id, text);
+    setQuickUpdate('');
+    setShowUpdateInput(false);
+    setCtxMenu(null);
+    onUpdateCountChange?.();
   }
 
   function handleClick(e: React.MouseEvent) {
@@ -348,6 +363,12 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
               </span>
             );
           })()}
+          {(updateCount ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5 text-t-25" title={`${updateCount} апдейтов`}>
+              <MessageSquare size={9} />
+              <span className="text-[9px] tabular-nums">{updateCount}</span>
+            </span>
+          )}
           {hasAttachments && <span className="text-t-25">📎</span>}
         </div>
       </div>
@@ -357,10 +378,49 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
         <div
           ref={ctxRef}
           className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl overflow-hidden py-1"
-          style={{ top: ctxMenu.y, left: ctxMenu.x, minWidth: 180 }}
+          style={{ top: ctxMenu.y, left: ctxMenu.x, minWidth: 220 }}
           onMouseDown={e => e.stopPropagation()}
           onClick={e => e.stopPropagation()}
         >
+          {/* Quick update */}
+          <div className="px-3 py-1.5 text-[10px] font-semibold text-t-30 uppercase tracking-wider flex items-center gap-1.5">
+            <MessageSquare size={10} />
+            Быстрый апдейт
+          </div>
+          {showUpdateInput ? (
+            <div className="px-2.5 pb-2 flex items-center gap-1">
+              <input
+                ref={quickUpdateRef}
+                value={quickUpdate}
+                onChange={(e) => setQuickUpdate(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleQuickUpdate();
+                  if (e.key === 'Escape') { setShowUpdateInput(false); setQuickUpdate(''); }
+                }}
+                placeholder="Что нового..."
+                className="flex-1 bg-t-04 border border-t-08 focus:border-accent-blue/40 rounded px-2 py-1 text-[11px] text-t-80 outline-none placeholder-t-20 transition-colors"
+                autoFocus
+              />
+              <button
+                onClick={handleQuickUpdate}
+                disabled={!quickUpdate.trim()}
+                className="w-6 h-6 flex items-center justify-center rounded text-t-30 hover:text-accent-blue hover:bg-t-06 transition-colors disabled:opacity-30"
+              >
+                <Send size={11} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setShowUpdateInput(true); setTimeout(() => quickUpdateRef.current?.focus(), 50); }}
+              className="w-full px-3 py-1.5 text-[12px] text-t-50 hover:bg-t-06 hover:text-t-80 transition-colors text-left"
+            >
+              Написать апдейт...
+            </button>
+          )}
+
+          <div className="h-px bg-t-06 my-1" />
+
+          {/* Move to board */}
           <div className="px-3 py-1.5 text-[10px] font-semibold text-t-30 uppercase tracking-wider flex items-center gap-1.5">
             <ArrowRightLeft size={10} />
             Перенести на доску

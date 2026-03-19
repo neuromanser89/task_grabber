@@ -208,6 +208,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => { ipcRenderer.removeListener('search:open', handler); };
   },
 
+  // Task Updates
+  getTaskUpdates: (taskId: string) => ipcRenderer.invoke('taskUpdates:get', taskId),
+  createTaskUpdate: (taskId: string, content: string, createdAt?: string) =>
+    ipcRenderer.invoke('taskUpdates:create', taskId, content, createdAt),
+  updateTaskUpdate: (id: string, data: { content?: string; created_at?: string }) =>
+    ipcRenderer.invoke('taskUpdates:update', id, data),
+  deleteTaskUpdate: (id: string) => ipcRenderer.invoke('taskUpdates:delete', id),
+  getTaskUpdateCounts: (taskIds: string[]) => ipcRenderer.invoke('taskUpdates:counts', taskIds),
+
   // Projects
   getProjects: () => ipcRenderer.invoke('projects:getAll'),
   createProject: (data: unknown) => ipcRenderer.invoke('projects:create', data),

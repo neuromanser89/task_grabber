@@ -59,6 +59,16 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
   const lastClickedTaskId = useRef<string | null>(null);
 
+  // Update counts
+  const [updateCounts, setUpdateCounts] = useState<Record<string, number>>({});
+  const loadUpdateCounts = useCallback(() => {
+    const ids = tasks.map(t => t.id);
+    if (ids.length > 0) {
+      window.electronAPI?.getTaskUpdateCounts?.(ids).then(c => c && setUpdateCounts(c));
+    }
+  }, [tasks]);
+  useEffect(() => { loadUpdateCounts(); }, [loadUpdateCounts]);
+
   // Inline new column state
   const [addingColumn, setAddingColumn] = useState(false);
   const [newColName, setNewColName] = useState('');
@@ -387,6 +397,8 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 selectedBatchIds={selectedBatchIds}
                 onBatchSelect={handleBatchSelect}
                 isDropTarget={overColumnId === col.id}
+                updateCounts={updateCounts}
+                onUpdateCountChange={loadUpdateCounts}
               />
             ))}
 

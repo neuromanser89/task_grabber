@@ -211,6 +211,16 @@ export function runMigrations(db: Database.Database) {
     db.exec("UPDATE columns SET column_type = 'cancelled' WHERE column_type IS NULL AND (LOWER(name) LIKE '%забит%' OR LOWER(name) LIKE '%cancel%' OR LOWER(name) LIKE '%discard%')");
   }
 
+  // Migrate: add task_updates table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS task_updates (
+      id         TEXT PRIMARY KEY,
+      task_id    TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+      content    TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Migrate: add completed_at to tasks
   if (!taskColumns.find((c) => c.name === 'completed_at')) {
     db.exec("ALTER TABLE tasks ADD COLUMN completed_at TEXT");

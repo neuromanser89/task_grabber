@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { Tag, TaskWithAttachments, Attachment } from '@shared/types';
+import type { Tag, TaskWithAttachments, Attachment, TaskUpdate } from '@shared/types';
 import { PRIORITY_COLORS, PRIORITY_LABELS } from '@shared/constants';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
@@ -9,7 +9,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import TagInput from '../common/TagInput';
 import {
-  Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, CheckCircle2,
+  Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, CheckCircle2, MessageSquare, Send,
   Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
   ChevronDown, ChevronUp, Bot, Loader2,
 } from 'lucide-react';
@@ -60,6 +60,157 @@ function formatDate(dateStr: string): string {
 }
 
 import { toggleChecklistItem, countChecklist } from '../../utils/checklist';
+
+function relativeTimeShort(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'сейчас';
+  if (mins < 60) return `${mins}м`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}ч`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'вчера';
+  return `${days}д`;
+}
+
+function UpdatesSection({ taskId }: { taskId: string }) {
+  const [updates, setUpdates] = useState<TaskUpdate[]>([]);
+  const [newText, setNewText] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const load = useCallback(() => {
+    window.electronAPI?.getTaskUpdates?.(taskId).then(setUpdates);
+  }, [taskId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAdd = async () => {
+    const text = newText.trim();
+    if (!text) return;
+    await window.electronAPI?.createTaskUpdate?.(taskId, text);
+    setNewText('');
+    load();
+  };
+
+  const handleDelete = async (id: string) => {
+    await window.electronAPI?.deleteTaskUpdate?.(id);
+    load();
+  };
+
+  const startEdit = (u: TaskUpdate) => {
+    setEditingId(u.id);
+    setEditContent(u.content);
+    setEditDate(u.created_at.slice(0, 16));
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    await window.electronAPI?.updateTaskUpdate?.(editingId, {
+      content: editContent,
+      created_at: editDate ? new Date(editDate).toISOString() : undefined,
+    });
+    setEditingId(null);
+    load();
+  };
+
+  return (
+    <div className="border-t border-t-04 pt-3">
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="flex items-center gap-1.5 mb-2 w-full"
+      >
+        <ChevronDown size={10} className={`text-t-20 transition-transform duration-150 ${collapsed ? '-rotate-90' : ''}`} />
+        <MessageSquare size={10} className="text-t-25" />
+        <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">
+          Апдейты
+        </span>
+        {updates.length > 0 && (
+          <span className="text-[9px] text-accent-blue tabular-nums ml-1">{updates.length}</span>
+        )}
+      </button>
+
+      {!collapsed && (
+        <>
+          {updates.length > 0 && (
+            <div className="flex flex-col gap-1.5 mb-2 max-h-48 overflow-y-auto">
+              {updates.map((u) => (
+                <div key={u.id} className="group/upd flex items-start gap-2 px-2 py-1.5 rounded-md bg-t-03 hover:bg-t-05 transition-colors">
+                  {editingId === u.id ? (
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <input
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="w-full bg-t-04 border border-t-08 rounded px-2 py-1 text-[11px] text-t-80 outline-none focus:border-accent-blue/40"
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingId(null); }}
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          value={editDate}
+                          onChange={(e) => setEditDate(e.target.value)}
+                          className="bg-t-04 border border-t-06 rounded px-1.5 py-0.5 text-[10px] text-t-60 outline-none"
+                        />
+                        <button onClick={saveEdit} className="text-[10px] text-accent-blue hover:underline">Сохранить</button>
+                        <button onClick={() => setEditingId(null)} className="text-[10px] text-t-30 hover:text-t-50">Отмена</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-[10px] text-t-25 tabular-nums flex-shrink-0 w-10 pt-0.5" title={formatDate(u.created_at)}>
+                        {relativeTimeShort(u.created_at)}
+                      </span>
+                      <p className="text-[11px] text-t-70 flex-1 leading-relaxed">{u.content}</p>
+                      <div className="flex gap-1 opacity-0 group-hover/upd:opacity-100 transition-opacity flex-shrink-0">
+                        <button
+                          onClick={() => startEdit(u)}
+                          className="text-t-20 hover:text-t-50 transition-colors"
+                          title="Редактировать"
+                        >
+                          <Edit3 size={10} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          className="text-t-20 hover:text-red-400/70 transition-colors"
+                          title="Удалить"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <input
+              ref={inputRef}
+              value={newText}
+              onChange={(e) => setNewText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+              placeholder="Написать апдейт..."
+              className="flex-1 bg-t-04 border border-t-06 hover:border-t-10 focus:border-accent-blue/40 outline-none rounded-lg px-2.5 py-1.5 text-[11px] text-t-75 placeholder-t-20 transition-all"
+            />
+            <button
+              onClick={handleAdd}
+              disabled={!newText.trim()}
+              className="w-7 h-7 flex items-center justify-center rounded-md text-t-30 hover:text-accent-blue hover:bg-t-06 transition-colors disabled:opacity-30"
+              title="Отправить (Enter)"
+            >
+              <Send size={12} />
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 
 // Attachment item with hover preview for images
@@ -646,6 +797,9 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
             <RelatedTasks taskId={task.id} />
           </div>
         )}
+
+        {/* Task Updates */}
+        <UpdatesSection taskId={task.id} />
 
         {/* Meta info */}
         <div className="flex flex-wrap items-center gap-3 text-[11px] text-t-25 pt-2 border-t border-t-04">
