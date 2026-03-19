@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -32,6 +33,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Install system deps (Linux)
+        if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
+
+      - name: Install Python setuptools (macOS)
+        if: matrix.platform == 'mac'
+        run: pip3 install setuptools --break-system-packages || pip3 install setuptools
 
       - name: Install dependencies
         run: npm ci
