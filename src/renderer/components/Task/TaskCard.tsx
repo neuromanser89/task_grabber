@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { TaskWithAttachments } from '@shared/types';
-import { PRIORITY_COLORS } from '@shared/constants';
+import { PRIORITY_COLORS, COLUMN_TYPE_STATUS } from '@shared/constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft, Check } from 'lucide-react';
+import { CalendarDays, Timer, Repeat, CheckSquare, Square, ArrowRightLeft, Check, Circle, Loader, PauseCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { useBoardStore } from '../../stores/boardStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useTaskStore } from '../../stores/taskStore';
@@ -300,7 +300,25 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
       )}
 
       <div className="flex items-center justify-between mt-2.5 text-[10px] text-t-20">
-        <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
+        <div className="flex items-center gap-1.5">
+          {(() => {
+            const col = columns.find(c => c.id === task.column_id);
+            const ct = col?.column_type;
+            const status = ct ? COLUMN_TYPE_STATUS[ct] : null;
+            if (!status) return null;
+            const Icon = ct === 'backlog' ? Circle : ct === 'in_progress' ? Loader : ct === 'waiting' ? PauseCircle : ct === 'done' ? CheckCircle2 : XCircle;
+            return (
+              <span
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium leading-none"
+                style={{ backgroundColor: status.bg, color: status.color }}
+              >
+                <Icon size={8} className={ct === 'in_progress' ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
+                {status.label}
+              </span>
+            );
+          })()}
+          <span className="transition-colors group-hover:text-t-30">{relativeTime(task.created_at)}</span>
+        </div>
         <div className="flex items-center gap-1.5">
           {task.recurrence_rule && (
             <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-violet-500/10 text-violet-400/70" title="Повторяющаяся задача">

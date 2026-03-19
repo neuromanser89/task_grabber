@@ -12,7 +12,7 @@ interface ElectronAPI {
   createTask: (data: unknown) => Promise<Task>;
   updateTask: (id: string, data: unknown) => Promise<Task>;
   deleteTask: (id: string) => Promise<boolean>;
-  moveTask: (id: string, columnId: string, sortOrder: number) => Promise<boolean>;
+  moveTask: (id: string, columnId: string, sortOrder: number) => Promise<{ completed_at: string | null }>;
 
   getColumns: () => Promise<Column[]>;
   createColumn: (data: unknown) => Promise<Column>;

@@ -120,9 +120,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   moveTask: async (id, columnId, sortOrder) => {
-    await window.electronAPI!.moveTask(id, columnId, sortOrder);
+    const result = await window.electronAPI!.moveTask(id, columnId, sortOrder);
+    const completed_at = result?.completed_at ?? null;
     set((s) => ({
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, column_id: columnId, sort_order: sortOrder } : t)),
+      tasks: s.tasks.map((t) => (t.id === id ? { ...t, column_id: columnId, sort_order: sortOrder, completed_at } : t)),
     }));
   },
 

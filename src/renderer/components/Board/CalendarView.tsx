@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
-import type { TaskWithAttachments } from '@shared/types';
+import type { TaskWithAttachments, ColumnType } from '@shared/types';
+import { COLUMN_TYPE_STATUS } from '@shared/constants';
 import TaskDetail from '../Task/TaskDetail';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, Loader, PauseCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 const PRIORITY_COLORS: Record<number, string> = {
   0: '#6B7280',
@@ -57,6 +58,12 @@ export default function CalendarView() {
   const colMap = useMemo(() => {
     const m: Record<string, string> = {};
     columns.forEach((c) => { m[c.id] = c.name; });
+    return m;
+  }, [columns]);
+
+  const colTypeMap = useMemo(() => {
+    const m: Record<string, ColumnType> = {};
+    columns.forEach((c) => { if (c.column_type) m[c.id] = c.column_type; });
     return m;
   }, [columns]);
 
@@ -233,25 +240,34 @@ export default function CalendarView() {
 
                 {/* Tasks in cell */}
                 <div className="flex flex-col gap-0.5 flex-1">
-                  {dayTasks.slice(0, 3).map((task) => (
-                    <div
-                      key={task.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, task)}
-                      onDragEnd={handleDragEnd}
-                      onClick={(e) => { e.stopPropagation(); setSelectedTask(task); }}
-                      className={`text-[10px] px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing truncate text-white leading-tight
-                        hover:brightness-110 hover:shadow-sm transition-all duration-150 select-none
-                        ${drag?.taskId === task.id ? 'opacity-50' : ''}`}
-                      style={{
-                        backgroundColor: PRIORITY_COLORS[task.priority ?? 0],
-                        boxShadow: `0 1px 3px ${PRIORITY_COLORS[task.priority ?? 0]}30`,
-                      }}
-                      title={`${task.title} [${colMap[task.column_id] ?? ''}]`}
-                    >
-                      {task.title}
-                    </div>
-                  ))}
+                  {dayTasks.slice(0, 3).map((task) => {
+                    const ct = colTypeMap[task.column_id];
+                    const status = ct ? COLUMN_TYPE_STATUS[ct] : null;
+                    const isDone = ct === 'done' || ct === 'cancelled';
+                    const StatusIcon = ct === 'in_progress' ? Loader : ct === 'waiting' ? PauseCircle : ct === 'done' ? CheckCircle2 : ct === 'cancelled' ? XCircle : Circle;
+                    return (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task)}
+                        onDragEnd={handleDragEnd}
+                        onClick={(e) => { e.stopPropagation(); setSelectedTask(task); }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing truncate leading-tight
+                          hover:brightness-110 hover:shadow-sm transition-all duration-150 select-none flex items-center gap-1
+                          ${drag?.taskId === task.id ? 'opacity-50' : ''}
+                          ${isDone ? 'opacity-60' : ''}`}
+                        style={{
+                          backgroundColor: isDone && status ? status.color : PRIORITY_COLORS[task.priority ?? 0],
+                          color: 'white',
+                          boxShadow: `0 1px 3px ${PRIORITY_COLORS[task.priority ?? 0]}30`,
+                        }}
+                        title={`${task.title} [${colMap[task.column_id] ?? ''}]${status ? ` — ${status.label}` : ''}`}
+                      >
+                        <StatusIcon size={8} className={`flex-shrink-0 ${ct === 'in_progress' ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
+                        <span className={`truncate ${isDone ? 'line-through' : ''}`}>{task.title}</span>
+                      </div>
+                    );
+                  })}
                   {dayTasks.length > 3 && (
                     <div className="text-[9px] text-t-30 px-1">
                       +{dayTasks.length - 3} ещё

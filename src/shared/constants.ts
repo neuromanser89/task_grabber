@@ -43,3 +43,12 @@ export const SOURCE_ICONS: Record<string, string> = {
   file: 'folder',
   email: 'mail',
 };
+
+/** Visual config for column_type status indicators */
+export const COLUMN_TYPE_STATUS: Record<string, { color: string; bg: string; label: string }> = {
+  backlog: { color: '#3B82F6', bg: 'rgba(59,130,246,0.12)', label: 'Бэклог' },
+  in_progress: { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', label: 'В работе' },
+  waiting: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', label: 'Ожидание' },
+  done: { color: '#10B981', bg: 'rgba(16,185,129,0.12)', label: 'Готово' },
+  cancelled: { color: '#6B7280', bg: 'rgba(107,114,128,0.12)', label: 'Отменено' },
+};

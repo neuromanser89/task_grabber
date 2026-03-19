@@ -217,7 +217,7 @@ export function createTask(
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next', 'time_spent'];
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'completed_at', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next', 'time_spent'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
@@ -230,10 +230,23 @@ export function updateTask(id: string, data: Partial<Task>): Task {
   return getDb().prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Task;
 }
 
-export function moveTask(id: string, columnId: string, sortOrder: number): void {
-  getDb()
-    .prepare(`UPDATE tasks SET column_id = ?, sort_order = ?, updated_at = datetime('now') WHERE id = ?`)
-    .run(columnId, sortOrder, id);
+export function moveTask(id: string, columnId: string, sortOrder: number): { completed_at: string | null } {
+  // Check if target column is done/cancelled → set completed_at
+  const col = getDb().prepare('SELECT column_type FROM columns WHERE id = ?').get(columnId) as { column_type: string | null } | undefined;
+  const isDone = col?.column_type === 'done' || col?.column_type === 'cancelled';
+  const now = new Date().toISOString();
+
+  if (isDone) {
+    getDb()
+      .prepare(`UPDATE tasks SET column_id = ?, sort_order = ?, completed_at = COALESCE(completed_at, ?), updated_at = datetime('now') WHERE id = ?`)
+      .run(columnId, sortOrder, now, id);
+  } else {
+    getDb()
+      .prepare(`UPDATE tasks SET column_id = ?, sort_order = ?, completed_at = NULL, updated_at = datetime('now') WHERE id = ?`)
+      .run(columnId, sortOrder, id);
+  }
+  const task = getDb().prepare('SELECT completed_at FROM tasks WHERE id = ?').get(id) as { completed_at: string | null };
+  return { completed_at: task?.completed_at ?? null };
 }
 
 export function deleteTask(id: string): void {

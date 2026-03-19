@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
-import type { TaskWithAttachments } from '@shared/types';
+import type { TaskWithAttachments, ColumnType } from '@shared/types';
+import { COLUMN_TYPE_STATUS } from '@shared/constants';
 import TaskDetail from '../Task/TaskDetail';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Circle, Loader, PauseCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 const PRIORITY_COLORS: Record<number, string> = {
   0: '#6B7280',
@@ -100,6 +101,12 @@ export default function TimelineView() {
   const colMap = useMemo(() => {
     const m: Record<string, string> = {};
     columns.forEach((c) => { m[c.id] = c.name; });
+    return m;
+  }, [columns]);
+
+  const colTypeMap = useMemo(() => {
+    const m: Record<string, ColumnType> = {};
+    columns.forEach((c) => { if (c.column_type) m[c.id] = c.column_type; });
     return m;
   }, [columns]);
 
@@ -239,25 +246,36 @@ export default function TimelineView() {
             <span className="text-xs text-t-30 font-medium uppercase tracking-wide">Задача</span>
           </div>
           {/* Task label rows */}
-          {tasksWithDates.map(({ task }) => (
-            <div
-              key={task.id}
-              style={{ height: ROW_H }}
-              className="flex items-center gap-2 px-3 border-b border-r border-t-04 cursor-pointer hover:bg-t-04 group"
-              onClick={() => setSelectedTask(task)}
-            >
+          {tasksWithDates.map(({ task }) => {
+            const ct = colTypeMap[task.column_id];
+            const status = ct ? COLUMN_TYPE_STATUS[ct] : null;
+            const StatusIcon = ct === 'in_progress' ? Loader : ct === 'waiting' ? PauseCircle : ct === 'done' ? CheckCircle2 : ct === 'cancelled' ? XCircle : Circle;
+            return (
               <div
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: PRIORITY_COLORS[task.priority ?? 0] }}
-              />
-              <span className="text-xs text-t-70 truncate group-hover:text-t-90 transition-colors flex-1">
-                {task.title}
-              </span>
-              <span className="text-[10px] text-t-25 truncate max-w-[60px]">
-                {colMap[task.column_id] ?? ''}
-              </span>
-            </div>
-          ))}
+                key={task.id}
+                style={{ height: ROW_H }}
+                className="flex items-center gap-2 px-3 border-b border-r border-t-04 cursor-pointer hover:bg-t-04 group"
+                onClick={() => setSelectedTask(task)}
+              >
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: PRIORITY_COLORS[task.priority ?? 0] }}
+                />
+                <span className="text-xs text-t-70 truncate group-hover:text-t-90 transition-colors flex-1">
+                  {task.title}
+                </span>
+                {status && (
+                  <span
+                    className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium flex-shrink-0"
+                    style={{ backgroundColor: status.bg, color: status.color }}
+                  >
+                    <StatusIcon size={8} className={ct === 'in_progress' ? 'animate-spin' : ''} style={{ animationDuration: '3s' }} />
+                    {status.label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Scrollable grid */}
@@ -300,6 +318,9 @@ export default function TimelineView() {
                 const adjustedEnd = isDragging ? addDays(endD, dragInfo!.offsetDays) : endD;
                 const { left, width, visible } = getBarStyle(adjustedStart, adjustedEnd);
                 const hasDue = !!task.due_date;
+                const barCt = colTypeMap[task.column_id];
+                const barStatus = barCt ? COLUMN_TYPE_STATUS[barCt] : null;
+                const isDone = barCt === 'done' || barCt === 'cancelled';
 
                 return (
                   <div
@@ -333,21 +354,24 @@ export default function TimelineView() {
                         data-bar="1"
                         className={`absolute top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-[11px] font-medium text-white
                           cursor-grab active:cursor-grabbing select-none transition-all duration-150
-                          ${isDragging ? 'opacity-80 shadow-drag scale-[1.02]' : 'hover:brightness-110 hover:shadow-md'}`}
+                          ${isDragging ? 'opacity-80 shadow-drag scale-[1.02]' : 'hover:brightness-110 hover:shadow-md'}
+                          ${isDone ? 'opacity-60' : ''}`}
                         style={{
                           left: clamp(left, 0, DAYS * DAY_W - DAY_W),
                           width: Math.min(width, DAYS * DAY_W - clamp(left, 0, DAYS * DAY_W - DAY_W)),
                           height: ROW_H - 10,
-                          backgroundColor: hasDue
+                          backgroundColor: isDone && barStatus
+                            ? barStatus.color
+                            : hasDue
                             ? PRIORITY_COLORS[task.priority ?? 0]
                             : `${PRIORITY_COLORS[task.priority ?? 0]}66`,
                           border: hasDue ? 'none' : `1px dashed ${PRIORITY_COLORS[task.priority ?? 0]}`,
                           zIndex: isDragging ? 20 : 5,
                         }}
                         onMouseDown={(e) => handleBarMouseDown(e, task, startD, endD)}
-                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна — потяни чтобы установить)'}`}
+                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна — потяни чтобы установить)'}${barStatus ? ` [${barStatus.label}]` : ''}`}
                       >
-                        <span className="truncate">{task.title}</span>
+                        <span className={`truncate ${isDone ? 'line-through' : ''}`}>{task.title}</span>
                       </div>
                     )}
                   </div>
