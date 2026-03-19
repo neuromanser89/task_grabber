@@ -83,7 +83,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
-    window.electronAPI?.getTaskUpdates?.(taskId).then(setUpdates);
+    window.electronAPI?.getTaskUpdates(taskId).then(r => setUpdates(r ?? [])).catch(() => {});
   }, [taskId]);
 
   useEffect(() => { load(); }, [load]);
@@ -91,13 +91,17 @@ function UpdatesSection({ taskId }: { taskId: string }) {
   const handleAdd = async () => {
     const text = newText.trim();
     if (!text) return;
-    await window.electronAPI?.createTaskUpdate?.(taskId, text);
-    setNewText('');
-    load();
+    try {
+      await window.electronAPI!.createTaskUpdate(taskId, text);
+      setNewText('');
+      load();
+    } catch (err) {
+      console.error('Failed to create update:', err);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await window.electronAPI?.deleteTaskUpdate?.(id);
+    await window.electronAPI!.deleteTaskUpdate(id);
     load();
   };
 
@@ -109,7 +113,7 @@ function UpdatesSection({ taskId }: { taskId: string }) {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    await window.electronAPI?.updateTaskUpdate?.(editingId, {
+    await window.electronAPI!.updateTaskUpdate(editingId, {
       content: editContent,
       created_at: editDate ? new Date(editDate).toISOString() : undefined,
     });

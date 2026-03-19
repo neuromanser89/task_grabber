@@ -64,7 +64,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
   const loadUpdateCounts = useCallback(() => {
     const ids = tasks.map(t => t.id);
     if (ids.length > 0) {
-      window.electronAPI?.getTaskUpdateCounts?.(ids).then(c => c && setUpdateCounts(c));
+      window.electronAPI?.getTaskUpdateCounts(ids).then(c => c && setUpdateCounts(c)).catch(() => {});
     }
   }, [tasks]);
   useEffect(() => { loadUpdateCounts(); }, [loadUpdateCounts]);

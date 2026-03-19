@@ -157,11 +157,15 @@ export default function TaskCard({ task, isDragOverlay = false, isSelected = fal
   async function handleQuickUpdate() {
     const text = quickUpdate.trim();
     if (!text) return;
-    await window.electronAPI?.createTaskUpdate?.(task.id, text);
-    setQuickUpdate('');
-    setShowUpdateInput(false);
-    setCtxMenu(null);
-    onUpdateCountChange?.();
+    try {
+      await window.electronAPI!.createTaskUpdate(task.id, text);
+      setQuickUpdate('');
+      setShowUpdateInput(false);
+      setCtxMenu(null);
+      onUpdateCountChange?.();
+    } catch (err) {
+      console.error('Failed to create quick update:', err);
+    }
   }
 
   function handleClick(e: React.MouseEvent) {
