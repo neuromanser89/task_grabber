@@ -635,6 +635,19 @@ export function deleteBoardFile(id: string): void {
   getDb().prepare('DELETE FROM board_files WHERE id = ?').run(id);
 }
 
+export function getTaskAttachmentsByBoard(boardId: string): (Attachment & { task_title: string })[] {
+  return getDb()
+    .prepare(`
+      SELECT a.*, t.title as task_title
+      FROM attachments a
+      INNER JOIN tasks t ON t.id = a.task_id
+      INNER JOIN columns c ON c.id = t.column_id
+      WHERE c.board_id = ? AND t.archived_at IS NULL
+      ORDER BY a.created_at DESC
+    `)
+    .all(boardId) as (Attachment & { task_title: string })[];
+}
+
 export function attachBoardFileToTask(fileId: string, taskId: string | null): void {
   getDb()
     .prepare('UPDATE board_files SET task_id = ? WHERE id = ?')

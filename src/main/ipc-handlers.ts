@@ -457,6 +457,10 @@ export function setupIpcHandlers() {
   // ─── Board Files ──────────────────────────────────────────────────────────
   ipcMain.handle('boardFiles:getAll', (_e, boardId: string) => queries.getBoardFiles(boardId));
 
+  ipcMain.handle('boardFiles:taskAttachments', (_e, boardId: string) =>
+    queries.getTaskAttachmentsByBoard(boardId)
+  );
+
   ipcMain.handle('boardFiles:add', (_e, boardId: string, filePath: string, taskId: string | null) => {
     const resolved = path.resolve(filePath);
     if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {

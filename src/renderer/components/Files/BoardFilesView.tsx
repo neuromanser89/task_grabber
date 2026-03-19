@@ -3,7 +3,11 @@ import { Upload, Search, Trash2, Paperclip, FolderOpen, File, X } from 'lucide-r
 import { useBoardStore } from '../../stores/boardStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
-import type { BoardFile } from '@shared/types';
+import type { BoardFile, Attachment } from '@shared/types';
+
+interface TaskAttachment extends Attachment {
+  task_title: string;
+}
 
 function formatSize(bytes: number | null): string {
   if (!bytes) return '—';
@@ -50,6 +54,7 @@ export default function BoardFilesView() {
   const { tasks } = useTaskStore();
   const { columns } = useColumnStore();
   const [files, setFiles] = useState<BoardFile[]>([]);
+  const [taskAttachments, setTaskAttachments] = useState<TaskAttachment[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -62,8 +67,12 @@ export default function BoardFilesView() {
     if (!activeBoardId) return;
     setLoading(true);
     try {
-      const result = (await window.electronAPI?.boardFilesGetAll(activeBoardId)) ?? [];
-      setFiles(result as BoardFile[]);
+      const [boardFiles, taskFiles] = await Promise.all([
+        window.electronAPI?.boardFilesGetAll?.(activeBoardId) ?? [],
+        window.electronAPI?.boardFilesTaskAttachments?.(activeBoardId) ?? [],
+      ]);
+      setFiles(boardFiles as BoardFile[]);
+      setTaskAttachments(taskFiles as TaskAttachment[]);
     } finally {
       setLoading(false);
     }
@@ -139,6 +148,10 @@ export default function BoardFilesView() {
     !search || f.filename.toLowerCase().includes(search.toLowerCase())
   );
 
+  const filteredTaskAttachments = taskAttachments.filter((a) =>
+    !search || a.filename.toLowerCase().includes(search.toLowerCase())
+  );
+
   const boardTasks = tasks.filter((t) => !t.archived_at);
 
   if (!activeBoardId) {
@@ -199,12 +212,13 @@ export default function BoardFilesView() {
       <div className="flex-1 overflow-y-auto min-h-0">
         {loading ? (
           <div className="text-t-40 text-sm text-center py-8">Загрузка...</div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && filteredTaskAttachments.length === 0 ? (
           <div className="text-t-40 text-sm text-center py-8">
             {search ? 'Ничего не найдено' : 'Файлов нет. Загрузите первый!'}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-1.5">
+            {/* Board files */}
             {filtered.map((file) => {
               const linkedTask = file.task_id ? tasks.find((t) => t.id === file.task_id) : null;
               return (
@@ -236,6 +250,39 @@ export default function BoardFilesView() {
                 </div>
               );
             })}
+
+            {/* Task attachments separator */}
+            {filteredTaskAttachments.length > 0 && filtered.length > 0 && (
+              <div className="flex items-center gap-2 py-1.5 mt-1">
+                <div className="h-px flex-1 bg-t-06" />
+                <span className="text-[10px] text-t-25 uppercase tracking-wider flex-shrink-0">Файлы из задач</span>
+                <div className="h-px flex-1 bg-t-06" />
+              </div>
+            )}
+            {filteredTaskAttachments.length > 0 && filtered.length === 0 && (
+              <div className="text-[10px] text-t-25 uppercase tracking-wider mb-1">Файлы из задач</div>
+            )}
+
+            {/* Task attachments */}
+            {filteredTaskAttachments.map((att) => (
+              <div
+                key={`att-${att.id}`}
+                onDoubleClick={() => handleOpen(att.filepath)}
+                className="group flex items-center gap-3 px-3 py-2.5 rounded-lg bg-t-03 hover:bg-t-06 cursor-pointer transition-colors select-none border border-t-04"
+              >
+                <FileIcon filename={att.filename} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-t-primary truncate">{att.filename}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-t-40">{formatSize(att.filesize)}</span>
+                    <span className="text-xs text-accent-purple/70 flex items-center gap-1">
+                      <Paperclip size={10} />
+                      {att.task_title.slice(0, 30)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -181,6 +181,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Board Files
   boardFilesGetAll: (boardId: string) => ipcRenderer.invoke('boardFiles:getAll', boardId),
+  boardFilesTaskAttachments: (boardId: string) => ipcRenderer.invoke('boardFiles:taskAttachments', boardId),
   boardFilesAdd: (boardId: string, filePath: string, taskId: string | null) =>
     ipcRenderer.invoke('boardFiles:add', boardId, filePath, taskId),
   boardFilesDelete: (id: string) => ipcRenderer.invoke('boardFiles:delete', id),
