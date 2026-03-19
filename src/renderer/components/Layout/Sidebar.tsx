@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
-import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard } from 'lucide-react';
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useBoardStore } from '../../stores/boardStore';
@@ -14,6 +14,59 @@ const SOURCES: { value: SourceType; label: string; icon: React.ReactNode }[] = [
   { value: 'file', label: 'Файл', icon: <Folder size={11} /> },
   { value: 'email', label: 'Письмо', icon: <Mail size={11} /> },
 ];
+
+const STORAGE_KEY = 'sidebar_collapsed_sections';
+
+function loadCollapsed(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function saveCollapsed(state: Record<string, boolean>) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function FilterSection({ id, label, icon, count, children }: {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  const [collapsed, setCollapsed] = useState(() => loadCollapsed()[id] ?? false);
+
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      const all = loadCollapsed();
+      all[id] = next;
+      saveCollapsed(all);
+      return next;
+    });
+  }, [id]);
+
+  return (
+    <div>
+      <button
+        onClick={toggle}
+        className="flex items-center gap-1.5 mb-1.5 w-full group/sec"
+      >
+        <ChevronDown
+          size={10}
+          className={`text-t-20 transition-transform duration-150 ${collapsed ? '-rotate-90' : ''}`}
+        />
+        {icon}
+        <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">{label}</span>
+        {count != null && count > 0 && (
+          <span className="ml-auto text-[9px] text-accent-blue tabular-nums">{count}</span>
+        )}
+      </button>
+      {!collapsed && children}
+    </div>
+  );
+}
 
 export interface SidebarHandle {
   focusSearch: () => void;
@@ -130,11 +183,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
 
               {/* Tags */}
               {allTags.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Tag size={10} className="text-t-25" />
-                    <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Теги</span>
-                  </div>
+                <FilterSection id="tags" label="Теги" icon={<Tag size={10} className="text-t-25" />} count={filterTags.length}>
                   <div className="flex flex-col gap-1">
                     {allTags.map((tag) => {
                       const active = filterTags.includes(tag.id);
@@ -160,16 +209,12 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                       );
                     })}
                   </div>
-                </div>
+                </FilterSection>
               )}
 
               {/* Boards */}
               {boards.length > 1 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <LayoutDashboard size={10} className="text-t-25" />
-                    <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Доски</span>
-                  </div>
+                <FilterSection id="boards" label="Доски" icon={<LayoutDashboard size={10} className="text-t-25" />} count={filterBoards.length}>
                   <div className="flex flex-col gap-1">
                     {boards.map((board) => {
                       const active = filterBoards.includes(board.id);
@@ -192,14 +237,11 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                       );
                     })}
                   </div>
-                </div>
+                </FilterSection>
               )}
 
               {/* Priority */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Приоритет</span>
-                </div>
+              <FilterSection id="priority" label="Приоритет" icon={<span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-500 via-amber-500 to-red-500 flex-shrink-0" />} count={filterPriority.length}>
                 <div className="flex flex-col gap-1">
                   {([1, 2, 3, 0] as Priority[]).map((p) => {
                     const active = filterPriority.includes(p);
@@ -220,13 +262,10 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                     );
                   })}
                 </div>
-              </div>
+              </FilterSection>
 
               {/* Source */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-[10px] font-medium text-t-30 uppercase tracking-wider">Источник</span>
-                </div>
+              <FilterSection id="source" label="Источник" icon={<Hand size={10} className="text-t-25" />} count={filterSource.length}>
                 <div className="flex flex-col gap-1">
                   {SOURCES.map(({ value, label, icon }) => {
                     const active = filterSource.includes(value);
@@ -246,7 +285,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                     );
                   })}
                 </div>
-              </div>
+              </FilterSection>
 
               {/* Reset */}
               {hasFilters && (
