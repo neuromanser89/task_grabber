@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
@@ -14,6 +15,50 @@ const SOURCES: { value: SourceType; label: string; icon: React.ReactNode }[] = [
   { value: 'file', label: 'Файл', icon: <Folder size={11} /> },
   { value: 'email', label: 'Письмо', icon: <Mail size={11} /> },
 ];
+
+const PALETTE = [
+  '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
+  '#22C55E', '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9',
+  '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF',
+  '#EC4899', '#F43F5E', '#6B7280', '#78716C', '#FFFFFF',
+];
+
+function ColorPickerPopup({ x, y, currentColor, onPick, onClose }: {
+  x: number; y: number; currentColor: string; onPick: (color: string) => void; onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed z-[9999] glass-heavy border border-t-10 rounded-lg shadow-2xl p-2"
+      style={{ top: y, left: x }}
+      onMouseDown={e => e.stopPropagation()}
+    >
+      <div className="grid grid-cols-5 gap-1.5">
+        {PALETTE.map((c) => (
+          <button
+            key={c}
+            onClick={() => { onPick(c); onClose(); }}
+            className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-125 ${
+              c === currentColor ? 'border-white scale-110' : 'border-transparent'
+            }`}
+            style={{ backgroundColor: c }}
+          />
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 const STORAGE_KEY = 'sidebar_collapsed_sections';
 
@@ -91,6 +136,23 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
   const [allTags, setAllTags] = useState<TagType[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Color picker state
+  const [colorPicker, setColorPicker] = useState<{
+    x: number; y: number; currentColor: string;
+    type: 'tag' | 'board' | 'priority';
+    id: string; // tag_id, board_id, or priority number as string
+  } | null>(null);
+
+  // Priority custom colors (stored in settings)
+  const [priorityColors, setPriorityColors] = useState<Record<number, string>>({ ...PRIORITY_COLORS });
+  useEffect(() => {
+    window.electronAPI?.getSetting('custom_priority_colors').then((val) => {
+      if (val) {
+        try { setPriorityColors({ ...PRIORITY_COLORS, ...JSON.parse(val) }); } catch {}
+      }
+    });
+  }, []);
+
   useImperativeHandle(ref, () => ({
     focusSearch: () => {
       searchInputRef.current?.focus();
@@ -119,6 +181,28 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
       tagCounts[tag.id] = (tagCounts[tag.id] ?? 0) + 1;
     }
   }
+
+  const handleColorPick = async (color: string) => {
+    if (!colorPicker) return;
+    const { type, id } = colorPicker;
+    if (type === 'tag') {
+      await window.electronAPI?.updateTag(id, { color });
+      setAllTags(prev => prev.map(t => t.id === id ? { ...t, color } : t));
+    } else if (type === 'board') {
+      await window.electronAPI?.updateBoard(id, { color });
+      useBoardStore.getState().fetchBoards();
+    } else if (type === 'priority') {
+      const p = Number(id);
+      const next = { ...priorityColors, [p]: color };
+      setPriorityColors(next);
+      // Save only overrides
+      const overrides: Record<number, string> = {};
+      for (const k of [0, 1, 2, 3]) {
+        if (next[k] !== PRIORITY_COLORS[k]) overrides[k] = next[k];
+      }
+      await window.electronAPI?.setSetting('custom_priority_colors', JSON.stringify(overrides));
+    }
+  };
 
   return (
     <aside
@@ -191,6 +275,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                         <button
                           key={tag.id}
                           onClick={() => toggleTagFilter(tag.id)}
+                          onContextMenu={(e) => { e.preventDefault(); setColorPicker({ x: e.clientX, y: e.clientY, currentColor: tag.color, type: 'tag', id: tag.id }); }}
                           className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                             active
                               ? 'bg-t-08 text-t-85'
@@ -222,6 +307,7 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                         <button
                           key={board.id}
                           onClick={() => toggleBoardFilter(board.id)}
+                          onContextMenu={(e) => { e.preventDefault(); setColorPicker({ x: e.clientX, y: e.clientY, currentColor: board.color, type: 'board', id: board.id }); }}
                           className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                             active
                               ? 'bg-t-08 text-t-85'
@@ -245,11 +331,12 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                 <div className="flex flex-col gap-1">
                   {([1, 2, 3, 0] as Priority[]).map((p) => {
                     const active = filterPriority.includes(p);
-                    const color = p === 0 ? '#6B7280' : PRIORITY_COLORS[p];
+                    const color = priorityColors[p] ?? (p === 0 ? '#6B7280' : PRIORITY_COLORS[p]);
                     return (
                       <button
                         key={p}
                         onClick={() => togglePriorityFilter(p)}
+                        onContextMenu={(e) => { e.preventDefault(); setColorPicker({ x: e.clientX, y: e.clientY, currentColor: color, type: 'priority', id: String(p) }); }}
                         className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
                           active
                             ? 'bg-t-08 text-t-85'
@@ -304,6 +391,15 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
             </div>
           )}
         </>
+      )}
+      {colorPicker && (
+        <ColorPickerPopup
+          x={colorPicker.x}
+          y={colorPicker.y}
+          currentColor={colorPicker.currentColor}
+          onPick={handleColorPick}
+          onClose={() => setColorPicker(null)}
+        />
       )}
     </aside>
   );
