@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Pencil, X, Check, User, Briefcase } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Search, Trash2, Pencil, X, Check, User, Briefcase, ChevronDown } from 'lucide-react';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Project, Tag } from '@shared/types';
 
@@ -28,6 +28,63 @@ const defaultForm = (): ProjectFormData => ({
   pap_url: '',
   tag_id: '',
 });
+
+function TagDropdown({ value, onChange, tags }: { value: string; onChange: (v: string) => void; tags: Tag[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = tags.find((t) => t.id === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-1 bg-t-04 border border-t-06 hover:border-t-10 rounded-md px-2 py-1 text-[12px] text-t-75 outline-none transition-colors"
+      >
+        <span className="flex items-center gap-1.5 truncate">
+          {selected ? (
+            <>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: selected.color }} />
+              {selected.name}
+            </>
+          ) : (
+            <span className="text-t-30">Без тега</span>
+          )}
+        </span>
+        <ChevronDown size={10} className={`text-t-30 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 glass-heavy border border-t-10 rounded-lg shadow-2xl max-h-48 overflow-y-auto py-1">
+          <button
+            onClick={() => { onChange(''); setOpen(false); }}
+            className={`w-full px-2.5 py-1.5 text-left text-[11px] hover:bg-t-06 transition-colors ${!value ? 'text-accent-blue' : 'text-t-50'}`}
+          >
+            Без тега
+          </button>
+          {tags.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => { onChange(t.id); setOpen(false); }}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-[11px] hover:bg-t-06 transition-colors ${value === t.id ? 'text-accent-blue' : 'text-t-70'}`}
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: t.color }} />
+              {t.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ProjectCardProps {
   project: Project;
@@ -67,19 +124,26 @@ function ProjectCard({ project, tags, onDelete, onUpdate }: ProjectCardProps) {
     setEditing(true);
   };
 
+  const [saveError, setSaveError] = useState('');
+
   const save = async () => {
-    await onUpdate(project.id, {
-      name: form.name.trim() || project.name,
-      rp: form.rp.trim() || null,
-      architect: form.architect.trim() || 'Я',
-      start_year: form.start_year ? Number(form.start_year) : null,
-      pmi_done: form.pmi_done ? 1 : 0,
-      pmi_url: form.pmi_url.trim() || null,
-      confluence: form.confluence.trim() || null,
-      pap_url: form.pap_url.trim() || null,
-      tag_id: form.tag_id || null,
-    });
-    setEditing(false);
+    setSaveError('');
+    try {
+      await onUpdate(project.id, {
+        name: form.name.trim() || project.name,
+        rp: form.rp.trim() || null,
+        architect: form.architect.trim() || 'Я',
+        start_year: form.start_year ? Number(form.start_year) : null,
+        pmi_done: form.pmi_done ? 1 : 0,
+        pmi_url: form.pmi_url.trim() || null,
+        confluence: form.confluence.trim() || null,
+        pap_url: form.pap_url.trim() || null,
+        tag_id: form.tag_id || null,
+      });
+      setEditing(false);
+    } catch (err) {
+      setSaveError(String(err instanceof Error ? err.message : err));
+    }
   };
 
   const cancel = () => setEditing(false);
@@ -118,16 +182,11 @@ function ProjectCard({ project, tags, onDelete, onUpdate }: ProjectCardProps) {
             placeholder="Год старта"
             className="w-full bg-t-04 border border-t-06 rounded-md px-2 py-1 text-[12px] text-t-75 outline-none placeholder-t-20"
           />
-          <select
+          <TagDropdown
             value={form.tag_id}
-            onChange={(e) => setForm((f) => ({ ...f, tag_id: e.target.value }))}
-            className="w-full bg-t-04 border border-t-06 rounded-md px-2 py-1 text-[12px] text-t-75 outline-none appearance-none"
-          >
-            <option value="">Без тега</option>
-            {tags.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+            onChange={(v) => setForm((f) => ({ ...f, tag_id: v }))}
+            tags={tags}
+          />
         </div>
         <input
           type="url"
@@ -159,6 +218,9 @@ function ProjectCard({ project, tags, onDelete, onUpdate }: ProjectCardProps) {
           />
           ПМИ пройден
         </label>
+        {saveError && (
+          <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1">{saveError}</p>
+        )}
         <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
           <button
             onClick={save}
@@ -263,27 +325,34 @@ function ProjectCard({ project, tags, onDelete, onUpdate }: ProjectCardProps) {
 function CreateProjectCard({ tags, onCreate }: { tags: Tag[]; onCreate: (data: Omit<Project, 'id' | 'created_at' | 'updated_at' | 'tag_id' | 'sort_order'>) => Promise<Project> }) {
   const [active, setActive] = useState(false);
   const [form, setForm] = useState<ProjectFormData>(defaultForm());
+  const [saveError, setSaveError] = useState('');
 
   const activate = () => setActive(true);
 
   const save = async () => {
     if (!form.name.trim()) return;
-    await onCreate({
-      name: form.name.trim(),
-      rp: form.rp.trim() || null,
-      architect: form.architect.trim() || 'Я',
-      start_year: form.start_year ? Number(form.start_year) : null,
-      pmi_done: form.pmi_done ? 1 : 0,
-      pmi_url: form.pmi_url.trim() || null,
-      confluence: form.confluence.trim() || null,
-      pap_url: form.pap_url.trim() || null,
-    });
-    setForm(defaultForm());
-    setActive(false);
+    setSaveError('');
+    try {
+      await onCreate({
+        name: form.name.trim(),
+        rp: form.rp.trim() || null,
+        architect: form.architect.trim() || 'Я',
+        start_year: form.start_year ? Number(form.start_year) : null,
+        pmi_done: form.pmi_done ? 1 : 0,
+        pmi_url: form.pmi_url.trim() || null,
+        confluence: form.confluence.trim() || null,
+        pap_url: form.pap_url.trim() || null,
+      });
+      setForm(defaultForm());
+      setActive(false);
+    } catch (err) {
+      setSaveError(String(err instanceof Error ? err.message : err));
+    }
   };
 
   const cancel = () => {
     setForm(defaultForm());
+    setSaveError('');
     setActive(false);
   };
 
@@ -373,6 +442,9 @@ function CreateProjectCard({ tags, onCreate }: { tags: Tag[]; onCreate: (data: O
         />
         ПМИ пройден
       </label>
+      {saveError && (
+        <p className="text-[11px] text-red-400 bg-red-500/10 rounded px-2 py-1">{saveError}</p>
+      )}
       <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
         <button
           onClick={save}
