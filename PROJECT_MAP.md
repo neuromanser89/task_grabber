@@ -1,6 +1,6 @@
 # Task Grabber — PROJECT MAP
 
-> Актуально после Phase 1–8 (2026-03-19)
+> Актуально после Phase 1–9 (2026-03-26)
 
 ---
 
@@ -63,6 +63,7 @@ task_grabber/
 │   │   ├── widget-entry.tsx          # ReactDOM.render → Widget
 │   │   ├── focus-entry.tsx           # ReactDOM.render → FocusWindow
 │   │   ├── env.d.ts                  # Типы для window.electronAPI
+│   │   ├── app-icon.png              # Иконка приложения для TitleBar
 │   │   ├── App.tsx                   # Корневой компонент: layout, темы, IPC-подписки
 │   │   ├── Widget.tsx                # Desktop Widget: топ-задачи, клик → открыть
 │   │   ├── FocusWindow.tsx           # Focus Mode: Pomodoro таймер, задача, сессии
@@ -100,6 +101,8 @@ task_grabber/
 │   │       │   └── GlobalSearch.tsx      # Ctrl+Space: поиск по задачам/заметкам/доскам с подсветкой
 │   │       ├── TaskDoctor/
 │   │       │   └── TaskDoctorDialog.tsx  # Визард аудита задач (8 диагнозов, quick-fix)
+│   │       ├── Archive/
+│   │       │   └── ArchiveView.tsx      # Канвас архивных задач + восстановление на доску
 │   │       ├── Projects/
 │   │       │   └── ProjectsCanvasView.tsx # Канвас проектов (карточки с метаданными)
 │   │       ├── Rules/
@@ -112,11 +115,12 @@ task_grabber/
 │   │       │   └── StatusBar.tsx         # Статус-бар: счётчики задач, хоткеи-подсказки
 │   │       ├── Notes/
 │   │       │   ├── NotesPanel.tsx        # Список заметок в Sidebar
+│   │       │   ├── NotesCanvasView.tsx  # Канвас заметок с тегами, markdown, обрезкой контента
 │   │       │   └── QuickNoteDialog.tsx   # Ctrl+Shift+N: быстрая заметка
 │   │       ├── Settings/
 │   │       │   └── SettingsDialog.tsx    # Настройки: тема, хоткеи, автозапуск, автоматизация, бэкап
 │   │       ├── Stats/
-│   │       │   └── StatsPanel.tsx        # Статистика задач + архив
+│   │       │   └── StatsPanel.tsx        # Статистика задач: всего, готово, по приоритетам, по колонкам
 │   │       └── common/
 │   │           ├── Button.tsx
 │   │           ├── Input.tsx
@@ -130,7 +134,11 @@ task_grabber/
 │       └── constants.ts              # DEFAULT_COLUMNS, HOTKEYS, PRIORITY_*, SOURCE_ICONS, COLUMN_TYPE_LABELS
 ├── assets/
 │   └── icons/
-│       └── icon.ico                  # Иконка приложения
+│       ├── icon.ico              # Windows multi-size (16-256)
+│       ├── icon.png              # 512×512 основная (macOS/Linux/уведомления)
+│       ├── tray-icon.png         # 16×16 системный трей
+│       ├── tray-icon@2x.png      # 32×32 HiDPI трей
+│       └── 16/32/64/128/256/512.png  # Исходники по размерам
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json                     # Для renderer
@@ -198,7 +206,7 @@ Props: `onCreateTask: () => void`, `onFocusSearch: () => void`
 ### Board/Column.tsx
 Заголовок с иконкой, цветом, WIP-лимитом (визуальное предупреждение при превышении). SortableContext для карточек.
 
-Props: `column: Column`, `tasks: TaskWithAttachments[]`, `onCreateTask: () => void`
+Props: `column: Column`, `tasks: TaskWithAttachments[]`, `onCreateTask: () => void`. Props включает `scale?: 1 | 1.5 | 2` для масштабирования ширины
 
 ### Board/ColumnEditor.tsx
 Модалка редактирования колонок: добавить, удалить, переименовать, изменить цвет, иконку, WIP-лимит, порядок.
@@ -207,7 +215,7 @@ Props: `column: Column`, `tasks: TaskWithAttachments[]`, `onCreateTask: () => vo
 Дропдаун в TitleBar для выбора активной доски. Создание/удаление досок.
 
 ### Board/TimelineView.tsx
-Горизонтальная временная шкала с задачами. Дни недели в заголовках. ЛКМ на баре растягивает дедлайн, ПКМ двигает начало. Тултип при drag с целевой датой и днём недели. Статус-бейджи на барах и лейблах.
+Timeline/Gantt вид задач. Drag за края бара — resize start/end, за середину — move обеих дат. Локальное время (без UTC-сдвига).
 
 ### Board/CalendarView.tsx
 Сетка-календарь по месяцам, задачи в ячейках дат.
@@ -221,12 +229,12 @@ Props: `column: Column`, `tasks: TaskWithAttachments[]`, `onCreateTask: () => vo
 Props: `task: TaskWithAttachments`, `onClick: () => void`
 
 ### Task/TaskDetail.tsx
-Полная модалка задачи: приоритет в хедере рядом с заголовком, описание (Markdown), теги, вложения, дедлайн, напоминание, дата выполнения (completed_at, read-only), секция Апдейтов (лента + inline-input + редактирование даты задним числом), связанные задачи, recurring, time tracking, архивирование, конфиденциальность.
+Полная модалка задачи: приоритет в хедере рядом с заголовком, описание (Markdown с тулбаром Bold/Italic/Checkbox/List/Heading/Code), теги, вложения, дедлайн, напоминание, дата выполнения (completed_at, read-only), секция Апдейтов (лента + inline-input + редактирование даты задним числом), связанные задачи, recurring, time tracking, архивирование, конфиденциальность.
 
 Props: `task: TaskWithAttachments | null`, `onClose: () => void`
 
 ### Task/TaskCreateDialog.tsx
-Диалог создания задачи. Предзаполнение из `initialText` (clipboard) и `initialFiles` (пути). Выбор колонки, приоритета, тегов, шаблонов.
+Диалог создания задачи. Предзаполнение из `initialText` (clipboard) и `initialFiles` (пути). Выбор колонки, приоритета, тегов, шаблонов. Прикрепляет файлы из initialFiles через addAttachment после создания.
 
 Props: `isOpen: boolean`, `onClose: () => void`, `initialText: string`, `initialFiles: string[]`
 
@@ -256,7 +264,7 @@ Props: `isOpen: boolean`, `onClose: () => void`
 Props: `isOpen: boolean`, `onClose: () => void`
 
 ### TaskDoctor/TaskDoctorDialog.tsx
-Визард аудита задач. Запускает 8 диагнозов (`overdue`, `deadline_soon`, `no_deadline`, `empty_description`, `stale_task`, `no_tags`, `no_priority`, `abandoned_checklist`), показывает список проблемных задач с severity (error/warning), позволяет применить quick-fix (переместить, проставить приоритет, теги и т.п.).
+Визард аудита задач. Запускает 8 диагнозов (`overdue`, `deadline_soon`, `no_deadline`, `empty_description`, `stale_task`, `no_tags`, `no_priority`, `abandoned_checklist`), показывает список проблемных задач с severity (error/warning), позволяет применить quick-fix (переместить, проставить приоритет, теги и т.п.). Исключает задачи в статусе Готово/Отменено.
 
 Props: `isOpen: boolean`, `onClose: () => void`
 
@@ -270,19 +278,22 @@ Props: `isOpen: boolean`, `onClose: () => void`
 Зона перетаскивания файлов. .msg → `parseMsg()`, остальные файлы → создаёт задачу с вложениями.
 
 ### Layout/TitleBar.tsx
-Кастомный title bar: логотип, BoardSwitcher, кнопки вида (kanban/timeline/calendar), кнопки Settings/AI/Rules, кнопки окна.
+Кастомный title bar: иконка приложения вместо градиентного кружка, BoardSwitcher, кнопки вида (kanban/timeline/calendar), кнопки Settings/AI/Rules, кнопки окна.
 
 Props: `onNewTask`, `onSettings`, `onAI`, `onRules`, `viewMode: ViewMode`, `onViewChange`
 
-`ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects'`
+`ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects' | 'archive'`
 
 ### Layout/Sidebar.tsx
-Сворачиваемый sidebar: поиск, фильтры по тегам/приоритету/источнику/доскам. Каждая секция фильтров сворачивается (состояние в localStorage). ПКМ на теге/доске/приоритете — ColorPickerPopup для смены цвета. Вкладки: Фильтры / Статистика.
+Сворачиваемый sidebar: поиск, фильтры по тегам/приоритету/источнику/доскам. Каждая секция фильтров сворачивается (состояние в localStorage). ПКМ на теге/доске/приоритете — ColorPickerPopup для смены цвета. Вкладки: Фильтры / Статистика. Удаление тегов при hover (мусорка). Обновление списка тегов при создании нового через событие tags-changed.
 
 Ref handle: `{ focusSearch: () => void }`
 
 ### Layout/StatusBar.tsx
 Нижняя строка: общее число задач, создано сегодня, хоткей-подсказки.
+
+### Notes/NotesCanvasView.tsx
+Канвас заметок: markdown, теги, обрезка контента, конверсия в задачу.
 
 ### Notes/QuickNoteDialog.tsx
 Мини-диалог быстрой заметки (Ctrl+Shift+N). Enter → сохранить.
@@ -290,7 +301,7 @@ Ref handle: `{ focusSearch: () => void }`
 Props: `isOpen: boolean`, `onClose: () => void`
 
 ### Settings/SettingsDialog.tsx
-Настройки: тема (dark/light/system), кастомные хоткеи, автозапуск, параметры автоматизации, бэкап/восстановление, экспорт/импорт JSON.
+Настройки: тема (dark/light/system), кастомные хоткеи, автозапуск, параметры автоматизации, бэкап/восстановление, экспорт/импорт JSON, масштаб колонок канбана (×1, ×1.5, ×2).
 
 Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
 
@@ -301,7 +312,7 @@ Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
 Переключение между редактированием и preview. Рендеринг через react-markdown + remark-gfm. Кликабельные чеклисты.
 
 ### common/TagInput.tsx
-Автокомплит тегов с созданием новых. Рандомный цвет для новых тегов.
+Универсальный autocomplete тегов (задачи + заметки). Props: onAdd/onRemove коллбэки. Dropdown через createPortal.
 
 ---
 
@@ -408,6 +419,8 @@ Props: `isOpen`, `onClose`, `onThemeChange`, `currentTheme`
 | `tags:delete` | Удалить |
 | `task-tags:add` | Привязать тег к задаче |
 | `task-tags:remove` | Отвязать |
+| `note-tags:add` | Привязать тег к заметке |
+| `note-tags:remove` | Отвязать тег от заметки |
 | `notes:getAll` | |
 | `notes:create` | |
 | `notes:update` | |
@@ -574,6 +587,15 @@ CREATE TABLE notes (
 );
 ```
 
+### note_tags
+```sql
+CREATE TABLE note_tags (
+  note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+  tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (note_id, tag_id)
+);
+```
+
 ### settings
 ```sql
 CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -689,9 +711,9 @@ GRAB_TEXT, GRAB_FILES, QUICK_NOTE, SCREENSHOT — кастомизируются
 | `ColumnType` | `'backlog' \| 'in_progress' \| 'waiting' \| 'done' \| 'cancelled' \| null` — семантический тип колонки |
 | `Board` | Доска (id, name, color, icon, sort_order) |
 | `Tag` | Тег (id, name, color) |
-| `Note` | Заметка (id, content, created_at, updated_at) |
+| `Note` | Заметка (id, content, created_at, updated_at, tags?: Tag[]) |
 | `Project` | Проект (id, name, confluence, pap_url, rp, start_year, pmi_done, pmi_url, architect, tag_id, sort_order) |
-| `ViewMode` | `'kanban' \| 'timeline' \| 'calendar' \| 'files' \| 'notes' \| 'projects'` (в TitleBar.tsx) |
+| `ViewMode` | `'kanban' \| 'timeline' \| 'calendar' \| 'files' \| 'notes' \| 'projects' \| 'archive'` (в TitleBar.tsx) |
 
 ---
 
