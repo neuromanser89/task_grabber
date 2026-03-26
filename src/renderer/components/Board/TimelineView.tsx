@@ -157,6 +157,10 @@ export default function TimelineView() {
       mode,
     });
 
+    // Блокируем контекстное меню глобально на время drag
+    const preventCtx = (ce: Event) => { ce.preventDefault(); };
+    window.addEventListener('contextmenu', preventCtx, true);
+
     const onMove = (me: MouseEvent) => {
       const dx = me.clientX - startX;
       if (Math.abs(dx) > 3) barDraggedRef.current = true;
@@ -165,22 +169,29 @@ export default function TimelineView() {
       setDragTooltip({ x: me.clientX, y: me.clientY });
     };
 
-    const onUp = async (me: MouseEvent) => {
+    const cleanup = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('contextmenu', preventCtx, true);
+    };
+
+    const onUp = async (me: MouseEvent) => {
+      // Игнорируем mouseup от другой кнопки (ЛКМ при drag ПКМ и наоборот)
+      if (mode === 'start' && me.button !== 2) return;
+      if (mode === 'end' && me.button !== 0) return;
+
+      cleanup();
 
       const dx = me.clientX - startX;
       const daysDelta = Math.round(dx / DAY_W);
 
       if (daysDelta !== 0 && barDraggedRef.current) {
         if (mode === 'end') {
-          // ЛКМ → меняем due_date (дедлайн)
           const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
           baseEnd.setHours(0, 0, 0, 0);
           const newEnd = addDays(baseEnd, daysDelta);
           await updateTask(task.id, { due_date: isoDate(newEnd) });
         } else {
-          // ПКМ → меняем created_at (дату начала)
           const baseStart = new Date(task.created_at);
           baseStart.setHours(0, 0, 0, 0);
           const newStart = addDays(baseStart, daysDelta);
@@ -189,6 +200,8 @@ export default function TimelineView() {
       }
       setDragInfo(null);
       setDragTooltip(null);
+      // Разблокируем контекстное меню через тик
+      setTimeout(() => window.removeEventListener('contextmenu', preventCtx, true), 0);
     };
 
     window.addEventListener('mousemove', onMove);
