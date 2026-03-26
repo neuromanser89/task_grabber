@@ -280,7 +280,10 @@ export default function ArchiveView() {
                   onClick={() => restoreToBoard(ctxMenu.task, board.id)}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-t-60 hover:bg-t-06 hover:text-t-85 transition-colors text-left"
                 >
-                  {board.icon && <span className="text-[13px]">{board.icon}</span>}
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: board.color ?? '#6B7280' }}
+                  />
                   <span className="flex-1 truncate">{board.name}</span>
                   <ChevronRight size={11} className="text-t-20 flex-shrink-0" />
                 </button>
