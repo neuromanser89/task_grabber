@@ -114,19 +114,25 @@ export default function TaskCreateDialog({
         .filter(t => t.column_id === columnId)
         .reduce((max, t) => Math.max(max, t.sort_order), -1);
 
-      await createTask({
+      const task = await createTask({
         title: title.trim(),
         description: description.trim() || null,
         column_id: columnId,
         sort_order: maxOrder + 1,
         priority,
         color: null,
-        source_type: initialText ? 'text' : 'manual',
+        source_type: initialFiles.length > 0 ? 'file' : initialText ? 'text' : 'manual',
         source_info: null,
         due_date: null,
         archived_at: null,
         reminder_at: null,
       });
+      // Прикрепить файлы к созданной задаче
+      if (task && initialFiles.length > 0) {
+        for (const filePath of initialFiles) {
+          await window.electronAPI?.addAttachment(task.id, filePath);
+        }
+      }
       onClose();
     } catch {
       setError('Ошибка при создании задачи');
@@ -327,11 +333,16 @@ export default function TaskCreateDialog({
 
         {/* Files hint */}
         {initialFiles.length > 0 && (
-          <div className="flex items-center gap-2.5 px-3 py-2.5 bg-t-03 border border-t-06 rounded-lg">
-            <Upload size={13} className="text-t-30 flex-shrink-0" />
-            <span className="text-[11px] text-t-40">
-              {initialFiles.length} файл{initialFiles.length > 1 ? 'а' : ''} будет прикреплено
-            </span>
+          <div className="flex flex-col gap-1 px-3 py-2.5 bg-t-03 border border-t-06 rounded-lg">
+            <div className="flex items-center gap-2 text-[11px] text-t-40">
+              <Upload size={13} className="text-t-30 flex-shrink-0" />
+              {initialFiles.length} файл{initialFiles.length > 1 ? 'а' : ''} будет прикреплено:
+            </div>
+            {initialFiles.map((f, i) => (
+              <span key={i} className="text-[11px] text-t-60 truncate pl-[21px]">
+                {f.replace(/\\/g, '/').split('/').pop()}
+              </span>
+            ))}
           </div>
         )}
 
