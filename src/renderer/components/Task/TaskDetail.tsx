@@ -11,7 +11,7 @@ import TagInput from '../common/TagInput';
 import {
   Trash2, FileText, Folder, Mail, Hand, Clock, CalendarDays, CheckCircle2, MessageSquare, Send,
   Eye, Edit3, Bookmark, BookmarkCheck, Paperclip, X, Image, Archive, Bell, BellOff, Timer, Lock, Unlock,
-  ChevronDown, ChevronUp, Bot, Loader2,
+  ChevronDown, ChevronUp, Bot, Loader2, Bold, Italic, CheckSquare, List, Heading2, Code,
 } from 'lucide-react';
 import RelatedTasks from './RelatedTasks';
 
@@ -298,6 +298,60 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
   const titleRef = useRef<HTMLInputElement>(null);
+  const descRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyDescFormat = useCallback((type: 'bold' | 'italic' | 'checkbox' | 'list' | 'heading' | 'code') => {
+    const ta = descRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = description.substring(start, end);
+    let newText = description;
+    let cursorPos = start;
+
+    if (type === 'bold') {
+      if (selected) {
+        newText = description.substring(0, start) + `**${selected}**` + description.substring(end);
+        cursorPos = end + 4;
+      } else {
+        newText = description.substring(0, start) + '**текст**' + description.substring(end);
+        cursorPos = start + 2;
+      }
+    } else if (type === 'italic') {
+      if (selected) {
+        newText = description.substring(0, start) + `*${selected}*` + description.substring(end);
+        cursorPos = end + 2;
+      } else {
+        newText = description.substring(0, start) + '*текст*' + description.substring(end);
+        cursorPos = start + 1;
+      }
+    } else if (type === 'code') {
+      if (selected) {
+        newText = description.substring(0, start) + '`' + selected + '`' + description.substring(end);
+        cursorPos = end + 2;
+      } else {
+        newText = description.substring(0, start) + '`код`' + description.substring(end);
+        cursorPos = start + 1;
+      }
+    } else if (type === 'checkbox' || type === 'list' || type === 'heading') {
+      const prefix = type === 'checkbox' ? '- [ ] ' : type === 'list' ? '- ' : '## ';
+      if (selected) {
+        const lines = selected.split('\n').map((l) => prefix + l);
+        const replaced = lines.join('\n');
+        newText = description.substring(0, start) + replaced + description.substring(end);
+        cursorPos = start + replaced.length;
+      } else {
+        newText = description.substring(0, start) + prefix + description.substring(end);
+        cursorPos = start + prefix.length;
+      }
+    }
+
+    setDescription(newText);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.setSelectionRange(cursorPos, cursorPos);
+    });
+  }, [description]);
 
   useEffect(() => {
     if (task) {
@@ -602,14 +656,38 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               )}
             </div>
           ) : (
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={() => { saveDescription(); if (description.trim()) setDescPreview(true); }}
-              rows={6}
-              placeholder={"Описание... (Markdown)\n\n- [ ] подзадача 1\n- [x] выполнено\n\n**жирный**, *курсив*, # заголовок"}
-              className="w-full bg-t-03 border border-t-06 hover:border-t-08 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-lg px-3 py-2.5 text-[13px] text-t-75 placeholder-t-15 outline-none resize-none transition-all duration-200 font-mono"
-            />
+            <div className="flex flex-col">
+              <div className="flex items-center gap-0.5 px-1.5 py-1 bg-t-04 border border-t-06 rounded-t-lg border-b-0">
+                {([
+                  { type: 'bold' as const, icon: <Bold size={13} />, title: 'Жирный' },
+                  { type: 'italic' as const, icon: <Italic size={13} />, title: 'Курсив' },
+                  { type: 'checkbox' as const, icon: <CheckSquare size={13} />, title: 'Чекбокс' },
+                  { type: 'list' as const, icon: <List size={13} />, title: 'Список' },
+                  { type: 'heading' as const, icon: <Heading2 size={13} />, title: 'Заголовок' },
+                  { type: 'code' as const, icon: <Code size={13} />, title: 'Код' },
+                ]).map((btn) => (
+                  <button
+                    key={btn.type}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applyDescFormat(btn.type)}
+                    title={btn.title}
+                    className="w-6 h-6 flex items-center justify-center rounded text-t-35 hover:text-t-70 hover:bg-t-06 transition-all"
+                  >
+                    {btn.icon}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                ref={descRef}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onBlur={() => { saveDescription(); if (description.trim()) setDescPreview(true); }}
+                rows={6}
+                placeholder={"Описание... (Markdown)\n\n- [ ] подзадача 1\n- [x] выполнено\n\n**жирный**, *курсив*, # заголовок"}
+                className="w-full bg-t-03 border border-t-06 hover:border-t-08 focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/15 rounded-b-lg px-3 py-2.5 text-[13px] text-t-75 placeholder-t-15 outline-none resize-none transition-all duration-200 font-mono"
+              />
+            </div>
           )}
         </div>
 
