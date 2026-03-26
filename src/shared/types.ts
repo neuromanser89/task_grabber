@@ -54,6 +54,7 @@ export interface Note {
   id: string;
   title: string | null;
   content: string;
+  tags?: Tag[];
   created_at: string;
   updated_at: string;
 }

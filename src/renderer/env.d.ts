@@ -30,6 +30,8 @@ interface ElectronAPI {
   createNote: (content: string, title?: string | null) => Promise<Note>;
   updateNote: (id: string, content: string, title?: string | null) => Promise<Note>;
   deleteNote: (id: string) => Promise<boolean>;
+  addTagToNote: (noteId: string, tagId: string) => Promise<boolean>;
+  removeTagFromNote: (noteId: string, tagId: string) => Promise<boolean>;
 
   // MSG
   parseMsg: (filePath: string) => Promise<TaskWithAttachments>;

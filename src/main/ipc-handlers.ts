@@ -232,7 +232,13 @@ export function setupIpcHandlers() {
   });
 
   // ─── Notes ────────────────────────────────────────────────────────────────
-  ipcMain.handle('notes:getAll', () => queries.getAllNotes());
+  ipcMain.handle('notes:getAll', () => {
+    const notes = queries.getAllNotes();
+    return notes.map((n) => ({
+      ...n,
+      tags: queries.getTagsByNoteId(n.id),
+    }));
+  });
 
   ipcMain.handle('notes:create', (_e, content: string, title?: string | null) => queries.createNote(content, title));
 
@@ -242,6 +248,16 @@ export function setupIpcHandlers() {
 
   ipcMain.handle('notes:delete', (_e, id: string) => {
     queries.deleteNote(id);
+    return true;
+  });
+
+  ipcMain.handle('note-tags:add', (_e, noteId: string, tagId: string) => {
+    queries.addTagToNote(noteId, tagId);
+    return true;
+  });
+
+  ipcMain.handle('note-tags:remove', (_e, noteId: string, tagId: string) => {
+    queries.removeTagFromNote(noteId, tagId);
     return true;
   });
 

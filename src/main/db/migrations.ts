@@ -72,6 +72,12 @@ export function runMigrations(db: Database.Database) {
       updated_at TEXT DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS note_tags (
+      note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+      tag_id  TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+      PRIMARY KEY (note_id, tag_id)
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL

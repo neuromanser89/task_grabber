@@ -354,6 +354,29 @@ export function removeTagFromTask(taskId: string, tagId: string): void {
     .run(taskId, tagId);
 }
 
+export function getTagsByNoteId(noteId: string): Tag[] {
+  return getDb()
+    .prepare(
+      `SELECT t.* FROM tags t
+       INNER JOIN note_tags nt ON nt.tag_id = t.id
+       WHERE nt.note_id = ?
+       ORDER BY t.name`
+    )
+    .all(noteId) as Tag[];
+}
+
+export function addTagToNote(noteId: string, tagId: string): void {
+  getDb()
+    .prepare('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)')
+    .run(noteId, tagId);
+}
+
+export function removeTagFromNote(noteId: string, tagId: string): void {
+  getDb()
+    .prepare('DELETE FROM note_tags WHERE note_id = ? AND tag_id = ?')
+    .run(noteId, tagId);
+}
+
 export function getTasksByColumnId(columnId: string): Task[] {
   return getDb()
     .prepare('SELECT * FROM tasks WHERE column_id = ? ORDER BY sort_order')
@@ -539,6 +562,7 @@ export interface ExportData {
   tags: unknown[];
   task_tags: unknown[];
   notes: unknown[];
+  note_tags: unknown[];
   settings: unknown[];
 }
 
@@ -552,6 +576,7 @@ export function exportAllData(): ExportData {
     tags: db.prepare('SELECT * FROM tags').all(),
     task_tags: db.prepare('SELECT * FROM task_tags').all(),
     notes: db.prepare('SELECT * FROM notes').all(),
+    note_tags: db.prepare('SELECT * FROM note_tags').all(),
     settings: db.prepare("SELECT * FROM settings WHERE key NOT IN ('ai_api_key')").all(),
   };
 }
@@ -561,6 +586,7 @@ export function importAllData(data: ExportData): void {
 
   db.transaction(() => {
     // Clear existing data
+    db.prepare('DELETE FROM note_tags').run();
     db.prepare('DELETE FROM task_tags').run();
     db.prepare('DELETE FROM attachments').run();
     db.prepare('DELETE FROM tasks').run();
@@ -603,6 +629,14 @@ export function importAllData(data: ExportData): void {
     );
     for (const note of data.notes as Record<string, unknown>[]) {
       insertNote.run(note);
+    }
+
+    // Insert note_tags
+    if (Array.isArray(data.note_tags)) {
+      const insertNoteTag = db.prepare('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (@note_id, @tag_id)');
+      for (const nt of data.note_tags as Record<string, unknown>[]) {
+        insertNoteTag.run(nt);
+      }
     }
 
     // Insert settings
