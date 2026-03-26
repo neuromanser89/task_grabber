@@ -174,20 +174,17 @@ export default function TimelineView() {
 
       if (daysDelta !== 0 && barDraggedRef.current) {
         if (mode === 'end') {
-          // Растягиваем конец → меняем due_date
+          // ЛКМ → меняем due_date (дедлайн)
           const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
           baseEnd.setHours(0, 0, 0, 0);
           const newEnd = addDays(baseEnd, daysDelta);
           await updateTask(task.id, { due_date: isoDate(newEnd) });
         } else {
-          // Растягиваем начало → меняем due_date тоже (сдвигаем начало = сдвигаем длительность)
-          // Начало задачи = created_at, нельзя менять. Но можно менять due_date в обратном направлении.
-          // Реально: ПКМ тянем влево = увеличиваем длину (due_date не меняется, но визуально начало раньше)
-          // Проще: ПКМ двигает due_date назад (в прошлое)
-          const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
-          baseEnd.setHours(0, 0, 0, 0);
-          const newEnd = addDays(baseEnd, daysDelta);
-          await updateTask(task.id, { due_date: isoDate(newEnd) });
+          // ПКМ → меняем created_at (дату начала)
+          const baseStart = new Date(task.created_at);
+          baseStart.setHours(0, 0, 0, 0);
+          const newStart = addDays(baseStart, daysDelta);
+          await updateTask(task.id, { created_at: isoDate(newStart) });
         }
       }
       setDragInfo(null);

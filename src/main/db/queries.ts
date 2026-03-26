@@ -217,7 +217,7 @@ export function createTask(
 }
 
 export function updateTask(id: string, data: Partial<Task>): Task {
-  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'completed_at', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next', 'time_spent'];
+  const allowed = ['title', 'description', 'column_id', 'sort_order', 'priority', 'color', 'source_type', 'source_info', 'due_date', 'completed_at', 'reminder_at', 'archived_at', 'is_confidential', 'recurrence_rule', 'recurrence_next', 'time_spent', 'created_at'];
   const filtered = safeFilterFields(data as Record<string, unknown>, allowed);
   const fields = Object.keys(filtered)
     .map((k) => `${k} = ?`)
