@@ -19,6 +19,25 @@
 
 ---
 
+## Скриншоты
+
+<p align="center">
+  <img src="docs/screenshots/kanban.png" width="100%" alt="Канбан-доска">
+  <br><em>Канбан-доска с колонками, тегами и статусами</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/timeline.png" width="100%" alt="Timeline">
+  <br><em>Timeline — Gantt-шкала с drag-resize</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/files.png" width="100%" alt="Файлы">
+  <br><em>Файловый менеджер доски</em>
+</p>
+
+---
+
 ## Что это?
 
 Task Grabber — десктопное приложение, которое живёт в системном трее и позволяет захватывать задачи откуда угодно — выделенный текст, файлы, письма Outlook (.msg) — одним хоткеем. Все задачи попадают на канбан-доску с drag-and-drop, несколькими видами отображения и без единого обязательного поля.
