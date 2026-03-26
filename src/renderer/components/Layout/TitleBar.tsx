@@ -1,8 +1,8 @@
 import React from 'react';
-import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote, Stethoscope, Briefcase } from 'lucide-react';
+import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote, Stethoscope, Briefcase, Archive } from 'lucide-react';
 import BoardSwitcher from '../Board/BoardSwitcher';
 
-export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects';
+export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects' | 'archive';
 
 interface TitleBarProps {
   onNewTask?: () => void;
@@ -21,6 +21,7 @@ const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[]
   { mode: 'notes', label: 'Заметки', Icon: StickyNote },
   { mode: 'files', label: 'Файлы', Icon: FolderOpen },
   { mode: 'projects', label: 'Проекты', Icon: Briefcase },
+  { mode: 'archive', label: 'Архив', Icon: Archive },
 ];
 
 export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDoctor, viewMode = 'kanban', onViewChange }: TitleBarProps) {

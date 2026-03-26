@@ -4,7 +4,7 @@ import { Search, X, Archive, RotateCcw, ChevronRight } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useBoardStore } from '../../stores/boardStore';
-import type { Task, Board } from '@shared/types';
+import type { TaskWithAttachments, Board } from '@shared/types';
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -33,15 +33,15 @@ const PRIORITY_LABELS: Record<number, string> = {
 interface CtxMenu {
   x: number;
   y: number;
-  task: Task;
+  task: TaskWithAttachments;
   submenuOpen: boolean;
 }
 
 interface ArchiveCardProps {
-  task: Task;
+  task: TaskWithAttachments;
   boardName: string;
   columnName: string;
-  onContextMenu: (e: React.MouseEvent, task: Task) => void;
+  onContextMenu: (e: React.MouseEvent, task: TaskWithAttachments) => void;
 }
 
 function ArchiveCard({ task, boardName, columnName, onContextMenu }: ArchiveCardProps) {
@@ -130,17 +130,17 @@ export default function ArchiveView() {
   const columnMap = Object.fromEntries(columns.map((c) => [c.id, c]));
   const boardMap = Object.fromEntries(boards.map((b) => [b.id, b]));
 
-  function getBoardName(task: Task): string {
+  function getBoardName(task: TaskWithAttachments): string {
     const col = columnMap[task.column_id];
     if (!col?.board_id) return '';
     return boardMap[col.board_id]?.name ?? '';
   }
 
-  function getColumnName(task: Task): string {
+  function getColumnName(task: TaskWithAttachments): string {
     return columnMap[task.column_id]?.name ?? '';
   }
 
-  const handleContextMenu = useCallback((e: React.MouseEvent, task: Task) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, task: TaskWithAttachments) => {
     e.preventDefault();
     e.stopPropagation();
     const x = Math.min(e.clientX, window.innerWidth - 240);
@@ -166,7 +166,7 @@ export default function ArchiveView() {
     };
   }, [ctxMenu, closeCtx]);
 
-  async function restoreToBoard(task: Task, boardId: string) {
+  async function restoreToBoard(task: TaskWithAttachments, boardId: string) {
     const boardCols = columns.filter((c) => c.board_id === boardId);
     const defaultCol = boardCols.find((c) => c.is_default) ?? boardCols[0];
     if (!defaultCol) return;
