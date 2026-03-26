@@ -5,8 +5,8 @@
 <h1 align="center">Task Grabber</h1>
 
 <p align="center">
-  <b>Grab anything. Track everything.</b><br>
-  Cross-platform task manager with kanban boards, timeline, calendar, focus mode, and AI assistant.
+  <b>Хватай всё. Контролируй всё.</b><br>
+  Кроссплатформенный менеджер задач с канбан-досками, таймлайном, календарём, фокус-режимом и AI-ассистентом.
 </p>
 
 <p align="center">
@@ -19,85 +19,89 @@
 
 ---
 
-## What is this?
+## Что это?
 
-Task Grabber is a desktop app that lives in your system tray and lets you capture tasks from anywhere — selected text, files, Outlook emails (.msg) — with a single hotkey. All tasks land on a kanban board with drag-and-drop, multiple views, and zero mandatory fields.
+Task Grabber — десктопное приложение, которое живёт в системном трее и позволяет захватывать задачи откуда угодно — выделенный текст, файлы, письма Outlook (.msg) — одним хоткеем. Все задачи попадают на канбан-доску с drag-and-drop, несколькими видами отображения и без единого обязательного поля.
 
-Built for speed. No accounts, no cloud, no BS. Your data stays on your machine in a local SQLite database.
+Сделано для скорости. Без аккаунтов, без облака, без лишней фигни. Данные хранятся локально в SQLite.
 
-## Features
+## Возможности
 
-### Core
-- **Kanban board** with custom columns, colors, WIP limits, drag-and-drop
-- **Multiple boards** — separate boards for different projects
-- **Timeline view** — Gantt-style horizontal timeline, drag to set deadlines
-- **Calendar view** — monthly grid, drag tasks between dates
-- **Task updates** — activity log per task, quick update via right-click
-- **Status indicators** — visual badges showing task status across all views
+### Ядро
+- **Канбан-доска** — настраиваемые колонки, цвета, WIP-лимиты, drag-and-drop
+- **Несколько досок** — отдельные доски для разных проектов
+- **Таймлайн** — горизонтальная Gantt-шкала, drag за края бара = resize, за середину = move
+- **Календарь** — месячная сетка, задачи в ячейках дат
+- **Апдейты задач** — лента активности, быстрый апдейт через ПКМ
+- **Статусы** — визуальные бейджи статуса задачи во всех видах
+- **Архив** — отдельный вид с сеткой карточек, ПКМ → восстановить на доску
+- **Масштаб колонок** — ×1 / ×1.5 / ×2 в настройках (для ноутбуков и больших мониторов)
 
-### Capture
-- **Global hotkeys** — grab selected text (`Ctrl+Shift+T`), files (`Ctrl+Shift+F`), screenshots (`Ctrl+Shift+S`)
-- **Outlook integration** — drag .msg files to create tasks from emails
-- **Quick capture** — double-tap hotkey for instant task creation
-- **Drop zone** — drag files/emails onto the board
+### Захват
+- **Глобальные хоткеи** — выделенный текст (`Ctrl+Shift+T`), файлы (`Ctrl+Shift+F`), скриншоты (`Ctrl+Shift+S`)
+- **Outlook интеграция** — перетащи .msg файл → задача из письма
+- **Быстрый захват** — двойное нажатие хоткея = задача без диалога
+- **Drop zone** — перетаскивай файлы/письма на доску
 
-### Productivity
-- **Focus Mode** — Pomodoro timer in a separate always-on-top window
-- **Desktop Widget** — floating widget showing top priority tasks
-- **Smart Rules** — automation engine (IF trigger THEN action)
-- **AI Assistant** — OpenRouter / Ollama integration for task analysis
-- **Task Doctor** — audit wizard that finds problems in your tasks
+### Продуктивность
+- **Фокус-режим** — Pomodoro таймер в отдельном always-on-top окне
+- **Десктоп виджет** — плавающий виджет с приоритетными задачами
+- **Умные правила** — движок автоматизации (ЕСЛИ триггер → ТО действие)
+- **AI-ассистент** — OpenRouter / Ollama для анализа и описания задач
+- **Task Doctor** — визард аудита: находит проблемы в задачах (просроченные, без дедлайна, заброшенные чеклисты). Пропускает завершённые задачи.
 
-### Organization
-- **Tags** with colors, right-click to change color
-- **Priority levels** (customizable colors)
-- **Deadlines & reminders** with notifications
-- **Recurring tasks** — daily, weekly, monthly, weekdays, custom
-- **Related tasks** — link tasks together
-- **File attachments** with preview
-- **Projects** — project cards with metadata (team lead, architect, links)
-- **Markdown descriptions** with clickable checklists
+### Организация
+- **Теги** с цветами, удаление из фильтров, ПКМ для смены цвета
+- **Приоритеты** (настраиваемые цвета)
+- **Дедлайны и напоминания** с нативными уведомлениями
+- **Повторяющиеся задачи** — ежедневно, еженедельно, ежемесячно, по будням, кастом
+- **Связанные задачи** — связи между задачами
+- **Вложения** с превью
+- **Проекты** — карточки проектов с метаданными (РП, архитектор, ссылки)
+- **Markdown описания** с кликабельными чеклистами и тулбаром форматирования
 
-### Search & Filter
-- **Global Search** (`Ctrl+Space`) — search across tasks, notes, boards
-- **Command Palette** (`Ctrl+K`) — quick actions, navigation
-- **Sidebar filters** — by tags, priority, source, board (collapsible sections)
-- **Batch operations** — select multiple tasks, move/archive/delete
+### Поиск и фильтры
+- **Глобальный поиск** (`Ctrl+Space`) — по задачам, заметкам, доскам
+- **Палитра команд** (`Ctrl+K`) — быстрые действия, навигация
+- **Фильтры в сайдбаре** — по тегам, приоритету, источнику, доске
+- **Массовые операции** — выбрать несколько задач, переместить/архивировать/удалить
 
-### Notes
-- **Quick notes** (`Ctrl+Shift+N`) — capture thoughts instantly
-- **Notes canvas** — grid view for all notes
-- **Markdown** support with preview
+### Заметки
+- **Быстрая заметка** (`Ctrl+Shift+N`) — мгновенный захват мыслей
+- **Канвас заметок** — сетка карточек с Markdown и поиском
+- **Теги на заметках** — те же теги что и на задачах
+- **Обрезка длинных заметок** — карточки до 8-9 строк, «Показать всё / Свернуть»
+- **Конвертация в задачу** — заметку можно превратить в задачу
 
-## Tech Stack
+## Стек
 
-| Layer | Technology |
-|-------|-----------|
+| Слой | Технология |
+|------|-----------|
 | Runtime | Electron 33 |
 | Frontend | React 18 + TypeScript 5 |
 | State | Zustand |
 | UI | Tailwind CSS 3 |
 | Drag & Drop | @dnd-kit |
-| Database | SQLite (better-sqlite3) |
-| Icons | Lucide React |
-| Build | Vite 5 + electron-builder |
+| БД | SQLite (better-sqlite3) |
+| Иконки | Lucide React |
+| Сборка | Vite 5 + electron-builder |
 | CI/CD | GitHub Actions |
 
-## Installation
+## Установка
 
-### Download
+### Скачать
 
-Go to [Releases](../../releases/latest) and download:
+Перейди в [Releases](../../releases/latest) и скачай:
 
-| Platform | File |
-|----------|------|
+| Платформа | Файл |
+|-----------|------|
 | Windows | `Task.Grabber.Setup.x.x.x.exe` |
 | macOS (Intel) | `Task.Grabber-x.x.x.dmg` |
 | macOS (Apple Silicon) | `Task.Grabber-x.x.x-arm64.dmg` |
 | Linux | `Task.Grabber-x.x.x.AppImage` |
 | ALT Linux / Fedora | `task-grabber-x.x.x.x86_64.rpm` |
 
-### Build from source
+### Собрать из исходников
 
 ```bash
 git clone https://github.com/neuromanser89/task_grabber.git
@@ -105,33 +109,35 @@ cd task_grabber
 npm install
 npx electron-rebuild -f -w better-sqlite3
 npm run build
-npx electron-builder          # your platform
+npx electron-builder          # под твою платформу
 ```
 
-## Development
+## Разработка
 
 ```bash
-npm run dev     # Electron + Vite dev server (port 6173)
+npm run dev     # Electron + Vite dev server (порт 6173)
 npm run build   # tsc (main) + vite build (renderer)
 npm run pack    # build + electron-builder → release/
 ```
 
-Architecture: 3 Electron windows (main, widget, focus), each with its own HTML entry point. Main process handles SQLite, hotkeys, tray, automation. Renderer is React + Zustand + Tailwind.
+Архитектура: 3 окна Electron (основное, виджет, фокус), каждое со своим HTML entry point. Main process — SQLite, хоткеи, трей, автоматизация. Renderer — React + Zustand + Tailwind.
 
-## Keyboard Shortcuts
+## Хоткеи
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Shift+T` | Grab selected text → new task |
-| `Ctrl+Shift+T` x2 | Quick capture (no dialog) |
-| `Ctrl+Shift+F` | Grab files → new task |
-| `Ctrl+Shift+N` | Quick note |
-| `Ctrl+Shift+W` | Toggle desktop widget |
-| `Ctrl+Shift+F2` | Toggle focus mode |
-| `Ctrl+Shift+S` | Screenshot → new task |
-| `Ctrl+K` | Command palette |
-| `Ctrl+Space` | Global search |
+| Хоткей | Действие |
+|--------|----------|
+| `Ctrl+Shift+T` | Текст из буфера → новая задача |
+| `Ctrl+Shift+T` ×2 | Быстрый захват (без диалога) |
+| `Ctrl+Shift+F` | Файлы из буфера → новая задача |
+| `Ctrl+Shift+N` | Быстрая заметка |
+| `Ctrl+Shift+W` | Показать/скрыть виджет |
+| `Ctrl+Shift+F2` | Показать/скрыть фокус-режим |
+| `Ctrl+Shift+S` | Скриншот → новая задача |
+| `Ctrl+K` | Палитра команд |
+| `Ctrl+Space` | Глобальный поиск |
 
-## License
+Все хоткеи захвата настраиваются в Настройках.
+
+## Лицензия
 
 MIT
