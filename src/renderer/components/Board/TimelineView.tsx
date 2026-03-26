@@ -60,7 +60,7 @@ export default function TimelineView() {
     startX: number;
     originalStart: string;
     originalEnd: string;
-    mode: 'end' | 'start'; // ЛКМ = end (вперёд), ПКМ = start (назад)
+    mode: 'end' | 'start' | 'move';
   } | null>(null);
   const [dragTooltip, setDragTooltip] = useState<{ x: number; y: number } | null>(null);
 
@@ -136,18 +136,30 @@ export default function TimelineView() {
     return { left, width, visible };
   }
 
+  function getBarDragMode(e: React.MouseEvent, barLeft: number, barWidth: number): 'start' | 'end' | 'move' {
+    const barEl = e.currentTarget as HTMLElement;
+    const rect = barEl.getBoundingClientRect();
+    const relX = e.clientX - rect.left;
+    const edgeZone = Math.min(8, barWidth / 3); // зона захвата края — 8px или треть бара
+    if (relX <= edgeZone) return 'start';
+    if (relX >= rect.width - edgeZone) return 'end';
+    return 'move';
+  }
+
   function handleBarMouseDown(
     e: React.MouseEvent,
     task: TaskWithAttachments,
     startD: Date,
-    endD: Date
+    endD: Date,
+    barLeft: number,
+    barWidth: number
   ) {
+    if (e.button !== 0) return; // только ЛКМ
     e.stopPropagation();
     e.preventDefault();
     barDraggedRef.current = false;
     const startX = e.clientX;
-    // ЛКМ (button=0) → растягиваем конец (due_date), ПКМ (button=2) → растягиваем начало
-    const mode: 'end' | 'start' = e.button === 2 ? 'start' : 'end';
+    const mode = getBarDragMode(e, barLeft, barWidth);
     setDragInfo({
       taskId: task.id,
       offsetDays: 0,
@@ -157,10 +169,6 @@ export default function TimelineView() {
       mode,
     });
 
-    // Блокируем контекстное меню глобально на время drag
-    const preventCtx = (ce: Event) => { ce.preventDefault(); };
-    window.addEventListener('contextmenu', preventCtx, true);
-
     const onMove = (me: MouseEvent) => {
       const dx = me.clientX - startX;
       if (Math.abs(dx) > 3) barDraggedRef.current = true;
@@ -169,18 +177,9 @@ export default function TimelineView() {
       setDragTooltip({ x: me.clientX, y: me.clientY });
     };
 
-    const cleanup = () => {
+    const onUp = async (me: MouseEvent) => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
-      window.removeEventListener('contextmenu', preventCtx, true);
-    };
-
-    const onUp = async (me: MouseEvent) => {
-      // Игнорируем mouseup от другой кнопки (ЛКМ при drag ПКМ и наоборот)
-      if (mode === 'start' && me.button !== 2) return;
-      if (mode === 'end' && me.button !== 0) return;
-
-      cleanup();
 
       const dx = me.clientX - startX;
       const daysDelta = Math.round(dx / DAY_W);
@@ -189,19 +188,25 @@ export default function TimelineView() {
         if (mode === 'end') {
           const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
           baseEnd.setHours(0, 0, 0, 0);
-          const newEnd = addDays(baseEnd, daysDelta);
-          await updateTask(task.id, { due_date: isoDate(newEnd) });
-        } else {
+          await updateTask(task.id, { due_date: isoDate(addDays(baseEnd, daysDelta)) });
+        } else if (mode === 'start') {
           const baseStart = new Date(task.created_at);
           baseStart.setHours(0, 0, 0, 0);
-          const newStart = addDays(baseStart, daysDelta);
-          await updateTask(task.id, { created_at: isoDate(newStart) });
+          await updateTask(task.id, { created_at: isoDate(addDays(baseStart, daysDelta)) });
+        } else {
+          // move — сдвигаем обе даты
+          const baseStart = new Date(task.created_at);
+          baseStart.setHours(0, 0, 0, 0);
+          const baseEnd = task.due_date ? new Date(task.due_date) : new Date(task.created_at);
+          baseEnd.setHours(0, 0, 0, 0);
+          await updateTask(task.id, {
+            created_at: isoDate(addDays(baseStart, daysDelta)),
+            due_date: isoDate(addDays(baseEnd, daysDelta)),
+          });
         }
       }
       setDragInfo(null);
       setDragTooltip(null);
-      // Разблокируем контекстное меню через тик
-      setTimeout(() => window.removeEventListener('contextmenu', preventCtx, true), 0);
     };
 
     window.addEventListener('mousemove', onMove);
@@ -264,7 +269,7 @@ export default function TimelineView() {
           {formatDay(viewStart)} — {formatDay(addDays(viewStart, DAYS - 1))}
         </span>
         <span className="ml-auto text-xs text-t-25">
-          Задач: {tasks.length} | Перетащи бар чтобы перенести дедлайн
+          Задач: {tasks.length} | Края бара = resize, середина = move
         </span>
       </div>
 
@@ -346,10 +351,10 @@ export default function TimelineView() {
             <div className="relative">
               {tasksWithDates.map(({ task, startD, endD }) => {
                 const isDragging = dragInfo?.taskId === task.id;
-                const adjustedStart = isDragging && dragInfo!.mode === 'start'
+                const adjustedStart = isDragging && (dragInfo!.mode === 'start' || dragInfo!.mode === 'move')
                   ? addDays(startD, dragInfo!.offsetDays)
                   : startD;
-                const adjustedEnd = isDragging && dragInfo!.mode === 'end'
+                const adjustedEnd = isDragging && (dragInfo!.mode === 'end' || dragInfo!.mode === 'move')
                   ? addDays(endD, dragInfo!.offsetDays)
                   : endD;
                 const { left, width, visible } = getBarStyle(adjustedStart, adjustedEnd);
@@ -388,8 +393,8 @@ export default function TimelineView() {
                     {visible && (
                       <div
                         data-bar="1"
-                        className={`absolute top-1/2 -translate-y-1/2 rounded-md flex items-center px-2 text-[11px] font-medium text-white
-                          cursor-grab active:cursor-grabbing select-none transition-all duration-150
+                        className={`absolute top-1/2 -translate-y-1/2 rounded-md flex items-center text-[11px] font-medium text-white
+                          select-none transition-all duration-150
                           ${isDragging ? 'opacity-80 shadow-drag scale-[1.02]' : 'hover:brightness-110 hover:shadow-md'}
                           ${isDone ? 'opacity-60' : ''}`}
                         style={{
@@ -404,11 +409,14 @@ export default function TimelineView() {
                           border: hasDue ? 'none' : `1px dashed ${PRIORITY_COLORS[task.priority ?? 0]}`,
                           zIndex: isDragging ? 20 : 5,
                         }}
-                        onMouseDown={(e) => handleBarMouseDown(e, task, startD, endD)}
-                        onContextMenu={(e) => e.preventDefault()}
-                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна)'}\nЛКМ: растянуть дедлайн → | ПКМ: сдвинуть начало ←`}
+                        onMouseDown={(e) => handleBarMouseDown(e, task, startD, endD, left, width)}
+                        title={`${task.title}${hasDue ? ` — до ${task.due_date}` : ' (нет дедлайна)'}\nКрая: resize | Середина: move`}
                       >
-                        <span className={`truncate ${isDone ? 'line-through' : ''}`}>{task.title}</span>
+                        {/* Левая ручка resize */}
+                        <div className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/20 rounded-l-md" />
+                        <span className={`truncate px-2 cursor-grab active:cursor-grabbing ${isDone ? 'line-through' : ''}`}>{task.title}</span>
+                        {/* Правая ручка resize */}
+                        <div className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/20 rounded-r-md" />
                       </div>
                     )}
                   </div>
@@ -421,6 +429,23 @@ export default function TimelineView() {
 
       {/* Drag tooltip */}
       {dragInfo && dragTooltip && (() => {
+        if (dragInfo.mode === 'move') {
+          const s = addDays(new Date(dragInfo.originalStart), dragInfo.offsetDays);
+          const e = addDays(new Date(dragInfo.originalEnd), dragInfo.offsetDays);
+          s.setHours(0, 0, 0, 0);
+          e.setHours(0, 0, 0, 0);
+          return (
+            <div
+              className="fixed z-[9999] pointer-events-none glass-heavy border border-t-10 rounded-lg px-2.5 py-1.5 shadow-2xl text-[11px] text-t-85 font-medium whitespace-nowrap"
+              style={{ left: dragTooltip.x + 12, top: dragTooltip.y - 32 }}
+            >
+              <span className="text-t-30 mr-1.5">↔ Сдвиг</span>
+              <span className="text-accent-blue">{formatDay(s)}</span>
+              <span className="text-t-30 mx-1">—</span>
+              <span className="text-accent-blue">{formatDay(e)}</span>
+            </div>
+          );
+        }
         const baseDate = dragInfo.mode === 'end'
           ? new Date(dragInfo.originalEnd)
           : new Date(dragInfo.originalStart);
