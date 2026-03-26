@@ -1,7 +1,7 @@
 import React from 'react';
 import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote, Stethoscope, Briefcase, Archive } from 'lucide-react';
 import BoardSwitcher from '../Board/BoardSwitcher';
-import appIcon from '../../../assets/icons/32.png';
+import appIcon from '../../app-icon.png';
 
 export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects' | 'archive';
 
