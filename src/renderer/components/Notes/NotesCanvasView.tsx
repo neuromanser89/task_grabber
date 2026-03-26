@@ -5,7 +5,7 @@ import { Plus, Search, Trash2, Edit3, Check, X, ArrowRightCircle } from 'lucide-
 import { useNoteStore } from '../../stores/noteStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
-import type { Note } from '@shared/types';
+import type { Note, Tag } from '@shared/types';
 import TagInput from '../common/TagInput';
 
 function relativeTime(dateStr: string): string {
@@ -94,7 +94,7 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
             className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed flex-1"
             placeholder="Текст заметки (markdown)..."
           />
-          <div className="pt-1 border-t border-t-06">
+          <div className="relative z-10 pt-1 border-t border-t-06">
             <TagInput
               initialTags={localTags}
               onAdd={async (tagId) => { await window.electronAPI?.addTagToNote(note.id, tagId); }}
@@ -102,7 +102,7 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
               onChange={(tags) => setLocalTags(tags)}
             />
           </div>
-          <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
+          <div className="relative z-0 flex gap-1.5 justify-end pt-1 border-t border-t-06">
             <button
               onClick={save}
               className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] text-green-400/80 hover:text-green-400 hover:bg-green-400/10 transition-colors"
@@ -223,9 +223,10 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
 }
 
 function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
-  const { createNote } = useNoteStore();
+  const { createNote, fetchNotes } = useNoteStore();
   const [value, setValue] = useState('');
   const [titleValue, setTitleValue] = useState('');
+  const [pendingTags, setPendingTags] = useState<Tag[]>([]);
   const [active, setActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -237,9 +238,17 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
   const save = async () => {
     const trimmed = value.trim();
     if (trimmed) {
-      await createNote(trimmed, titleValue.trim() || null);
+      const note = await createNote(trimmed, titleValue.trim() || null);
+      // Привязать теги к только что созданной заметке
+      for (const tag of pendingTags) {
+        await window.electronAPI?.addTagToNote(note.id, tag.id);
+      }
+      if (pendingTags.length > 0) {
+        await fetchNotes(); // обновить список с тегами
+      }
       setValue('');
       setTitleValue('');
+      setPendingTags([]);
       onCreated();
     }
     setActive(false);
@@ -248,6 +257,7 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
   const cancel = () => {
     setValue('');
     setTitleValue('');
+    setPendingTags([]);
     setActive(false);
   };
 
@@ -286,7 +296,15 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
         className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed"
         placeholder="Текст заметки (поддерживается markdown)&#10;Ctrl+Enter — сохранить"
       />
-      <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
+      <div className="relative z-10 pt-1 border-t border-t-06">
+        <TagInput
+          initialTags={pendingTags}
+          onAdd={async () => {}}
+          onRemove={async () => {}}
+          onChange={(tags) => setPendingTags(tags)}
+        />
+      </div>
+      <div className="relative z-0 flex gap-1.5 justify-end pt-1 border-t border-t-06">
         <button
           onClick={save}
           className="flex items-center gap-1 px-3 py-1 rounded-md text-[11px] bg-accent-blue/80 hover:bg-accent-blue text-white transition-colors"
