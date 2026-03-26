@@ -72,9 +72,26 @@ function NoteItem({ note }: { note: Note }) {
         </div>
       ) : (
         <>
-          <p className="text-[13px] text-t-75 leading-relaxed whitespace-pre-wrap break-words">
+          <p className="text-[13px] text-t-75 leading-relaxed whitespace-pre-wrap break-words line-clamp-[8]">
             {note.content}
           </p>
+          {(note.tags && note.tags.length > 0) && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {note.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${tag.color}20`,
+                    color: tag.color,
+                    border: `1px solid ${tag.color}40`,
+                  }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between mt-2">
             <span className="text-[10px] text-t-20">{relativeTime(note.created_at)}</span>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

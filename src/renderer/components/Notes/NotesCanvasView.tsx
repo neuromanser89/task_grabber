@@ -6,6 +6,7 @@ import { useNoteStore } from '../../stores/noteStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import type { Note } from '@shared/types';
+import TagInput from '../common/TagInput';
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -27,7 +28,11 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(note.content);
   const [titleValue, setTitleValue] = useState(note.title ?? '');
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [localTags, setLocalTags] = useState(note.tags ?? []);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const startEdit = () => {
     setValue(note.content);
@@ -59,6 +64,16 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
     if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); save(); }
   };
 
+  useEffect(() => {
+    setLocalTags(note.tags ?? []);
+  }, [note.tags]);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setIsTruncated(contentRef.current.scrollHeight > contentRef.current.clientHeight + 2);
+    }
+  }, [note.content, expanded]);
+
   return (
     <div className="group glass-card rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 hover:border-t-12 hover:shadow-lg">
       {editing ? (
@@ -79,6 +94,14 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
             className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed flex-1"
             placeholder="Текст заметки (markdown)..."
           />
+          <div className="pt-1 border-t border-t-06">
+            <TagInput
+              initialTags={localTags}
+              onAdd={async (tagId) => { await window.electronAPI?.addTagToNote(note.id, tagId); }}
+              onRemove={async (tagId) => { await window.electronAPI?.removeTagFromNote(note.id, tagId); }}
+              onChange={(tags) => setLocalTags(tags)}
+            />
+          </div>
           <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
             <button
               onClick={save}
@@ -98,7 +121,10 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
         </div>
       ) : (
         <>
-          <div className="flex-1 min-h-[60px] overflow-hidden">
+          <div
+            ref={contentRef}
+            className={`min-h-[60px] overflow-hidden${!expanded ? ' max-h-[180px]' : ''}`}
+          >
             {note.title && (
               <p className="text-[13px] font-semibold text-t-85 mb-2 leading-snug">{note.title}</p>
             )}
@@ -128,6 +154,41 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
               {note.content}
             </ReactMarkdown>
           </div>
+
+          {isTruncated && !expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-[11px] text-accent-blue/70 hover:text-accent-blue mt-1 text-left"
+            >
+              Показать всё ↓
+            </button>
+          )}
+          {expanded && (
+            <button
+              onClick={() => setExpanded(false)}
+              className="text-[11px] text-accent-blue/70 hover:text-accent-blue mt-1 text-left"
+            >
+              Свернуть ↑
+            </button>
+          )}
+
+          {localTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {localTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${tag.color}20`,
+                    color: tag.color,
+                    border: `1px solid ${tag.color}40`,
+                  }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center justify-between pt-2 border-t border-t-04">
             <span className="text-[10px] text-t-20">{relativeTime(note.created_at)}</span>

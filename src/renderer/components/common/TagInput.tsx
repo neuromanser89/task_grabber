@@ -14,12 +14,13 @@ function randomColor(): string {
 }
 
 interface Props {
-  taskId: string;
   initialTags: Tag[];
+  onAdd: (tagId: string) => Promise<void>;
+  onRemove: (tagId: string) => Promise<void>;
   onChange?: (tags: Tag[]) => void;
 }
 
-export default function TagInput({ taskId, initialTags, onChange }: Props) {
+export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Props) {
   const [tags, setTags] = useState<Tag[]>(initialTags);
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [input, setInput] = useState('');
@@ -52,7 +53,7 @@ export default function TagInput({ taskId, initialTags, onChange }: Props) {
   );
 
   async function addTag(tag: Tag) {
-    await window.electronAPI?.addTagToTask(taskId, tag.id);
+    await onAdd(tag.id);
     const next = [...tags, tag];
     setTags(next);
     onChange?.(next);
@@ -73,7 +74,7 @@ export default function TagInput({ taskId, initialTags, onChange }: Props) {
   }
 
   async function removeTag(tagId: string) {
-    await window.electronAPI?.removeTagFromTask(taskId, tagId);
+    await onRemove(tagId);
     const next = tags.filter((t) => t.id !== tagId);
     setTags(next);
     onChange?.(next);
