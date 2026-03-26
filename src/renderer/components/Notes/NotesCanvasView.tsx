@@ -94,7 +94,7 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
             className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed flex-1"
             placeholder="Текст заметки (markdown)..."
           />
-          <div className="relative z-10 pt-1 border-t border-t-06">
+          <div className="pt-1 border-t border-t-06">
             <TagInput
               initialTags={localTags}
               onAdd={async (tagId) => { await window.electronAPI?.addTagToNote(note.id, tagId); }}
@@ -102,7 +102,7 @@ function NoteCard({ note, onConvertToTask }: NoteCardProps) {
               onChange={(tags) => setLocalTags(tags)}
             />
           </div>
-          <div className="relative z-0 flex gap-1.5 justify-end pt-1 border-t border-t-06">
+          <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
             <button
               onClick={save}
               className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] text-green-400/80 hover:text-green-400 hover:bg-green-400/10 transition-colors"
@@ -296,7 +296,7 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
         className="w-full bg-transparent text-[13px] text-t-85 outline-none resize-none leading-relaxed"
         placeholder="Текст заметки (поддерживается markdown)&#10;Ctrl+Enter — сохранить"
       />
-      <div className="relative z-10 pt-1 border-t border-t-06">
+      <div className="pt-1 border-t border-t-06">
         <TagInput
           initialTags={pendingTags}
           onAdd={async () => {}}
@@ -304,7 +304,7 @@ function CreateNoteCard({ onCreated }: { onCreated: () => void }) {
           onChange={(tags) => setPendingTags(tags)}
         />
       </div>
-      <div className="relative z-0 flex gap-1.5 justify-end pt-1 border-t border-t-06">
+      <div className="flex gap-1.5 justify-end pt-1 border-t border-t-06">
         <button
           onClick={save}
           className="flex items-center gap-1 px-3 py-1 rounded-md text-[11px] bg-accent-blue/80 hover:bg-accent-blue text-white transition-colors"

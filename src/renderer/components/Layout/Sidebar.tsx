@@ -159,9 +159,18 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
     },
   }));
 
-  useEffect(() => {
+  const reloadTags = useCallback(() => {
     window.electronAPI?.getTags().then(setAllTags);
-  }, [tasks]); // reload when tasks change (new tags might appear)
+  }, []);
+
+  useEffect(() => {
+    reloadTags();
+  }, [tasks, reloadTags]); // reload when tasks change (new tags might appear)
+
+  useEffect(() => {
+    window.addEventListener('tags-changed', reloadTags);
+    return () => window.removeEventListener('tags-changed', reloadTags);
+  }, [reloadTags]);
 
   // Keep columnBoardMap in sync
   useEffect(() => {

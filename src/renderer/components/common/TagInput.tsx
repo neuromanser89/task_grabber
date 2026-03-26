@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { Tag } from '@shared/types';
 import { X } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
   const [input, setInput] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(0);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +72,7 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
     if (newTag) {
       setAllTags((prev) => [...prev, newTag]);
       await addTag(newTag);
+      window.dispatchEvent(new CustomEvent('tags-changed'));
     }
   }
 
@@ -109,9 +112,17 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
     }
   }
 
+  function updateDropdownPos() {
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 192) });
+    }
+  }
+
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInput(e.target.value);
     setHighlightIndex(0);
+    updateDropdownPos();
     setShowDropdown(true);
   }
 
@@ -164,17 +175,18 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
           ref={inputRef}
           value={input}
           onChange={handleInputChange}
-          onFocus={() => setShowDropdown(true)}
+          onFocus={() => { updateDropdownPos(); setShowDropdown(true); }}
           onKeyDown={handleKeyDown}
           placeholder="+ добавить тег"
           className="w-full bg-transparent text-[12px] text-t-60 placeholder-t-20 outline-none border-b border-t-06 focus:border-t-20 pb-1 transition-colors"
         />
 
-        {/* Dropdown */}
-        {showDropdown && dropdownItems.length > 0 && (
+        {/* Dropdown — portal с fixed позиционированием, чтобы вылезал поверх stacking context */}
+        {showDropdown && dropdownItems.length > 0 && createPortal(
           <div
             ref={dropdownRef}
-            className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg overflow-hidden border border-t-08 shadow-xl glass-heavy"
+            className="fixed rounded-lg overflow-hidden border border-t-08 shadow-xl glass-heavy"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 9999 }}
           >
             {dropdownItems.map((item, idx) =>
               item === null ? (
@@ -205,7 +217,8 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
                 </button>
               )
             )}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
