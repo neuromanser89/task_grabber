@@ -698,8 +698,8 @@ export default function TaskDetail({ task, isOpen, onClose }: Props) {
               </label>
               <TagInput
                 initialTags={taskTags}
-                onAdd={(tagId) => window.electronAPI!.addTagToTask(task.id, tagId)}
-                onRemove={(tagId) => window.electronAPI!.removeTagFromTask(task.id, tagId)}
+                onAdd={async (tagId) => { await window.electronAPI!.addTagToTask(task.id, tagId); }}
+                onRemove={async (tagId) => { await window.electronAPI!.removeTagFromTask(task.id, tagId); }}
                 onChange={(tags) => {
                   setTaskTags(tags);
                   updateTaskTags(task.id, tags);
