@@ -18,9 +18,10 @@ interface Props {
   updateCounts?: Record<string, number>;
   latestUpdates?: Record<string, { content: string; created_at: string }>;
   onUpdateCountChange?: () => void;
+  scale?: 1 | 1.5 | 2;
 }
 
-export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect, isDropTarget, updateCounts, latestUpdates, onUpdateCountChange }: Props) {
+export default function Column({ column, tasks, onTaskClick, isDragOverlay, selectedTaskId, selectedBatchIds, onBatchSelect, isDropTarget, updateCounts, latestUpdates, onUpdateCountChange, scale = 1 }: Props) {
   const sorted = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
   const taskIds = sorted.map((t) => t.id);
 
@@ -60,14 +61,16 @@ export default function Column({ column, tasks, onTaskClick, isDragOverlay, sele
         ref={(node) => { setSortRef(node); setDropRef(node); }}
         style={{
           ...(isDragOverlay ? {} : style),
+          width: Math.round(260 * scale),
           outline: (isOver || isDropTarget)
             ? '2px solid rgba(59, 130, 246, 0.5)'
             : isOverWip
             ? '2px solid rgba(239, 68, 68, 0.3)'
             : 'none',
           outlineOffset: '-2px',
+          fontSize: scale > 1 ? `${Math.round(100 * scale)}%` : undefined,
         }}
-        className={`flex flex-col w-[260px] flex-shrink-0 rounded-xl overflow-hidden glass transition-all duration-300 ${
+        className={`flex flex-col flex-shrink-0 rounded-xl overflow-hidden glass transition-all duration-300 ${
           (isOver || isDropTarget) ? 'bg-accent-blue/[0.02]' : ''
         }`}
       >

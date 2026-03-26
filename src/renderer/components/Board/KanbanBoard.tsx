@@ -37,9 +37,10 @@ const RANDOM_COLORS = [
 interface Props {
   onCreateTask?: () => void;
   onFocusSearch?: () => void;
+  kanbanScale?: 1 | 1.5 | 2;
 }
 
-export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
+export default function KanbanBoard({ onCreateTask, onFocusSearch, kanbanScale = 1 }: Props) {
   const { tasks, fetchAll, moveTask, filteredTasks, deleteTask } = useTaskStore();
   const { columns, fetchColumns, createColumn, reorderColumns } = useColumnStore();
   const { activeBoardId } = useBoardStore();
@@ -439,6 +440,7 @@ export default function KanbanBoard({ onCreateTask, onFocusSearch }: Props) {
                 updateCounts={updateCounts}
                 latestUpdates={latestUpdates}
                 onUpdateCountChange={loadUpdateCounts}
+                scale={kanbanScale}
               />
             ))}
 

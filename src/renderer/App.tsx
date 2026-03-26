@@ -60,6 +60,7 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [textBrighter, setTextBrighter] = useState(false);
   const [textBolder, setTextBolder] = useState(false);
+  const [kanbanScale, setKanbanScale] = useState<1 | 1.5 | 2>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const { fetchNotes } = useNoteStore();
   const { fetchBoards, setActiveBoard } = useBoardStore();
@@ -78,6 +79,10 @@ export default function App() {
     });
     window.electronAPI?.getSetting('text_bolder').then((v) => {
       if (v === 'true') { setTextBolder(true); document.documentElement.classList.add('text-bolder'); }
+    });
+    window.electronAPI?.getSetting('kanban_scale').then((v) => {
+      const s = parseFloat(v as string);
+      if (s === 1.5 || s === 2) setKanbanScale(s);
     });
   }, []);
 
@@ -275,10 +280,15 @@ export default function App() {
         onDoctor={() => setShowDoctor(true)}
         viewMode={viewMode}
         onViewChange={setViewMode}
+        kanbanScale={kanbanScale}
+        onKanbanScaleChange={(s) => {
+          setKanbanScale(s);
+          window.electronAPI?.setSetting('kanban_scale', String(s));
+        }}
       />
       <main className="flex flex-1 overflow-hidden">
         <Sidebar ref={sidebarRef} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
-        {viewMode === 'kanban' && <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} />}
+        {viewMode === 'kanban' && <KanbanBoard onCreateTask={openCreateDialog} onFocusSearch={focusSearch} kanbanScale={kanbanScale} />}
         {viewMode === 'timeline' && <TimelineView />}
         {viewMode === 'calendar' && <CalendarView />}
         {viewMode === 'notes' && <NotesCanvasView />}
