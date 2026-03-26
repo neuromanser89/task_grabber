@@ -4,15 +4,17 @@ import path from 'path';
 let tray: Tray | null = null;
 
 export function setupTray(mainWindow: BrowserWindow) {
-  const iconPath = path.join(__dirname, '../../assets/icons/tray-icon.png');
-
+  const iconDir = path.join(__dirname, '../../assets/icons');
+  let icon: Electron.NativeImage;
   try {
-    tray = new Tray(iconPath);
+    // nativeImage автоматически подхватывает @2x для HiDPI
+    icon = nativeImage.createFromPath(path.join(iconDir, 'tray-icon.png'));
+    // На Windows трей-иконка должна быть 16x16
+    if (icon.isEmpty()) throw new Error('empty');
   } catch {
-    // Fallback to empty icon if not found
-    const emptyIcon = nativeImage.createEmpty();
-    tray = new Tray(emptyIcon);
+    icon = nativeImage.createEmpty();
   }
+  tray = new Tray(icon);
 
   tray.setToolTip('Task Grabber');
 
