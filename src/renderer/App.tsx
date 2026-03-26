@@ -280,11 +280,6 @@ export default function App() {
         onDoctor={() => setShowDoctor(true)}
         viewMode={viewMode}
         onViewChange={setViewMode}
-        kanbanScale={kanbanScale}
-        onKanbanScaleChange={(s) => {
-          setKanbanScale(s);
-          window.electronAPI?.setSetting('kanban_scale', String(s));
-        }}
       />
       <main className="flex flex-1 overflow-hidden">
         <Sidebar ref={sidebarRef} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((v) => !v)} />
@@ -316,6 +311,11 @@ export default function App() {
         onBrighterToggle={handleBrighterToggle}
         textBolder={textBolder}
         onBolderToggle={handleBolderToggle}
+        kanbanScale={kanbanScale}
+        onKanbanScaleChange={(s) => {
+          setKanbanScale(s);
+          window.electronAPI?.setSetting('kanban_scale', String(s));
+        }}
       />
       <CommandPalette
         isOpen={showPalette}

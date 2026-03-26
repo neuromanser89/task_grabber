@@ -4,8 +4,6 @@ import BoardSwitcher from '../Board/BoardSwitcher';
 
 export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects' | 'archive';
 
-type KanbanScale = 1 | 1.5 | 2;
-
 interface TitleBarProps {
   onNewTask?: () => void;
   onSettings?: () => void;
@@ -14,8 +12,6 @@ interface TitleBarProps {
   onDoctor?: () => void;
   viewMode?: ViewMode;
   onViewChange?: (mode: ViewMode) => void;
-  kanbanScale?: KanbanScale;
-  onKanbanScaleChange?: (scale: KanbanScale) => void;
 }
 
 const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[] = [
@@ -28,10 +24,7 @@ const VIEW_BUTTONS: { mode: ViewMode; label: string; Icon: React.ElementType }[]
   { mode: 'archive', label: 'Архив', Icon: Archive },
 ];
 
-const SCALE_OPTIONS: KanbanScale[] = [1, 1.5, 2];
-const SCALE_LABELS: Record<KanbanScale, string> = { 1: '×1', 1.5: '×1.5', 2: '×2' };
-
-export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDoctor, viewMode = 'kanban', onViewChange, kanbanScale = 1, onKanbanScaleChange }: TitleBarProps) {
+export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDoctor, viewMode = 'kanban', onViewChange }: TitleBarProps) {
   const minimize = () => window.electronAPI?.minimizeWindow();
   const maximize = () => window.electronAPI?.maximizeWindow();
   const close = () => window.electronAPI?.closeWindow();
@@ -73,24 +66,6 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDocto
       </div>
 
       <div className="flex items-center gap-2 no-drag">
-        {viewMode === 'kanban' && onKanbanScaleChange && (
-          <div className="flex items-center bg-t-06 rounded-md p-0.5 mr-1">
-            {SCALE_OPTIONS.map((s) => (
-              <button
-                key={s}
-                onClick={() => onKanbanScaleChange(s)}
-                className={`px-1.5 h-5 text-[10px] font-medium rounded transition-all duration-150 ${
-                  kanbanScale === s
-                    ? 'bg-t-15 text-t-80'
-                    : 'text-t-30 hover:text-t-60'
-                }`}
-                title={`Масштаб колонок ${SCALE_LABELS[s]}`}
-              >
-                {SCALE_LABELS[s]}
-              </button>
-            ))}
-          </div>
-        )}
         {onNewTask && (
           <button
             onClick={onNewTask}
