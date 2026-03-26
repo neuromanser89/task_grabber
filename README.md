@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icons/icon.png" width="128" height="128" alt="Task Grabber">
+  <img src="assets/icons/256.png" width="128" height="128" alt="Task Grabber">
 </p>
 
 <h1 align="center">Task Grabber</h1>
