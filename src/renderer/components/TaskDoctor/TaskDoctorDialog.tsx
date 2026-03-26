@@ -202,7 +202,8 @@ export default function TaskDoctorDialog({ isOpen, onClose }: Props) {
     (async () => {
       const tags = (await window.electronAPI?.getTags?.() ?? []) as Tag[];
       setAllTags(tags);
-      const active = tasks.filter((t) => !t.archived_at);
+      const doneColIds = new Set(columns.filter((c) => c.column_type === 'done' || c.column_type === 'cancelled').map((c) => c.id));
+      const active = tasks.filter((t) => !t.archived_at && !doneColIds.has(t.column_id));
       const sick: SickTask[] = [];
       for (const task of active) {
         const diagInfos = diagnoseTask(task, columns);
