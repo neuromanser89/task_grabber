@@ -4,7 +4,7 @@ import path from 'path';
 let tray: Tray | null = null;
 
 export function setupTray(mainWindow: BrowserWindow) {
-  const iconDir = path.join(__dirname, '../../assets/icons');
+  const iconDir = path.join(__dirname, '../../../assets/icons');
   let icon: Electron.NativeImage;
   try {
     // nativeImage автоматически подхватывает @2x для HiDPI

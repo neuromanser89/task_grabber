@@ -1,6 +1,7 @@
 import React from 'react';
 import { Minus, Square, X, Plus, Settings, Bot, LayoutList, Calendar, GanttChartSquare, Zap, FolderOpen, StickyNote, Stethoscope, Briefcase, Archive } from 'lucide-react';
 import BoardSwitcher from '../Board/BoardSwitcher';
+import appIcon from '../../../assets/icons/32.png';
 
 export type ViewMode = 'kanban' | 'timeline' | 'calendar' | 'files' | 'notes' | 'projects' | 'archive';
 
@@ -35,10 +36,7 @@ export default function TitleBar({ onNewTask, onSettings, onAI, onRules, onDocto
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-blue/20 to-transparent" />
 
       <div className="flex items-center gap-2.5 no-drag">
-        <div className="relative w-3.5 h-3.5 flex-shrink-0">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple" />
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent-blue to-accent-purple animate-glow-pulse blur-sm opacity-50" />
-        </div>
+        <img src={appIcon} alt="" className="w-5 h-5 flex-shrink-0" draggable={false} />
         <span className="text-sm font-semibold text-t-primary tracking-tight flex-shrink-0">
           Task Grabber
         </span>
