@@ -109,14 +109,19 @@ function ArchiveCard({ task, boardName, columnName, onContextMenu }: ArchiveCard
 }
 
 export default function ArchiveView() {
-  const { tasks, updateTask, moveTask } = useTaskStore();
+  const { updateTask, moveTask } = useTaskStore();
   const { columns } = useColumnStore();
   const { boards } = useBoardStore();
   const [search, setSearch] = useState('');
   const [ctxMenu, setCtxMenu] = useState<CtxMenu | null>(null);
   const ctxRef = useRef<HTMLDivElement>(null);
+  const [archived, setArchived] = useState<TaskWithAttachments[]>([]);
 
-  const archived = tasks.filter((t) => t.archived_at);
+  useEffect(() => {
+    window.electronAPI?.getArchivedTasks?.().then((tasks: TaskWithAttachments[]) => {
+      setArchived(tasks ?? []);
+    });
+  }, []);
 
   const filtered = search.trim()
     ? archived.filter(
@@ -173,6 +178,7 @@ export default function ArchiveView() {
     closeCtx();
     await updateTask(task.id, { archived_at: null });
     await moveTask(task.id, defaultCol.id, 0);
+    setArchived((prev) => prev.filter((t) => t.id !== task.id));
   }
 
   const count = archived.length;
