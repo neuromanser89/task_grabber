@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard } from 'lucide-react';
+import { Search, Tag, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, Hand, FileText, Folder, Mail, BarChart2, LayoutDashboard, Trash2 } from 'lucide-react';
 import { useTaskStore } from '../../stores/taskStore';
 import { useColumnStore } from '../../stores/columnStore';
 import { useBoardStore } from '../../stores/boardStore';
@@ -283,25 +283,37 @@ const Sidebar = forwardRef<SidebarHandle, Props>(function Sidebar({ collapsed, o
                     {allTags.map((tag) => {
                       const active = filterTags.includes(tag.id);
                       return (
-                        <button
-                          key={tag.id}
-                          onClick={() => toggleTagFilter(tag.id)}
-                          onContextMenu={(e) => { e.preventDefault(); setColorPicker({ x: e.clientX, y: e.clientY, currentColor: tag.color, type: 'tag', id: tag.id }); }}
-                          className={`flex items-center gap-2 w-full text-left px-2 py-1 rounded-md text-[11px] transition-all ${
-                            active
-                              ? 'bg-t-08 text-t-85'
-                              : 'text-t-45 hover:text-t-60 hover:bg-t-04'
-                          }`}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: tag.color }}
-                          />
-                          <span className="flex-1 truncate">{tag.name}</span>
-                          {tagCounts[tag.id] && (
-                            <span className="text-[10px] text-t-20 tabular-nums">{tagCounts[tag.id]}</span>
-                          )}
-                        </button>
+                        <div key={tag.id} className="group/tag flex items-center gap-0.5">
+                          <button
+                            onClick={() => toggleTagFilter(tag.id)}
+                            onContextMenu={(e) => { e.preventDefault(); setColorPicker({ x: e.clientX, y: e.clientY, currentColor: tag.color, type: 'tag', id: tag.id }); }}
+                            className={`flex items-center gap-2 flex-1 min-w-0 text-left px-2 py-1 rounded-md text-[11px] transition-all ${
+                              active
+                                ? 'bg-t-08 text-t-85'
+                                : 'text-t-45 hover:text-t-60 hover:bg-t-04'
+                            }`}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="flex-1 truncate">{tag.name}</span>
+                            {tagCounts[tag.id] && (
+                              <span className="text-[10px] text-t-20 tabular-nums">{tagCounts[tag.id]}</span>
+                            )}
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await window.electronAPI?.deleteTag(tag.id);
+                              reloadTags();
+                            }}
+                            className="flex-shrink-0 p-0.5 rounded opacity-0 group-hover/tag:opacity-100 text-t-20 hover:text-red-400 transition-all"
+                            title="Удалить тег"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
