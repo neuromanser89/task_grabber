@@ -240,11 +240,15 @@ export function setupIpcHandlers() {
     }));
   });
 
-  ipcMain.handle('notes:create', (_e, content: string, title?: string | null) => queries.createNote(content, title));
+  ipcMain.handle('notes:create', (_e, content: string, title?: string | null) => {
+    const note = queries.createNote(content, title);
+    return { ...note, tags: queries.getTagsByNoteId(note.id) };
+  });
 
-  ipcMain.handle('notes:update', (_e, id: string, content: string, title?: string | null) =>
-    queries.updateNote(id, content, title)
-  );
+  ipcMain.handle('notes:update', (_e, id: string, content: string, title?: string | null) => {
+    const note = queries.updateNote(id, content, title);
+    return { ...note, tags: queries.getTagsByNoteId(note.id) };
+  });
 
   ipcMain.handle('notes:delete', (_e, id: string) => {
     queries.deleteNote(id);

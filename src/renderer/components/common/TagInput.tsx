@@ -185,14 +185,15 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
         {showDropdown && dropdownItems.length > 0 && createPortal(
           <div
             ref={dropdownRef}
-            className="fixed rounded-lg overflow-hidden border border-t-08 shadow-xl glass-heavy"
-            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 9999 }}
+            className="fixed rounded-lg overflow-hidden border border-t-08 shadow-xl"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width, zIndex: 9999, background: 'var(--bg-secondary)' }}
           >
             {dropdownItems.map((item, idx) =>
               item === null ? (
                 <button
                   key="create"
-                  onMouseDown={(e) => { e.preventDefault(); createAndAdd(); }}
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={() => createAndAdd()}
                   className={`w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 transition-colors ${
                     highlightIndex === idx ? 'bg-t-08' : 'hover:bg-t-05'
                   }`}
@@ -204,7 +205,8 @@ export default function TagInput({ initialTags, onAdd, onRemove, onChange }: Pro
               ) : (
                 <button
                   key={(item as Tag).id}
-                  onMouseDown={(e) => { e.preventDefault(); addTag(item as Tag); }}
+                  onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onClick={() => addTag(item as Tag)}
                   className={`w-full text-left px-3 py-2 text-[12px] flex items-center gap-2 transition-colors ${
                     highlightIndex === idx ? 'bg-t-08' : 'hover:bg-t-05'
                   }`}
